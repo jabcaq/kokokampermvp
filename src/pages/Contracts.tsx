@@ -779,7 +779,14 @@ const Contracts = () => {
                     <div className="text-right flex-1 sm:flex-none">
                       <p className="text-sm text-muted-foreground">Wartość</p>
                       <p className="text-xl font-bold text-primary">
-                        {contract.value ? `${contract.value.toFixed(2)} zł` : 'Brak danych'}
+                        {(() => {
+                          const payments = contract.payments as Record<string, any> || {};
+                          const total = Object.values(payments).reduce((sum, payment: any) => {
+                            const wysokosc = parseFloat(payment?.wysokosc || 0);
+                            return sum + wysokosc;
+                          }, 0);
+                          return total > 0 ? `${total.toFixed(2)} zł` : 'Brak danych';
+                        })()}
                       </p>
                     </div>
                     <div className="flex gap-2">
