@@ -28,8 +28,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/driver-form/:contractId" element={<DriverSubmission />} />
-          <Route path="/handover-form/:contractId" element={<VehicleHandover />} />
-          <Route path="/return-form/:contractId" element={<VehicleReturn />} />
+          <Route path="/vehicle-handover" element={<VehicleHandover />} />
+          <Route path="/vehicle-return" element={<VehicleReturn />} />
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/clients" element={<Clients />} />
