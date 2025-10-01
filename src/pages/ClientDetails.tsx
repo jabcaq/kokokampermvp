@@ -2,110 +2,110 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Mail, Phone, FileText, Calendar, MapPin } from "lucide-react";
+import { ArrowLeft, Mail, Phone, FileText, Calendar, MapPin, Loader2, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-
-interface Client {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  postalCode: string;
-  joinDate: string;
-  totalContracts: number;
-  activeContracts: number;
-}
-
-interface Contract {
-  id: number;
-  contractNumber: string;
-  vehicle: string;
-  startDate: string;
-  endDate: string;
-  status: "active" | "completed" | "cancelled";
-  totalAmount: string;
-}
-
-const mockClient: Client = {
-  id: 1,
-  name: "Jan Kowalski",
-  email: "jan.kowalski@email.com",
-  phone: "+48 500 123 456",
-  address: "ul. Przykładowa 123",
-  city: "Warszawa",
-  postalCode: "00-001",
-  joinDate: "2023-05-15",
-  totalContracts: 5,
-  activeContracts: 2,
-};
-
-const mockContracts: Contract[] = [
-  {
-    id: 1,
-    contractNumber: "CT-2024-001",
-    vehicle: "Mercedes Sprinter 2023",
-    startDate: "2024-01-10",
-    endDate: "2024-01-20",
-    status: "active",
-    totalAmount: "3,500 PLN",
-  },
-  {
-    id: 2,
-    contractNumber: "CT-2024-002",
-    vehicle: "Fiat Ducato 2022",
-    startDate: "2024-02-05",
-    endDate: "2024-02-12",
-    status: "active",
-    totalAmount: "2,800 PLN",
-  },
-  {
-    id: 3,
-    contractNumber: "CT-2023-045",
-    vehicle: "VW California 2021",
-    startDate: "2023-08-15",
-    endDate: "2023-08-30",
-    status: "completed",
-    totalAmount: "4,200 PLN",
-  },
-  {
-    id: 4,
-    contractNumber: "CT-2023-032",
-    vehicle: "Peugeot Boxer 2022",
-    startDate: "2023-06-10",
-    endDate: "2023-06-20",
-    status: "completed",
-    totalAmount: "3,100 PLN",
-  },
-];
+import { useClient, useDeleteClient } from "@/hooks/useClients";
+import { useContractsByClient } from "@/hooks/useContracts";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 const ClientDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  const { data: client, isLoading: clientLoading } = useClient(id);
+  const { data: contracts = [], isLoading: contractsLoading } = useContractsByClient(id);
+  const deleteClientMutation = useDeleteClient();
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive"; label: string }> = {
       active: { variant: "default", label: "Aktywna" },
       completed: { variant: "secondary", label: "Zakończona" },
       cancelled: { variant: "destructive", label: "Anulowana" },
+      pending: { variant: "secondary", label: "Oczekująca" },
     };
     const config = variants[status] || variants.active;
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center gap-4">
+  const handleDeleteClient = async () => {
+    if (!id) return;
+    
+    try {
+      await deleteClientMutation.mutateAsync(id);
+      toast({
+        title: "Sukces",
+        description: "Klient został usunięty.",
+      });
+      navigate("/clients");
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się usunąć klienta. Sprawdź czy nie ma przypisanych umów.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (clientLoading || contractsLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!client) {
+    return (
+      <div className="space-y-6 animate-fade-in">
         <Button variant="ghost" size="icon" onClick={() => navigate("/clients")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div>
-          <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            {mockClient.name}
-          </h1>
-          <p className="text-muted-foreground mt-1">Szczegóły klienta</p>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">Nie znaleziono klienta</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const activeContracts = contracts.filter(c => c.status === 'active').length;
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/clients")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              {client.name}
+            </h1>
+            <p className="text-muted-foreground mt-1">Szczegóły klienta</p>
+          </div>
         </div>
+        <Button
+          variant="destructive"
+          onClick={() => setShowDeleteDialog(true)}
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Usuń klienta
+        </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -120,21 +120,11 @@ const ClientDetails = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Email</p>
-              <p className="font-medium">{mockClient.email}</p>
+              <p className="font-medium">{client.email}</p>
             </div>
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Telefon</p>
-              <p className="font-medium">{mockClient.phone}</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                Adres
-              </p>
-              <p className="font-medium">{mockClient.address}</p>
-              <p className="font-medium">
-                {mockClient.postalCode} {mockClient.city}
-              </p>
+              <p className="font-medium">{client.phone || 'Brak danych'}</p>
             </div>
           </CardContent>
         </Card>
@@ -153,15 +143,17 @@ const ClientDetails = () => {
                 <Calendar className="h-4 w-4" />
                 Data dołączenia
               </p>
-              <p className="font-medium">{mockClient.joinDate}</p>
+              <p className="font-medium">
+                {client.created_at ? format(new Date(client.created_at), 'dd.MM.yyyy') : 'Brak danych'}
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-4 pt-4">
               <div className="bg-gradient-subtle rounded-lg p-4 text-center">
-                <p className="text-3xl font-bold text-primary">{mockClient.totalContracts}</p>
+                <p className="text-3xl font-bold text-primary">{contracts.length}</p>
                 <p className="text-sm text-muted-foreground mt-1">Wszystkie umowy</p>
               </div>
               <div className="bg-gradient-subtle rounded-lg p-4 text-center">
-                <p className="text-3xl font-bold text-secondary">{mockClient.activeContracts}</p>
+                <p className="text-3xl font-bold text-secondary">{activeContracts}</p>
                 <p className="text-sm text-muted-foreground mt-1">Aktywne umowy</p>
               </div>
             </div>
@@ -183,42 +175,71 @@ const ClientDetails = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Numer umowy</TableHead>
-                <TableHead>Pojazd</TableHead>
-                <TableHead>Data rozpoczęcia</TableHead>
-                <TableHead>Data zakończenia</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Kwota</TableHead>
-                <TableHead>Akcje</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mockContracts.map((contract) => (
-                <TableRow key={contract.id}>
-                  <TableCell className="font-medium">{contract.contractNumber}</TableCell>
-                  <TableCell>{contract.vehicle}</TableCell>
-                  <TableCell>{contract.startDate}</TableCell>
-                  <TableCell>{contract.endDate}</TableCell>
-                  <TableCell>{getStatusBadge(contract.status)}</TableCell>
-                  <TableCell className="font-medium">{contract.totalAmount}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate(`/contracts/${contract.id}`)}
-                    >
-                      Zobacz
-                    </Button>
-                  </TableCell>
+          {contracts.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-muted-foreground">Brak umów dla tego klienta</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Numer umowy</TableHead>
+                  <TableHead>Pojazd</TableHead>
+                  <TableHead>Data rozpoczęcia</TableHead>
+                  <TableHead>Data zakończenia</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Kwota</TableHead>
+                  <TableHead>Akcje</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {contracts.map((contract) => (
+                  <TableRow key={contract.id}>
+                    <TableCell className="font-medium">{contract.contract_number}</TableCell>
+                    <TableCell>{contract.vehicle_model}</TableCell>
+                    <TableCell>{format(new Date(contract.start_date), 'dd.MM.yyyy')}</TableCell>
+                    <TableCell>{format(new Date(contract.end_date), 'dd.MM.yyyy')}</TableCell>
+                    <TableCell>{getStatusBadge(contract.status)}</TableCell>
+                    <TableCell className="font-medium">
+                      {contract.value ? `${contract.value.toFixed(2)} zł` : 'Brak danych'}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/contracts/${contract.id}`)}
+                      >
+                        Zobacz
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Czy na pewno chcesz usunąć tego klienta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ta operacja jest nieodwracalna. Wszystkie dane klienta zostaną trwale usunięte.
+              Upewnij się, że klient nie ma aktywnych umów.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteClient}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Usuń
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
