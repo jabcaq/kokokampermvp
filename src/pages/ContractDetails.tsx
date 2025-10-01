@@ -32,7 +32,9 @@ const ContractDetails = () => {
   const updateContractMutation = useUpdateContract();
 
   const handleEdit = () => {
-    setEditedData({ ...contract });
+    const initialData = { ...contract };
+    console.log('Starting edit with data:', initialData);
+    setEditedData(initialData);
     setIsEditing(true);
   };
 
@@ -60,6 +62,8 @@ const ContractDetails = () => {
   const handleSave = async () => {
     if (!id) return;
     
+    console.log('Saving data:', editedData);
+    
     try {
       await updateContractMutation.mutateAsync({
         id,
@@ -73,6 +77,7 @@ const ContractDetails = () => {
       setIsEditing(false);
       setEditedData({});
     } catch (error) {
+      console.error('Save error:', error);
       toast({
         title: "Błąd",
         description: "Nie udało się zaktualizować umowy.",
@@ -82,7 +87,12 @@ const ContractDetails = () => {
   };
 
   const updateField = (field: string, value: any) => {
-    setEditedData({ ...editedData, [field]: value });
+    console.log('Updating field:', field, 'with value:', value);
+    setEditedData(prev => {
+      const updated = { ...prev, [field]: value };
+      console.log('Updated editedData:', updated);
+      return updated;
+    });
   };
 
   const displayData = isEditing ? editedData : contract;
