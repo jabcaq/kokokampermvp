@@ -86,6 +86,37 @@ const Contracts = () => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
+    // Przygotuj dodatkowych kierowców
+    const driversData = additionalDrivers.map((idx) => ({
+      imie_nazwisko: formData.get(`add_driver_${idx}_imie_nazwisko`),
+      email: formData.get(`add_driver_${idx}_email`),
+      tel: formData.get(`add_driver_${idx}_tel`),
+      prawo_jazdy_numer: formData.get(`add_driver_${idx}_prawo_jazdy_numer`),
+      prawo_jazdy_data: formData.get(`add_driver_${idx}_prawo_jazdy_data`),
+      dokument_rodzaj: formData.get(`add_driver_${idx}_dokument_rodzaj`),
+      dokument_numer: formData.get(`add_driver_${idx}_dokument_numer`),
+      dokument_organ: formData.get(`add_driver_${idx}_dokument_organ`),
+    }));
+    
+    // Przygotuj dane płatności
+    const paymentsData = {
+      rezerwacyjna: {
+        data: formData.get('oplata_rez_data'),
+        wysokosc: formData.get('oplata_rez_wysokosc'),
+        rachunek: formData.get('oplata_rez_rachunek'),
+      },
+      zasadnicza: {
+        data: formData.get('oplata_zasad_data'),
+        wysokosc: formData.get('oplata_zasad_wysokosc'),
+        rachunek: formData.get('oplata_zasad_rachunek'),
+      },
+      kaucja: {
+        data: formData.get('oplata_kaucja_data'),
+        wysokosc: formData.get('oplata_kaucja_wysokosc'),
+        rachunek: formData.get('oplata_kaucja_rachunek'),
+      },
+    };
+    
     try {
       await addContractMutation.mutateAsync({
         contract_number: formData.get('umowa_numer') as string,
@@ -96,6 +127,36 @@ const Contracts = () => {
         end_date: formData.get('okres_do') as string,
         status: 'pending',
         value: null,
+        company_name: formData.get('nazwa_firmy') as string,
+        company_email: formData.get('email') as string,
+        company_phone1: formData.get('telefon1') as string,
+        company_phone2: formData.get('telefon2') as string,
+        lessor_name: formData.get('wynajmujacy_nazwa') as string,
+        lessor_address: formData.get('wynajmujacy_adres') as string,
+        lessor_phone: formData.get('wynajmujacy_tel') as string,
+        lessor_website: formData.get('wynajmujacy_www') as string,
+        lessor_email: formData.get('wynajmujacy_email') as string,
+        rental_location: formData.get('okres_miejsce') as string,
+        return_by: formData.get('okres_zwrot_do') as string,
+        tenant_name: formData.get('najemca_imie_nazwisko') as string,
+        tenant_email: formData.get('najemca_email') as string,
+        tenant_phone: formData.get('najemca_tel') as string,
+        tenant_address: formData.get('najemca_adres_zamieszkania') as string,
+        tenant_id_type: formData.get('najemca_dokument_rodzaj') as string,
+        tenant_id_number: formData.get('najemca_dokument_numer') as string,
+        tenant_id_issuer: formData.get('najemca_dokument_organ') as string,
+        tenant_pesel: formData.get('najemca_pesel') as string,
+        tenant_nip: formData.get('najemca_nip') as string,
+        tenant_license_number: formData.get('najemca_prawo_jazdy_numer') as string,
+        tenant_license_date: formData.get('najemca_prawo_jazdy_data') as string,
+        vehicle_vin: vehicleData.vin,
+        vehicle_next_inspection: vehicleData.next_inspection_date,
+        vehicle_insurance_number: vehicleData.insurance_policy_number,
+        vehicle_insurance_valid_until: vehicleData.insurance_valid_until,
+        vehicle_additional_info: vehicleData.additional_info,
+        additional_drivers: driversData,
+        payments: paymentsData,
+        notes: formData.get('uwagi') as string,
       });
       
       toast({

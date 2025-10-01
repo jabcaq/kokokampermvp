@@ -46,43 +46,133 @@ export type Database = {
       }
       contracts: {
         Row: {
+          additional_drivers: Json | null
           client_id: string
+          company_email: string | null
+          company_name: string | null
+          company_phone1: string | null
+          company_phone2: string | null
           contract_number: string
           created_at: string | null
           end_date: string
           id: string
+          lessor_address: string | null
+          lessor_email: string | null
+          lessor_name: string | null
+          lessor_phone: string | null
+          lessor_website: string | null
+          notes: string | null
+          payments: Json | null
           registration_number: string
+          rental_location: string | null
+          return_by: string | null
           start_date: string
           status: Database["public"]["Enums"]["contract_status"] | null
+          tenant_address: string | null
+          tenant_email: string | null
+          tenant_id_issuer: string | null
+          tenant_id_number: string | null
+          tenant_id_type: string | null
+          tenant_license_date: string | null
+          tenant_license_number: string | null
+          tenant_name: string | null
+          tenant_nip: string | null
+          tenant_pesel: string | null
+          tenant_phone: string | null
           updated_at: string | null
           value: number | null
+          vehicle_additional_info: string | null
+          vehicle_insurance_number: string | null
+          vehicle_insurance_valid_until: string | null
           vehicle_model: string
+          vehicle_next_inspection: string | null
+          vehicle_vin: string | null
         }
         Insert: {
+          additional_drivers?: Json | null
           client_id: string
+          company_email?: string | null
+          company_name?: string | null
+          company_phone1?: string | null
+          company_phone2?: string | null
           contract_number: string
           created_at?: string | null
           end_date: string
           id?: string
+          lessor_address?: string | null
+          lessor_email?: string | null
+          lessor_name?: string | null
+          lessor_phone?: string | null
+          lessor_website?: string | null
+          notes?: string | null
+          payments?: Json | null
           registration_number: string
+          rental_location?: string | null
+          return_by?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["contract_status"] | null
+          tenant_address?: string | null
+          tenant_email?: string | null
+          tenant_id_issuer?: string | null
+          tenant_id_number?: string | null
+          tenant_id_type?: string | null
+          tenant_license_date?: string | null
+          tenant_license_number?: string | null
+          tenant_name?: string | null
+          tenant_nip?: string | null
+          tenant_pesel?: string | null
+          tenant_phone?: string | null
           updated_at?: string | null
           value?: number | null
+          vehicle_additional_info?: string | null
+          vehicle_insurance_number?: string | null
+          vehicle_insurance_valid_until?: string | null
           vehicle_model: string
+          vehicle_next_inspection?: string | null
+          vehicle_vin?: string | null
         }
         Update: {
+          additional_drivers?: Json | null
           client_id?: string
+          company_email?: string | null
+          company_name?: string | null
+          company_phone1?: string | null
+          company_phone2?: string | null
           contract_number?: string
           created_at?: string | null
           end_date?: string
           id?: string
+          lessor_address?: string | null
+          lessor_email?: string | null
+          lessor_name?: string | null
+          lessor_phone?: string | null
+          lessor_website?: string | null
+          notes?: string | null
+          payments?: Json | null
           registration_number?: string
+          rental_location?: string | null
+          return_by?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["contract_status"] | null
+          tenant_address?: string | null
+          tenant_email?: string | null
+          tenant_id_issuer?: string | null
+          tenant_id_number?: string | null
+          tenant_id_type?: string | null
+          tenant_license_date?: string | null
+          tenant_license_number?: string | null
+          tenant_name?: string | null
+          tenant_nip?: string | null
+          tenant_pesel?: string | null
+          tenant_phone?: string | null
           updated_at?: string | null
           value?: number | null
+          vehicle_additional_info?: string | null
+          vehicle_insurance_number?: string | null
+          vehicle_insurance_valid_until?: string | null
           vehicle_model?: string
+          vehicle_next_inspection?: string | null
+          vehicle_vin?: string | null
         }
         Relationships: [
           {
