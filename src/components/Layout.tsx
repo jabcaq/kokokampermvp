@@ -1,10 +1,12 @@
 import { Link, useLocation, Outlet } from "react-router-dom";
-import { Home, Users, FileText, UserPlus, Truck, Menu, Mail, ClipboardCheck } from "lucide-react";
+import { Home, Users, FileText, UserPlus, Truck, Menu, Mail, ClipboardCheck, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useCheckExpiringDocuments } from "@/hooks/useNotifications";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: Home },
@@ -19,6 +21,16 @@ export const Layout = () => {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const checkExpiringMutation = useCheckExpiringDocuments();
+  const { signOut, user } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Wylogowano",
+      description: "Do zobaczenia!",
+    });
+  };
 
   // Check for expiring documents on mount
   useEffect(() => {
@@ -52,13 +64,20 @@ export const Layout = () => {
           );
         })}
       </nav>
-      <div className="p-4 border-t border-sidebar-border">
-        <div className="bg-gradient-subtle rounded-lg p-4">
-          <p className="text-sm font-medium mb-1">Potrzebujesz pomocy?</p>
-          <p className="text-xs text-muted-foreground">
-            Skontaktuj się z wsparciem technicznym
-          </p>
-        </div>
+      <div className="p-4 border-t border-sidebar-border space-y-2">
+        <Button
+          onClick={handleSignOut}
+          variant="ghost"
+          className="w-full justify-start gap-3"
+        >
+          <LogOut className="h-5 w-5" />
+          <span>Wyloguj</span>
+        </Button>
+        {user && (
+          <div className="px-3 py-2 text-xs text-muted-foreground truncate">
+            {user.email}
+          </div>
+        )}
       </div>
     </>
   );

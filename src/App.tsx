@@ -2,8 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "./components/Layout";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import ClientDetails from "./pages/ClientDetails";
@@ -28,25 +31,32 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/driver-form/:contractId" element={<DriverSubmission />} />
-          <Route path="/vehicle-handover" element={<VehicleHandover />} />
-          <Route path="/vehicle-return" element={<VehicleReturn />} />
-          <Route path="/accounting-upload/:invoiceId" element={<AccountingUpload />} />
-          <Route element={<Layout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/clients/:id" element={<ClientDetails />} />
-            <Route path="/contracts" element={<Contracts />} />
-            <Route path="/contracts/:id" element={<ContractDetails />} />
-            <Route path="/fleet" element={<Fleet />} />
-            <Route path="/fleet/:id" element={<VehicleDetails />} />
-            <Route path="/drivers" element={<Drivers />} />
-            <Route path="/inquiries" element={<Inquiries />} />
-            <Route path="/protocols" element={<Protocols />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/driver-form/:contractId" element={<DriverSubmission />} />
+            <Route path="/vehicle-handover" element={<VehicleHandover />} />
+            <Route path="/vehicle-return" element={<VehicleReturn />} />
+            <Route path="/accounting-upload/:invoiceId" element={<AccountingUpload />} />
+            <Route element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/clients" element={<Clients />} />
+              <Route path="/clients/:id" element={<ClientDetails />} />
+              <Route path="/contracts" element={<Contracts />} />
+              <Route path="/contracts/:id" element={<ContractDetails />} />
+              <Route path="/fleet" element={<Fleet />} />
+              <Route path="/fleet/:id" element={<VehicleDetails />} />
+              <Route path="/drivers" element={<Drivers />} />
+              <Route path="/inquiries" element={<Inquiries />} />
+              <Route path="/protocols" element={<Protocols />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
