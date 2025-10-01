@@ -26,7 +26,7 @@ const VehicleDetails = () => {
   const handleEdit = () => {
     setEditedData({
       name: vehicle?.name || '',
-      type: vehicle?.type || 'kamper',
+      type: vehicle?.type || 'Kamper',
       brand: vehicle?.brand || '',
       model: vehicle?.model || '',
       year: vehicle?.year || new Date().getFullYear(),
@@ -180,7 +180,7 @@ const VehicleDetails = () => {
 
       <div className="flex items-center gap-4">
         <div className="h-16 w-16 rounded-lg bg-gradient-primary flex items-center justify-center">
-          {displayData.type === "kamper" ? (
+          {displayData.type === "Kamper" ? (
             <Truck className="h-8 w-8 text-primary-foreground" />
           ) : (
             <Caravan className="h-8 w-8 text-primary-foreground" />
@@ -265,8 +265,8 @@ const VehicleDetails = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="kamper">Kamper</SelectItem>
-                      <SelectItem value="przyczepa">Przyczepa</SelectItem>
+                      <SelectItem value="Kamper">Kamper</SelectItem>
+                      <SelectItem value="Przyczepa">Przyczepa</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -308,7 +308,7 @@ const VehicleDetails = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Typ pojazdu:</span>
                   <span className="font-medium text-foreground">
-                    {displayData.type === "kamper" ? "Kamper" : displayData.type === "przyczepa" ? "Przyczepa" : "Brak danych"}
+                    {displayData.type === "Kamper" ? "Kamper" : displayData.type === "Przyczepa" ? "Przyczepa" : "Brak danych"}
                   </span>
                 </div>
                 {displayData.location && (
