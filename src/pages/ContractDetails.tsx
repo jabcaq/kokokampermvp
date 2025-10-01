@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, FileText, User, Car, CreditCard, AlertCircle } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, User, Car, CreditCard, AlertCircle, Edit2, Save, X } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data - w przyszłości z bazy danych
 const contractsData: Record<string, any> = {
@@ -134,8 +139,31 @@ const statusConfig = {
 const ContractDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContract, setEditedContract] = useState<any>(null);
   
   const contract = id ? contractsData[id] : null;
+
+  const handleEdit = () => {
+    setEditedContract({ ...contract });
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditedContract(null);
+  };
+
+  const handleSave = () => {
+    // Tutaj będzie zapisywanie do backendu
+    toast({
+      title: "Umowa zaktualizowana",
+      description: "Zmiany zostały pomyślnie zapisane.",
+    });
+    setIsEditing(false);
+    setEditedContract(null);
+  };
 
   if (!contract) {
     return (
@@ -169,6 +197,25 @@ const ContractDetails = () => {
             </Badge>
           </div>
           <p className="text-muted-foreground mt-2">Szczegóły umowy najmu</p>
+        </div>
+        <div className="flex gap-2">
+          {!isEditing ? (
+            <Button onClick={handleEdit} className="gap-2">
+              <Edit2 className="h-4 w-4" />
+              Edytuj umowę
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={handleCancel} className="gap-2">
+                <X className="h-4 w-4" />
+                Anuluj
+              </Button>
+              <Button onClick={handleSave} className="gap-2">
+                <Save className="h-4 w-4" />
+                Zapisz zmiany
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
