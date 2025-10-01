@@ -558,9 +558,11 @@ const Contracts = () => {
                     <p className="text-xl font-bold text-primary">{contract.value}</p>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="icon" className="shrink-0">
-                      <Eye className="h-4 w-4" />
-                    </Button>
+                    <Link to={`/contracts/${contract.id}`}>
+                      <Button variant="outline" size="icon" className="shrink-0">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </Link>
                     <Button variant="outline" size="icon" className="shrink-0">
                       <Edit className="h-4 w-4" />
                     </Button>
