@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Package, ExternalLink, Edit, Image as ImageIcon } from "lucide-react";
+import { Package, ExternalLink, Edit, Image as ImageIcon, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -21,6 +21,7 @@ interface ReturnTabProps {
 export const ReturnTab = ({ contractId, contractNumber, tenantName, startDate, endDate, vehicleModel, returns }: ReturnTabProps) => {
   const navigate = useNavigate();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [previewReturn, setPreviewReturn] = useState<VehicleReturn | null>(null);
   
   const handleOpenForm = () => {
     const params = new URLSearchParams({
@@ -69,15 +70,26 @@ export const ReturnTab = ({ contractId, contractNumber, tenantName, startDate, e
               <div key={returnData.id} className="p-4 border rounded-lg space-y-4">
                 <div className="flex justify-between items-start">
                   <h4 className="font-semibold">Protokół zwrotu</h4>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleOpenForm}
-                    className="gap-2"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edytuj
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setPreviewReturn(returnData)}
+                      className="gap-2"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Podgląd
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleOpenForm}
+                      className="gap-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edytuj
+                    </Button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
@@ -163,6 +175,80 @@ export const ReturnTab = ({ contractId, contractNumber, tenantName, startDate, e
               alt="Podgląd"
               className="w-full h-auto rounded-lg"
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Return Preview Dialog */}
+      <Dialog open={!!previewReturn} onOpenChange={() => setPreviewReturn(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Podgląd protokołu zwrotu</DialogTitle>
+          </DialogHeader>
+          {previewReturn && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Przebieg</Label>
+                  <p className="font-medium text-lg">{previewReturn.mileage} km</p>
+                </div>
+                <div>
+                  <Label>Poziom paliwa</Label>
+                  <p className="font-medium text-lg">{previewReturn.fuel_level}%</p>
+                </div>
+                <div>
+                  <Label>Data zwrotu</Label>
+                  <p className="font-medium text-lg">{format(new Date(previewReturn.created_at), 'dd.MM.yyyy HH:mm')}</p>
+                </div>
+                <div>
+                  <Label>Pracownik</Label>
+                  <p className="font-medium text-lg">{previewReturn.employee_name}</p>
+                </div>
+                <div>
+                  <Label>Zwrot kaucji</Label>
+                  <p className="font-medium text-lg">{previewReturn.can_refund_deposit ? 'Tak' : 'Nie'}</p>
+                </div>
+                <div>
+                  <Label>Usterki</Label>
+                  <p className="font-medium text-lg">{previewReturn.vehicle_issue ? 'Tak' : 'Nie'}</p>
+                </div>
+              </div>
+
+              {previewReturn.return_notes && (
+                <div>
+                  <Label>Uwagi</Label>
+                  <p className="text-muted-foreground text-base">{previewReturn.return_notes}</p>
+                </div>
+              )}
+
+              {/* Photos Gallery */}
+              {previewReturn.photos && Array.isArray(previewReturn.photos) && previewReturn.photos.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4" />
+                    Zdjęcia ({previewReturn.photos.length})
+                  </Label>
+                  <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                    {previewReturn.photos.map((photo: any, index: number) => {
+                      const photoUrl = photo.url || photo;
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedImage(photoUrl)}
+                          className="aspect-square rounded-lg overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-pointer"
+                        >
+                          <img 
+                            src={photoUrl}
+                            alt={`Zdjęcie ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </DialogContent>
       </Dialog>
