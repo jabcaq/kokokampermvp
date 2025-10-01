@@ -302,6 +302,14 @@ const ContractDetails = () => {
                 <p className="font-medium text-foreground">{displayData?.company_phone2 || 'Nie podano'}</p>
               )}
             </div>
+            <div className="space-y-2">
+              <Label>Numer umowy (stary system)</Label>
+              {isEditing ? (
+                <Input value={displayData?.umowa_text || ''} onChange={(e) => updateField('umowa_text', e.target.value)} placeholder="np. 60/2024" />
+              ) : (
+                <p className="font-medium text-foreground">{displayData?.umowa_text || 'Nie podano'}</p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

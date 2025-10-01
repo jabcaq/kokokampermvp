@@ -120,6 +120,7 @@ const Contracts = () => {
     try {
       await addContractMutation.mutateAsync({
         contract_number: formData.get('umowa_numer') as string,
+        umowa_text: formData.get('umowa_text') as string,
         client_id: selectedClientId,
         vehicle_model: vehicleData.model,
         registration_number: vehicleData.registration_number,
@@ -300,6 +301,10 @@ const Contracts = () => {
                   <div className="space-y-2">
                     <Label htmlFor="umowa_numer">Numer umowy</Label>
                     <Input id="umowa_numer" name="umowa_numer" placeholder="60/2024" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="umowa_text">Numer umowy (stary system)</Label>
+                    <Input id="umowa_text" name="umowa_text" placeholder="np. 60/2024" />
                   </div>
                 </div>
               </div>

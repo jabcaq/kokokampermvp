@@ -33,6 +33,7 @@ export interface Contract {
   tenant_nip?: string;
   tenant_license_number?: string;
   tenant_license_date?: string;
+  umowa_text?: string;
   vehicle_vin?: string;
   vehicle_next_inspection?: string;
   vehicle_insurance_number?: string;

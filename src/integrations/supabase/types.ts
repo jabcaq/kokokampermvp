@@ -176,6 +176,7 @@ export type Database = {
           tenant_nip: string | null
           tenant_pesel: string | null
           tenant_phone: string | null
+          umowa_text: string | null
           updated_at: string | null
           value: number | null
           vehicle_additional_info: string | null
@@ -219,6 +220,7 @@ export type Database = {
           tenant_nip?: string | null
           tenant_pesel?: string | null
           tenant_phone?: string | null
+          umowa_text?: string | null
           updated_at?: string | null
           value?: number | null
           vehicle_additional_info?: string | null
@@ -262,6 +264,7 @@ export type Database = {
           tenant_nip?: string | null
           tenant_pesel?: string | null
           tenant_phone?: string | null
+          umowa_text?: string | null
           updated_at?: string | null
           value?: number | null
           vehicle_additional_info?: string | null
