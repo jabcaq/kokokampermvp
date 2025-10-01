@@ -1,13 +1,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, FileText, Car, TrendingUp } from "lucide-react";
+import { Users, FileText, Car, TrendingUp, Eye } from "lucide-react";
 import { useClients } from "@/hooks/useClients";
 import { useContracts } from "@/hooks/useContracts";
 import { useVehicles } from "@/hooks/useVehicles";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { data: clients, isLoading: clientsLoading } = useClients();
   const { data: contracts, isLoading: contractsLoading } = useContracts();
   const { data: vehicles, isLoading: vehiclesLoading } = useVehicles();
@@ -123,6 +126,16 @@ const Dashboard = () => {
                          contract.status === "completed" ? "Zakończona" : "Anulowana"}
                       </span>
                     </div>
+                    {contract.client_id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/clients/${contract.client_id}`)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Podgląd
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
