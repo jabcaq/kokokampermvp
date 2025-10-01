@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Loader2, Trash2, ArrowUpDown, FileText } from "lucide-react";
+import { Plus, Search, Loader2, Trash2, ArrowUpDown, FileText, Eye } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useDocuments, useAddDocument, useDeleteDocument } from "@/hooks/useDocuments";
+import { useDocuments, useAddDocument, useDeleteDocument, useUpdateDocument, Document } from "@/hooks/useDocuments";
 import { useClients } from "@/hooks/useClients";
 import { useContracts } from "@/hooks/useContracts";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +25,8 @@ const Documents = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [rodzajFilter, setRodzajFilter] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [deleteDocumentId, setDeleteDocumentId] = useState<string | null>(null);
   const [sortField, setSortField] = useState<"rodzaj" | "nazwa_pliku" | "data">("data");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -34,6 +36,7 @@ const Documents = () => {
   const { data: clients = [] } = useClients();
   const { data: contracts = [] } = useContracts();
   const addDocumentMutation = useAddDocument();
+  const updateDocumentMutation = useUpdateDocument();
   const deleteDocumentMutation = useDeleteDocument();
 
   // Get unique rodzaj values for filter
@@ -124,6 +127,45 @@ const Documents = () => {
       toast({
         title: "Błąd",
         description: "Nie udało się usunąć dokumentu.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditDocument = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingDocument) return;
+    
+    const formData = new FormData(e.currentTarget);
+    
+    try {
+      await updateDocumentMutation.mutateAsync({
+        id: editingDocument.id,
+        updates: {
+          rodzaj: formData.get("rodzaj") as string,
+          contract_id: formData.get("contract_id") as string || null,
+          umowa_id: formData.get("umowa_id") as string || null,
+          client_id: formData.get("client_id") as string || null,
+          folder: formData.get("folder") as string || null,
+          nazwa_pliku: formData.get("nazwa_pliku") as string,
+          link: formData.get("link") as string || null,
+          path: formData.get("path") as string || null,
+          data: formData.get("data") as string || null,
+          rok: formData.get("rok") ? parseInt(formData.get("rok") as string) : null,
+        },
+      });
+      
+      toast({
+        title: "Sukces",
+        description: "Dokument został zaktualizowany.",
+      });
+      
+      setIsEditDialogOpen(false);
+      setEditingDocument(null);
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się zaktualizować dokumentu.",
         variant: "destructive",
       });
     }
@@ -283,7 +325,6 @@ const Documents = () => {
                   </div>
                 </TableHead>
                 <TableHead className="min-w-[140px]">Umowa (system)</TableHead>
-                <TableHead className="min-w-[140px]">Umowa (stara baza)</TableHead>
                 <TableHead>Folder</TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50 transition-colors min-w-[150px]"
@@ -296,18 +337,8 @@ const Documents = () => {
                 </TableHead>
                 <TableHead className="w-[80px]">Link</TableHead>
                 <TableHead className="min-w-[120px]">Path</TableHead>
-                <TableHead className="min-w-[120px]">Klient</TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors w-[110px]"
-                  onClick={() => handleSort("data")}
-                >
-                  <div className="flex items-center gap-2">
-                    Data
-                    <ArrowUpDown className="h-4 w-4" />
-                  </div>
-                </TableHead>
                 <TableHead className="w-[70px]">Rok</TableHead>
-                <TableHead className="text-right w-[80px]">Akcje</TableHead>
+                <TableHead className="text-right w-[100px]">Akcje</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -316,9 +347,6 @@ const Documents = () => {
                   <TableCell className="font-medium">{doc.rodzaj}</TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {doc.contract?.contract_number || "—"}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {doc.umowa_id || "—"}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm max-w-[120px] truncate">
                     {doc.folder || "—"}
@@ -342,22 +370,28 @@ const Documents = () => {
                     {doc.path || "—"}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
-                    {doc.client?.name || "—"}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
-                    {doc.data ? new Date(doc.data).toLocaleDateString('pl-PL') : "—"}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
                     {doc.rok || "—"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setDeleteDocumentId(doc.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditingDocument(doc);
+                          setIsEditDialogOpen(true);
+                        }}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setDeleteDocumentId(doc.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -385,6 +419,160 @@ const Documents = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Document Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) setEditingDocument(null);
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Podgląd i edycja dokumentu</DialogTitle>
+            <DialogDescription>
+              Edytuj informacje o dokumencie
+            </DialogDescription>
+          </DialogHeader>
+          {editingDocument && (
+            <form onSubmit={handleEditDocument} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-rodzaj">Rodzaj *</Label>
+                  <Input 
+                    id="edit-rodzaj" 
+                    name="rodzaj" 
+                    defaultValue={editingDocument.rodzaj}
+                    placeholder="Typ dokumentu" 
+                    required 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-nazwa_pliku">Nazwa pliku *</Label>
+                  <Input 
+                    id="edit-nazwa_pliku" 
+                    name="nazwa_pliku" 
+                    defaultValue={editingDocument.nazwa_pliku}
+                    placeholder="dokument.pdf" 
+                    required 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-client_id">Klient</Label>
+                  <Select name="client_id" defaultValue={editingDocument.client_id || ""}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Wybierz klienta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Brak</SelectItem>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-contract_id">Umowa (system)</Label>
+                  <Select name="contract_id" defaultValue={editingDocument.contract_id || ""}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Wybierz umowę" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Brak</SelectItem>
+                      {contracts.map((contract) => (
+                        <SelectItem key={contract.id} value={contract.id}>
+                          {contract.contract_number}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-umowa_id">Numer umowy (stara baza)</Label>
+                <Input 
+                  id="edit-umowa_id" 
+                  name="umowa_id" 
+                  defaultValue={editingDocument.umowa_id || ""}
+                  placeholder="Numer z poprzedniej bazy" 
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-folder">Folder</Label>
+                  <Input 
+                    id="edit-folder" 
+                    name="folder" 
+                    defaultValue={editingDocument.folder || ""}
+                    placeholder="Ścieżka folderu" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-path">Path</Label>
+                  <Input 
+                    id="edit-path" 
+                    name="path" 
+                    defaultValue={editingDocument.path || ""}
+                    placeholder="Pełna ścieżka" 
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-link">Link</Label>
+                <Input 
+                  id="edit-link" 
+                  name="link" 
+                  type="url" 
+                  defaultValue={editingDocument.link || ""}
+                  placeholder="https://..." 
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-data">Data</Label>
+                  <Input 
+                    id="edit-data" 
+                    name="data" 
+                    type="date" 
+                    defaultValue={editingDocument.data || ""}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-rok">Rok</Label>
+                  <Input 
+                    id="edit-rok" 
+                    name="rok" 
+                    type="number" 
+                    defaultValue={editingDocument.rok || ""}
+                    placeholder="2024" 
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button type="submit" className="flex-1">Zapisz zmiany</Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsEditDialogOpen(false);
+                    setEditingDocument(null);
+                  }}
+                >
+                  Anuluj
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
