@@ -161,6 +161,7 @@ const Inquiries = () => {
                     content={replyMessage}
                     onChange={setReplyMessage}
                     placeholder="Napisz odpowiedź..."
+                    inquiryData={selectedInquiry}
                   />
                 </div>
 
