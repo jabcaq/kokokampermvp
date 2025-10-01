@@ -31,6 +31,42 @@ const ContractDetails = () => {
   const { data: vehicles } = useVehicles();
   const updateContractMutation = useUpdateContract();
 
+  const sanitizeContractUpdates = (data: any) => {
+    const sanitized: any = { ...data };
+
+    const normalizeDate = (key: string) => {
+      if (sanitized[key] === '') sanitized[key] = null;
+      else if (typeof sanitized[key] === 'string' && sanitized[key].includes('T')) {
+        sanitized[key] = sanitized[key].split('T')[0];
+      }
+    };
+
+    // Normalize date-only fields stored as DATE in DB
+    normalizeDate('start_date');
+    normalizeDate('end_date');
+    normalizeDate('tenant_license_date');
+    normalizeDate('vehicle_next_inspection');
+    normalizeDate('vehicle_insurance_valid_until');
+
+    // Ensure numeric column types
+    if (sanitized.value !== undefined) {
+      sanitized.value = sanitized.value === '' || sanitized.value === null ? null : Number(sanitized.value);
+      if (Number.isNaN(sanitized.value)) delete sanitized.value;
+    }
+
+    // Coerce numeric amounts inside payments JSON to numbers/null
+    if (sanitized.payments) {
+      const toNum = (val: any) => (val === '' || val === null || val === undefined ? null : Number(val));
+      const p = { ...sanitized.payments };
+      if (p.rezerwacyjna) p.rezerwacyjna = { ...p.rezerwacyjna, wysokosc: toNum(p.rezerwacyjna.wysokosc) };
+      if (p.zasadnicza) p.zasadnicza = { ...p.zasadnicza, wysokosc: toNum(p.zasadnicza.wysokosc) };
+      if (p.kaucja) p.kaucja = { ...p.kaucja, wysokosc: toNum(p.kaucja.wysokosc) };
+      sanitized.payments = p;
+    }
+
+    return sanitized;
+  };
+
   const handleEdit = () => {
     const initialData = { ...contract };
     console.log('Starting edit with data:', initialData);
@@ -62,12 +98,13 @@ const ContractDetails = () => {
   const handleSave = async () => {
     if (!id) return;
     
-    console.log('Saving data:', editedData);
+    const updates = sanitizeContractUpdates(editedData);
+    console.log('Saving data (sanitized):', updates);
     
     try {
       await updateContractMutation.mutateAsync({
         id,
-        updates: editedData,
+        updates,
       });
       
       toast({
@@ -296,8 +333,8 @@ const ContractDetails = () => {
               <Label>Data rozpoczęcia</Label>
               {isEditing ? (
                 <Input 
-                  type="datetime-local" 
-                  value={displayData?.start_date?.replace(' ', 'T') || ''} 
+                  type="date" 
+                  value={displayData?.start_date || ''} 
                   onChange={(e) => updateField('start_date', e.target.value)} 
                 />
               ) : (
@@ -536,7 +573,7 @@ const ContractDetails = () => {
             <div className="space-y-2">
               <Label>Wartość umowy</Label>
               {isEditing ? (
-                <Input type="number" value={displayData?.value || ''} onChange={(e) => updateField('value', parseFloat(e.target.value))} />
+                <Input type="number" step="0.01" value={displayData?.value ?? ''} onChange={(e) => updateField('value', e.target.value)} />
               ) : (
                 <p className="font-medium text-foreground">{displayData?.value ? `${displayData.value} zł` : 'Nie podano'}</p>
               )}
@@ -624,7 +661,7 @@ const ContractDetails = () => {
               <div className="space-y-2">
                 <Label>Wysokość</Label>
                 {isEditing ? (
-                  <Input value={displayData?.payments?.rezerwacyjna?.wysokosc || ''} onChange={(e) => {
+                  <Input type="number" step="0.01" value={displayData?.payments?.rezerwacyjna?.wysokosc ?? ''} onChange={(e) => {
                     const newPayments = { ...displayData.payments, rezerwacyjna: { ...displayData.payments?.rezerwacyjna, wysokosc: e.target.value } };
                     updateField('payments', newPayments);
                   }} />
@@ -662,7 +699,7 @@ const ContractDetails = () => {
               <div className="space-y-2">
                 <Label>Wysokość</Label>
                 {isEditing ? (
-                  <Input value={displayData?.payments?.zasadnicza?.wysokosc || ''} onChange={(e) => {
+                  <Input type="number" step="0.01" value={displayData?.payments?.zasadnicza?.wysokosc ?? ''} onChange={(e) => {
                     const newPayments = { ...displayData.payments, zasadnicza: { ...displayData.payments?.zasadnicza, wysokosc: e.target.value } };
                     updateField('payments', newPayments);
                   }} />
@@ -700,7 +737,7 @@ const ContractDetails = () => {
               <div className="space-y-2">
                 <Label>Wysokość</Label>
                 {isEditing ? (
-                  <Input value={displayData?.payments?.kaucja?.wysokosc || ''} onChange={(e) => {
+                  <Input type="number" step="0.01" value={displayData?.payments?.kaucja?.wysokosc ?? ''} onChange={(e) => {
                     const newPayments = { ...displayData.payments, kaucja: { ...displayData.payments?.kaucja, wysokosc: e.target.value } };
                     updateField('payments', newPayments);
                   }} />
