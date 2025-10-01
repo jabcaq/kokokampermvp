@@ -117,19 +117,19 @@ const Contracts = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="nazwa_firmy">Nazwa firmy</Label>
-                    <Input id="nazwa_firmy" name="nazwa_firmy" placeholder="KOKO KAMPER" required />
+                    <Input id="nazwa_firmy" name="nazwa_firmy" defaultValue="KOKO KAMPER" placeholder="KOKO KAMPER" required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" name="email" type="email" placeholder="kontakt@kokokamper.pl" required />
+                    <Input id="email" name="email" type="email" defaultValue="kontakt@kokokamper.pl" placeholder="kontakt@kokokamper.pl" required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="telefon1">Telefon 1</Label>
-                    <Input id="telefon1" name="telefon1" placeholder="+48 607 108 993" required />
+                    <Input id="telefon1" name="telefon1" defaultValue="+48 607 108 993" placeholder="+48 607 108 993" required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="telefon2">Telefon 2</Label>
-                    <Input id="telefon2" name="telefon2" placeholder="+48 660 694 257" />
+                    <Input id="telefon2" name="telefon2" defaultValue="+48 660 694 257" placeholder="+48 660 694 257" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="umowa_numer">Numer umowy</Label>
@@ -144,23 +144,23 @@ const Contracts = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="wynajmujacy_nazwa">Nazwa</Label>
-                    <Input id="wynajmujacy_nazwa" name="wynajmujacy_nazwa" placeholder="Koko Group Sp. z o.o." required />
+                    <Input id="wynajmujacy_nazwa" name="wynajmujacy_nazwa" defaultValue="Koko Group Sp. z o.o." placeholder="Koko Group Sp. z o.o." required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="wynajmujacy_adres">Adres</Label>
-                    <Input id="wynajmujacy_adres" name="wynajmujacy_adres" placeholder="ul. Lazurowa 85a/53, 01-479 Warszawa" required />
+                    <Input id="wynajmujacy_adres" name="wynajmujacy_adres" defaultValue="ul. Lazurowa 85a/53, 01-479 Warszawa" placeholder="ul. Lazurowa 85a/53, 01-479 Warszawa" required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="wynajmujacy_tel">Telefon</Label>
-                    <Input id="wynajmujacy_tel" name="wynajmujacy_tel" placeholder="+48 660 694 257" required />
+                    <Input id="wynajmujacy_tel" name="wynajmujacy_tel" defaultValue="+48 660 694 257" placeholder="+48 660 694 257" required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="wynajmujacy_www">WWW</Label>
-                    <Input id="wynajmujacy_www" name="wynajmujacy_www" placeholder="www.kokokamper.pl" />
+                    <Input id="wynajmujacy_www" name="wynajmujacy_www" defaultValue="www.kokokamper.pl" placeholder="www.kokokamper.pl" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="wynajmujacy_email">Email</Label>
-                    <Input id="wynajmujacy_email" name="wynajmujacy_email" type="email" placeholder="kontakt@kokokamper.pl" required />
+                    <Input id="wynajmujacy_email" name="wynajmujacy_email" type="email" defaultValue="kontakt@kokokamper.pl" placeholder="kontakt@kokokamper.pl" required />
                   </div>
                 </div>
               </div>
