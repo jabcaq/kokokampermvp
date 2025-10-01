@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, FileText, User, Car, CreditCard, Edit2, Save, X, Link2, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Calendar, FileText, User, Car, CreditCard, Edit2, Save, X, Link2, Loader2, Users, Truck, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useContract, useUpdateContract } from "@/hooks/useContracts";
 import { useVehicles } from "@/hooks/useVehicles";
+import { useVehicleHandovers, useAddVehicleHandover } from "@/hooks/useVehicleHandovers";
+import { useVehicleReturns, useAddVehicleReturn } from "@/hooks/useVehicleReturns";
 import { format } from "date-fns";
+import { DriversTab } from "@/components/contract-tabs/DriversTab";
+import { HandoverTab } from "@/components/contract-tabs/HandoverTab";
+import { ReturnTab } from "@/components/contract-tabs/ReturnTab";
 
 const statusConfig = {
   active: { label: "Aktywna", className: "bg-primary/10 text-primary border-primary/20" },
@@ -26,10 +32,15 @@ const ContractDetails = () => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState<any>({});
+  const [activeTab, setActiveTab] = useState("contract");
   
   const { data: contract, isLoading } = useContract(id);
   const { data: vehicles } = useVehicles();
+  const { data: handovers } = useVehicleHandovers(id);
+  const { data: returns } = useVehicleReturns(id);
   const updateContractMutation = useUpdateContract();
+  const addHandoverMutation = useAddVehicleHandover();
+  const addReturnMutation = useAddVehicleReturn();
 
   const sanitizeContractUpdates = (data: any) => {
     const sanitized: any = { ...data };
@@ -201,7 +212,28 @@ const ContractDetails = () => {
         </div>
       </div>
 
-      {/* Informacje podstawowe */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsTrigger value="contract" className="gap-2">
+            <FileText className="h-4 w-4" />
+            Umowa
+          </TabsTrigger>
+          <TabsTrigger value="drivers" className="gap-2">
+            <Users className="h-4 w-4" />
+            Kierowcy
+          </TabsTrigger>
+          <TabsTrigger value="handover" className="gap-2">
+            <Truck className="h-4 w-4" />
+            Wydanie
+          </TabsTrigger>
+          <TabsTrigger value="return" className="gap-2">
+            <Package className="h-4 w-4" />
+            Zdanie
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="contract" className="space-y-8">
+
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -587,59 +619,6 @@ const ContractDetails = () => {
         </CardContent>
       </Card>
 
-      {/* Dodatkowi kierowcy */}
-      {displayData?.additional_drivers && displayData.additional_drivers.length > 0 && (
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Dodatkowi kierowcy
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {displayData.additional_drivers.map((driver: any, idx: number) => (
-              <div key={idx} className="p-4 border rounded-lg space-y-4">
-                <h4 className="font-semibold">Kierowca #{idx + 1}</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Imię i nazwisko</Label>
-                    <p className="font-medium text-foreground">{driver.imie_nazwisko || 'Nie podano'}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <p className="font-medium text-foreground">{driver.email || 'Nie podano'}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Telefon</Label>
-                    <p className="font-medium text-foreground">{driver.tel || 'Nie podano'}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Numer prawa jazdy</Label>
-                    <p className="font-medium text-foreground">{driver.prawo_jazdy_numer || 'Nie podano'}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Data wydania prawa jazdy</Label>
-                    <p className="font-medium text-foreground">{driver.prawo_jazdy_data || 'Nie podano'}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Rodzaj dokumentu</Label>
-                    <p className="font-medium text-foreground">{driver.dokument_rodzaj || 'Nie podano'}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Numer dokumentu</Label>
-                    <p className="font-medium text-foreground">{driver.dokument_numer || 'Nie podano'}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Organ wydający</Label>
-                    <p className="font-medium text-foreground">{driver.dokument_organ || 'Nie podano'}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
       {/* Płatności */}
       <Card className="shadow-md">
         <CardHeader>
@@ -779,34 +758,28 @@ const ContractDetails = () => {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
 
-      {/* Linki szybkiego dostępu */}
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Link2 className="h-5 w-5" />
-            Dokumenty
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <Button 
-            variant="outline" 
-            className="w-full justify-start gap-2"
-            onClick={() => navigate(`/vehicle-handover?contractId=${id}`)}
-          >
-            <FileText className="h-4 w-4" />
-            Protokół wydania pojazdu
-          </Button>
-          <Button 
-            variant="outline" 
-            className="w-full justify-start gap-2"
-            onClick={() => navigate(`/vehicle-return?contractId=${id}`)}
-          >
-            <FileText className="h-4 w-4" />
-            Protokół zwrotu pojazdu
-          </Button>
-        </CardContent>
-      </Card>
+        <TabsContent value="drivers">
+          <DriversTab additionalDrivers={(contract?.additional_drivers as any[] | null) || []} />
+        </TabsContent>
+
+        <TabsContent value="handover">
+          <HandoverTab
+            contractId={id!}
+            handovers={handovers}
+            onSubmit={(data) => addHandoverMutation.mutate(data)}
+          />
+        </TabsContent>
+
+        <TabsContent value="return">
+          <ReturnTab
+            contractId={id!}
+            returns={returns}
+            onSubmit={(data) => addReturnMutation.mutate(data)}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
