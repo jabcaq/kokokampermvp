@@ -1,42 +1,25 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-// Mock data - w przyszłości z bazy danych
-const contractsData: Record<string, any> = {
-  "1": {
-    umowa_numer: "UM/2024/001",
-    okres_najmu: {
-      od: "2024-03-15 10:00",
-      do: "2024-03-22 14:00",
-    },
-    przedmiot_najmu: {
-      model: "RANDGER R600",
-      nr_rej: "WZ726ES",
-    }
-  },
-  "2": {
-    umowa_numer: "UM/2024/002",
-    okres_najmu: {
-      od: "2024-03-14 10:00",
-      do: "2024-03-21 14:00",
-    },
-    przedmiot_najmu: {
-      model: "Przyczepa Camp-200",
-      nr_rej: "WZ123AB",
-    }
-  }
-};
+import { useAddVehicleHandover } from "@/hooks/useVehicleHandovers";
+import { format } from "date-fns";
 
 const VehicleHandover = () => {
-  const { contractId } = useParams<{ contractId: string }>();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const contract = contractId ? contractsData[contractId] : null;
+  const addHandoverMutation = useAddVehicleHandover();
+  
+  const contractId = searchParams.get('contractId');
+  const contractNumber = searchParams.get('contractNumber');
+  const tenantName = searchParams.get('tenantName');
+  const startDate = searchParams.get('startDate');
+  const endDate = searchParams.get('endDate');
+  const vehicleModel = searchParams.get('vehicleModel');
 
   const [formData, setFormData] = useState({
     mileage: "",
@@ -45,21 +28,37 @@ const VehicleHandover = () => {
     photos: null as File[] | null,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    toast({
-      title: "Formularz wysłany",
-      description: "Protokół wydania został zapisany pomyślnie.",
-    });
+    if (!contractId) {
+      toast({
+        title: "Błąd",
+        description: "Brak ID umowy.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      await addHandoverMutation.mutateAsync({
+        contract_id: contractId,
+        mileage: parseInt(formData.mileage),
+        fuel_level: parseInt(formData.fuelLevel),
+        handover_protocol_files: [],
+        photos: [],
+      });
 
-    // Reset form
-    setFormData({
-      mileage: "",
-      fuelLevel: "",
-      handoverProtocol: null,
-      photos: null,
-    });
+      // Reset form
+      setFormData({
+        mileage: "",
+        fuelLevel: "",
+        handoverProtocol: null,
+        photos: null,
+      });
+    } catch (error) {
+      // Error is handled by the mutation
+    }
   };
 
   const handleFileChange = (field: 'handoverProtocol' | 'photos') => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,13 +79,13 @@ const VehicleHandover = () => {
     });
   };
 
-  if (!contract) {
+  if (!contractId || !contractNumber) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="max-w-md">
           <CardHeader>
-            <CardTitle>Nie znaleziono umowy</CardTitle>
-            <CardDescription>Sprawdź poprawność linku.</CardDescription>
+            <CardTitle>Błąd</CardTitle>
+            <CardDescription>Brak wymaganych parametrów umowy. Sprawdź poprawność linku.</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -98,127 +97,105 @@ const VehicleHandover = () => {
       <div className="max-w-4xl mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Formularz wydania</CardTitle>
-            <CardDescription className="text-base">
+            <CardTitle>Formularz wydania</CardTitle>
+            <CardDescription>
               Ten formularz służy do rejestracji procesu wydania kampera. Prosimy o dodanie protokołu zdawczego oraz zdjęć dokumentujących wydanie pojazdu. Upewnij się, że wszystkie załączniki są kompletne i czytelne.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Readonly contract info */}
-            <div className="mb-6 p-4 bg-muted rounded-lg space-y-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Numer umowy</p>
-                  <p className="font-medium">{contract.umowa_numer}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Pojazd</p>
-                  <p className="font-medium">{contract.przedmiot_najmu.model}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Nr rejestracyjny</p>
-                  <p className="font-medium">{contract.przedmiot_najmu.nr_rej}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Data wydania</p>
-                  <p className="font-medium">{contract.okres_najmu.od}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Data zwrotu</p>
-                  <p className="font-medium">{contract.okres_najmu.do}</p>
-                </div>
+            {/* Contract info */}
+            <div className="mb-6 p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold mb-2">Dane umowy:</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                <p><span className="font-medium">Numer umowy:</span> {contractNumber}</p>
+                <p><span className="font-medium">Najemca:</span> {tenantName}</p>
+                <p><span className="font-medium">Pojazd:</span> {vehicleModel}</p>
+                <p><span className="font-medium">Okres najmu:</span> {startDate && format(new Date(startDate), 'dd.MM.yyyy')} - {endDate && format(new Date(endDate), 'dd.MM.yyyy')}</p>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="mileage">Ilość KM na liczniku</Label>
                   <Input
                     id="mileage"
                     type="number"
-                    value={formData.mileage}
-                    onChange={(e) => setFormData(prev => ({ ...prev, mileage: e.target.value }))}
-                    placeholder="np. 45000"
                     required
+                    value={formData.mileage}
+                    onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
                   />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="fuelLevel">Ilość paliwa</Label>
                   <Input
                     id="fuelLevel"
-                    value={formData.fuelLevel}
-                    onChange={(e) => setFormData(prev => ({ ...prev, fuelLevel: e.target.value }))}
-                    placeholder="np. 3/4 baku"
+                    type="number"
+                    min="0"
+                    max="100"
                     required
+                    value={formData.fuelLevel}
+                    onChange={(e) => setFormData({ ...formData, fuelLevel: e.target.value })}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="handoverProtocol">Protokół z wydania</Label>
-                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                <div className="border-2 border-dashed rounded-lg p-6 text-center">
+                  <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                   <input
                     id="handoverProtocol"
                     type="file"
                     multiple
-                    onChange={handleFileChange('handoverProtocol')}
                     className="hidden"
-                    accept=".pdf,.doc,.docx,image/*"
+                    onChange={handleFileChange('handoverProtocol')}
                   />
                   <label htmlFor="handoverProtocol" className="cursor-pointer">
-                    <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Drop files here or{" "}
-                      <span className="text-primary hover:underline">browse</span>
-                    </p>
-                    {formData.handoverProtocol && (
-                      <p className="text-sm text-primary mt-2">
-                        {formData.handoverProtocol.length} plik(ów) wybranych
-                      </p>
-                    )}
+                    <span className="text-primary hover:underline">Drop files here or browse</span>
                   </label>
+                  {formData.handoverProtocol && (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {formData.handoverProtocol.length} plików wybranych
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="photos">Zdjęcia</Label>
-                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                <div className="border-2 border-dashed rounded-lg p-6 text-center">
+                  <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                   <input
                     id="photos"
                     type="file"
                     multiple
-                    onChange={handleFileChange('photos')}
-                    className="hidden"
                     accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange('photos')}
                   />
                   <label htmlFor="photos" className="cursor-pointer">
-                    <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Drop files here or{" "}
-                      <span className="text-primary hover:underline">browse</span>
-                    </p>
-                    {formData.photos && (
-                      <p className="text-sm text-primary mt-2">
-                        {formData.photos.length} zdjęć wybranych
-                      </p>
-                    )}
+                    <span className="text-primary hover:underline">Drop files here or browse</span>
                   </label>
+                  {formData.photos && (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {formData.photos.length} zdjęć wybranych
+                    </p>
+                  )}
                 </div>
               </div>
 
-              <div className="flex justify-between items-center pt-4">
-                <Button
-                  type="button"
-                  variant="ghost"
+              <div className="flex gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
                   onClick={handleClearForm}
-                  className="text-primary"
+                  className="gap-2"
                 >
                   Clear form
                 </Button>
-                <Button type="submit" size="lg">
-                  Wyślij
+                <Button type="submit" disabled={addHandoverMutation.isPending}>
+                  {addHandoverMutation.isPending ? 'Wysyłanie...' : 'Wyślij'}
                 </Button>
               </div>
             </form>

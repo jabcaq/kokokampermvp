@@ -1,49 +1,59 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Truck, Upload, Plus } from "lucide-react";
+import { Truck, ExternalLink, Edit } from "lucide-react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import type { VehicleHandover } from "@/hooks/useVehicleHandovers";
 
 interface HandoverTabProps {
   contractId: string;
+  contractNumber: string;
+  tenantName: string;
+  startDate: string;
+  endDate: string;
+  vehicleModel: string;
   handovers: VehicleHandover[] | undefined;
-  onSubmit: (data: any) => void;
 }
 
-export const HandoverTab = ({ contractId, handovers, onSubmit }: HandoverTabProps) => {
-  const [formData, setFormData] = useState({
-    mileage: "",
-    fuelLevel: "",
-    photos: [] as string[],
-    handoverProtocolFiles: [] as string[],
-  });
-  const [showForm, setShowForm] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({
-      contract_id: contractId,
-      mileage: parseInt(formData.mileage),
-      fuel_level: parseInt(formData.fuelLevel),
-      photos: formData.photos,
-      handover_protocol_files: formData.handoverProtocolFiles,
+export const HandoverTab = ({ contractId, contractNumber, tenantName, startDate, endDate, vehicleModel, handovers }: HandoverTabProps) => {
+  const navigate = useNavigate();
+  
+  const handleOpenForm = () => {
+    const params = new URLSearchParams({
+      contractId,
+      contractNumber,
+      tenantName,
+      startDate,
+      endDate,
+      vehicleModel
     });
-    setFormData({
-      mileage: "",
-      fuelLevel: "",
-      photos: [],
-      handoverProtocolFiles: [],
-    });
-    setShowForm(false);
+    navigate(`/vehicle-handover?${params.toString()}`);
   };
 
   return (
     <div className="space-y-6">
+      {/* Button to open handover form */}
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Truck className="h-5 w-5" />
+            Formularz wydania pojazdu
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">
+            Otwórz formularz wydania pojazdu dla pracownika. Dane umowy zostaną automatycznie przekazane.
+          </p>
+          <Button onClick={handleOpenForm} className="gap-2">
+            <ExternalLink className="h-4 w-4" />
+            Otwórz formularz wydania
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Existing handovers */}
-      {handovers && handovers.length > 0 && (
+      {handovers && handovers.length > 0 ? (
         <Card className="shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -53,7 +63,19 @@ export const HandoverTab = ({ contractId, handovers, onSubmit }: HandoverTabProp
           </CardHeader>
           <CardContent className="space-y-4">
             {handovers.map((handover) => (
-              <div key={handover.id} className="p-4 border rounded-lg space-y-2">
+              <div key={handover.id} className="p-4 border rounded-lg space-y-4">
+                <div className="flex justify-between items-start">
+                  <h4 className="font-semibold">Protokół wydania</h4>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleOpenForm}
+                    className="gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edytuj
+                  </Button>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Przebieg</Label>
@@ -72,63 +94,10 @@ export const HandoverTab = ({ contractId, handovers, onSubmit }: HandoverTabProp
             ))}
           </CardContent>
         </Card>
-      )}
-
-      {/* New handover form */}
-      {!showForm ? (
-        <Button onClick={() => setShowForm(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Dodaj protokół wydania
-        </Button>
       ) : (
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Truck className="h-5 w-5" />
-              Nowy protokół wydania
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="mileage">Przebieg (km) *</Label>
-                  <Input
-                    id="mileage"
-                    type="number"
-                    required
-                    value={formData.mileage}
-                    onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fuelLevel">Poziom paliwa (%) *</Label>
-                  <Input
-                    id="fuelLevel"
-                    type="number"
-                    min="0"
-                    max="100"
-                    required
-                    value={formData.fuelLevel}
-                    onChange={(e) => setFormData({ ...formData, fuelLevel: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button type="submit">Zapisz protokół</Button>
-                <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
-                  Anuluj
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      {handovers && handovers.length === 0 && !showForm && (
         <Card>
           <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">Brak protokołów wydania</p>
+            <p className="text-center text-muted-foreground">Brak protokołów wydania. Użyj formularza powyżej, aby dodać protokół.</p>
           </CardContent>
         </Card>
       )}

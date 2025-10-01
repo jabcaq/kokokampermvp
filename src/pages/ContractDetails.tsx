@@ -39,8 +39,6 @@ const ContractDetails = () => {
   const { data: handovers } = useVehicleHandovers(id);
   const { data: returns } = useVehicleReturns(id);
   const updateContractMutation = useUpdateContract();
-  const addHandoverMutation = useAddVehicleHandover();
-  const addReturnMutation = useAddVehicleReturn();
 
   const sanitizeContractUpdates = (data: any) => {
     const sanitized: any = { ...data };
@@ -767,16 +765,24 @@ const ContractDetails = () => {
         <TabsContent value="handover">
           <HandoverTab
             contractId={id!}
+            contractNumber={contract.contract_number}
+            tenantName={contract.tenant_name || contract.client?.name || 'Brak danych'}
+            startDate={contract.start_date}
+            endDate={contract.end_date}
+            vehicleModel={contract.vehicle_model}
             handovers={handovers}
-            onSubmit={(data) => addHandoverMutation.mutate(data)}
           />
         </TabsContent>
 
         <TabsContent value="return">
           <ReturnTab
             contractId={id!}
+            contractNumber={contract.contract_number}
+            tenantName={contract.tenant_name || contract.client?.name || 'Brak danych'}
+            startDate={contract.start_date}
+            endDate={contract.end_date}
+            vehicleModel={contract.vehicle_model}
             returns={returns}
-            onSubmit={(data) => addReturnMutation.mutate(data)}
           />
         </TabsContent>
       </Tabs>
