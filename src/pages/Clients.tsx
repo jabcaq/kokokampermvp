@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ const initialClients: Client[] = [
 ];
 
 const Clients = () => {
+  const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -101,6 +103,7 @@ const Clients = () => {
           <Card
             key={client.id}
             className="transition-all hover:shadow-lg hover:-translate-y-1 duration-300 cursor-pointer"
+            onClick={() => navigate(`/clients/${client.id}`)}
           >
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -119,7 +122,14 @@ const Clients = () => {
                 <Phone className="h-4 w-4" />
                 <span>{client.phone}</span>
               </div>
-              <Button variant="outline" className="w-full mt-4">
+              <Button 
+                variant="outline" 
+                className="w-full mt-4"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/clients/${client.id}`);
+                }}
+              >
                 Zobacz szczegóły
               </Button>
             </CardContent>
