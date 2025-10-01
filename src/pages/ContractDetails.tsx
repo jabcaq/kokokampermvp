@@ -34,6 +34,11 @@ const ContractDetails = () => {
   const sanitizeContractUpdates = (data: any) => {
     const sanitized: any = { ...data };
 
+    // Remove fields that are not actual columns in the contracts table
+    delete sanitized.client;
+    delete sanitized.created_at;
+    delete sanitized.updated_at;
+
     const normalizeDate = (key: string) => {
       if (sanitized[key] === '') sanitized[key] = null;
       else if (typeof sanitized[key] === 'string' && sanitized[key].includes('T')) {
