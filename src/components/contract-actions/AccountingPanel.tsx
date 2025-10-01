@@ -105,8 +105,8 @@ export const AccountingPanel = ({ contractId, contractNumber }: AccountingPanelP
       <CardContent className="space-y-4">
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Send className="h-4 w-4 mr-2" />
+            <Button size="sm">
+              <Send className="h-3 w-3 mr-1.5" />
               Wyślij do księgowości
             </Button>
           </DialogTrigger>

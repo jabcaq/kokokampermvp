@@ -108,28 +108,31 @@ export const ContractActionsPanel = ({
         <CardTitle>Akcje umowy</CardTitle>
         <CardDescription>Nr umowy: {contractNumber}</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-wrap gap-3">
+      <CardContent className="flex flex-wrap gap-2">
         <Button 
           onClick={handleGenerateContract}
           disabled={addDocument.isPending}
+          size="sm"
         >
-          <FileText className="h-4 w-4 mr-2" />
+          <FileText className="h-3 w-3 mr-1.5" />
           Generuj umowę
         </Button>
         <Button 
           onClick={handleSendToClient}
           variant="outline"
           disabled={addDocument.isPending || !clientEmail}
+          size="sm"
         >
-          <Send className="h-4 w-4 mr-2" />
+          <Send className="h-3 w-3 mr-1.5" />
           Wyślij do klienta
         </Button>
         <Button 
           onClick={handleSendVerification}
           variant="secondary"
           disabled={addDocument.isPending}
+          size="sm"
         >
-          <CheckCircle className="h-4 w-4 mr-2" />
+          <CheckCircle className="h-3 w-3 mr-1.5" />
           Wyślij do weryfikacji
         </Button>
       </CardContent>
