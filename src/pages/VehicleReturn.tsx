@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAddVehicleReturn } from "@/hooks/useVehicleReturns";
+import { useAddVehicleReturn, useUpdateVehicleReturn, useVehicleReturns } from "@/hooks/useVehicleReturns";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,6 +16,7 @@ const VehicleReturn = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const addReturnMutation = useAddVehicleReturn();
+  const updateReturnMutation = useUpdateVehicleReturn();
   
   const contractId = searchParams.get('contractId');
   const contractNumber = searchParams.get('contractNumber');
@@ -23,6 +24,9 @@ const VehicleReturn = () => {
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
   const vehicleModel = searchParams.get('vehicleModel');
+
+  const { data: existingReturns } = useVehicleReturns(contractId || undefined);
+  const existingReturn = existingReturns?.[0];
 
   const [formData, setFormData] = useState({
     employeeName: "",
@@ -35,6 +39,26 @@ const VehicleReturn = () => {
     photos: null as File[] | null,
     returnNotes: "",
   });
+
+  const [existingPhotos, setExistingPhotos] = useState<string[]>([]);
+
+  // Load existing data when available
+  useEffect(() => {
+    if (existingReturn) {
+      setFormData({
+        employeeName: existingReturn.employee_name,
+        employeeId: existingReturn.employee_id || "",
+        canRefundDeposit: existingReturn.can_refund_deposit,
+        depositRefundedCash: existingReturn.deposit_refunded_cash,
+        vehicleIssue: existingReturn.vehicle_issue,
+        fuelLevel: existingReturn.fuel_level.toString(),
+        mileage: existingReturn.mileage.toString(),
+        photos: null,
+        returnNotes: existingReturn.return_notes || "",
+      });
+      setExistingPhotos(existingReturn.photos || []);
+    }
+  }, [existingReturn]);
 
   const uploadPhotos = async (photos: File[]): Promise<string[]> => {
     const uploadPromises = photos.map(async (photo) => {
@@ -80,12 +104,15 @@ const VehicleReturn = () => {
     }
 
     try {
-      // Upload photos to storage
-      const photoUrls = formData.photos 
+      // Upload new photos to storage
+      const newPhotoUrls = formData.photos 
         ? await uploadPhotos(formData.photos)
         : [];
 
-      await addReturnMutation.mutateAsync({
+      // Combine existing photos (that weren't removed) with new uploads
+      const allPhotoUrls = [...existingPhotos, ...newPhotoUrls];
+
+      const returnData = {
         contract_id: contractId,
         mileage: parseInt(formData.mileage),
         fuel_level: parseInt(formData.fuelLevel),
@@ -95,21 +122,25 @@ const VehicleReturn = () => {
         deposit_refunded_cash: formData.depositRefundedCash,
         vehicle_issue: formData.vehicleIssue,
         return_notes: formData.returnNotes || null,
-        photos: photoUrls,
-      });
+        photos: allPhotoUrls,
+      };
 
-      // Reset form
-      setFormData({
-        employeeName: "",
-        employeeId: "",
-        canRefundDeposit: false,
-        depositRefundedCash: false,
-        vehicleIssue: false,
-        fuelLevel: "",
-        mileage: "",
+      if (existingReturn) {
+        // Update existing record
+        await updateReturnMutation.mutateAsync({
+          id: existingReturn.id,
+          ...returnData,
+        });
+      } else {
+        // Create new record
+        await addReturnMutation.mutateAsync(returnData);
+      }
+
+      // Reset new photos only
+      setFormData(prev => ({
+        ...prev,
         photos: null,
-        returnNotes: "",
-      });
+      }));
     } catch (error) {
       console.error('Submission error:', error);
       toast({
@@ -118,6 +149,10 @@ const VehicleReturn = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const removeExistingPhoto = (url: string) => {
+    setExistingPhotos(prev => prev.filter(photoUrl => photoUrl !== url));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -271,31 +306,51 @@ const VehicleReturn = () => {
                       <span className="text-primary hover:underline">Przeciągnij zdjęcia lub kliknij aby wybrać</span>
                     </label>
                   </div>
-                  {formData.photos && formData.photos.length > 0 && (
-                    <div className="grid grid-cols-4 gap-2">
-                      {formData.photos.map((file, index) => (
-                        <div key={index} className="relative group aspect-square">
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-full object-cover rounded-lg"
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => {
-                              const newPhotos = formData.photos?.filter((_, i) => i !== index) || null;
-                              setFormData({ ...formData, photos: newPhotos?.length ? newPhotos : null });
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  
+                  <div className="grid grid-cols-4 gap-2">
+                    {/* Existing photos */}
+                    {existingPhotos.map((url, index) => (
+                      <div key={`existing-${index}`} className="relative group aspect-square">
+                        <img
+                          src={url}
+                          alt={`Istniejące ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => removeExistingPhoto(url)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    
+                    {/* New photos */}
+                    {formData.photos && formData.photos.map((file, index) => (
+                      <div key={`new-${index}`} className="relative group aspect-square">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Nowe ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => {
+                            const newPhotos = formData.photos?.filter((_, i) => i !== index) || null;
+                            setFormData({ ...formData, photos: newPhotos?.length ? newPhotos : null });
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -319,8 +374,8 @@ const VehicleReturn = () => {
                 >
                   Clear form
                 </Button>
-                <Button type="submit" disabled={addReturnMutation.isPending}>
-                  {addReturnMutation.isPending ? 'Wysyłanie...' : 'Wyślij'}
+                <Button type="submit" disabled={addReturnMutation.isPending || updateReturnMutation.isPending}>
+                  {(addReturnMutation.isPending || updateReturnMutation.isPending) ? 'Zapisywanie...' : (existingReturn ? 'Zaktualizuj' : 'Wyślij')}
                 </Button>
               </div>
             </form>

@@ -68,3 +68,36 @@ export const useAddVehicleReturn = () => {
     },
   });
 };
+
+export const useUpdateVehicleReturn = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, ...returnData }: Partial<VehicleReturn> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("vehicle_returns")
+        .update(returnData)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicle_returns"] });
+      toast({
+        title: "Sukces",
+        description: "Protokół zdania został zaktualizowany.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Błąd",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};

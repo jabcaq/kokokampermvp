@@ -63,3 +63,36 @@ export const useAddVehicleHandover = () => {
     },
   });
 };
+
+export const useUpdateVehicleHandover = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, ...handover }: Partial<VehicleHandover> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("vehicle_handovers")
+        .update(handover)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicle_handovers"] });
+      toast({
+        title: "Sukces",
+        description: "Protokół wydania został zaktualizowany.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Błąd",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};

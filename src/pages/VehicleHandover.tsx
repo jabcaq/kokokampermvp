@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, X } from "lucide-react";
+import { Upload, X, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAddVehicleHandover } from "@/hooks/useVehicleHandovers";
+import { useAddVehicleHandover, useUpdateVehicleHandover, useVehicleHandovers } from "@/hooks/useVehicleHandovers";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,6 +14,7 @@ const VehicleHandover = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const addHandoverMutation = useAddVehicleHandover();
+  const updateHandoverMutation = useUpdateVehicleHandover();
   
   const contractId = searchParams.get('contractId');
   const contractNumber = searchParams.get('contractNumber');
@@ -22,12 +23,39 @@ const VehicleHandover = () => {
   const endDate = searchParams.get('endDate');
   const vehicleModel = searchParams.get('vehicleModel');
 
+  const { data: existingHandovers } = useVehicleHandovers(contractId || undefined);
+  const existingHandover = existingHandovers?.[0];
+
   const [formData, setFormData] = useState({
     mileage: "",
     fuelLevel: "",
     handoverProtocol: null as File[] | null,
     photos: null as File[] | null,
   });
+
+  const [existingFiles, setExistingFiles] = useState<{
+    protocols: string[];
+    photos: string[];
+  }>({
+    protocols: [],
+    photos: [],
+  });
+
+  // Load existing data when available
+  useEffect(() => {
+    if (existingHandover) {
+      setFormData({
+        mileage: existingHandover.mileage.toString(),
+        fuelLevel: existingHandover.fuel_level.toString(),
+        handoverProtocol: null,
+        photos: null,
+      });
+      setExistingFiles({
+        protocols: existingHandover.handover_protocol_files || [],
+        photos: existingHandover.photos || [],
+      });
+    }
+  }, [existingHandover]);
 
   const uploadFiles = async (files: File[], folder: string): Promise<string[]> => {
     const uploadPromises = files.map(async (file) => {
@@ -64,30 +92,44 @@ const VehicleHandover = () => {
     }
     
     try {
-      // Upload files to storage
-      const protocolUrls = formData.handoverProtocol 
+      // Upload new files to storage
+      const newProtocolUrls = formData.handoverProtocol 
         ? await uploadFiles(formData.handoverProtocol, 'handover-protocols')
         : [];
       
-      const photoUrls = formData.photos 
+      const newPhotoUrls = formData.photos 
         ? await uploadFiles(formData.photos, 'handover-photos')
         : [];
 
-      await addHandoverMutation.mutateAsync({
+      // Combine existing files (that weren't removed) with new uploads
+      const allProtocolUrls = [...existingFiles.protocols, ...newProtocolUrls];
+      const allPhotoUrls = [...existingFiles.photos, ...newPhotoUrls];
+
+      const handoverData = {
         contract_id: contractId,
         mileage: parseInt(formData.mileage),
         fuel_level: parseInt(formData.fuelLevel),
-        handover_protocol_files: protocolUrls,
-        photos: photoUrls,
-      });
+        handover_protocol_files: allProtocolUrls,
+        photos: allPhotoUrls,
+      };
 
-      // Reset form
-      setFormData({
-        mileage: "",
-        fuelLevel: "",
+      if (existingHandover) {
+        // Update existing record
+        await updateHandoverMutation.mutateAsync({
+          id: existingHandover.id,
+          ...handoverData,
+        });
+      } else {
+        // Create new record
+        await addHandoverMutation.mutateAsync(handoverData);
+      }
+
+      // Reset new files only
+      setFormData(prev => ({
+        ...prev,
         handoverProtocol: null,
         photos: null,
-      });
+      }));
     } catch (error) {
       console.error('Submission error:', error);
       toast({
@@ -96,6 +138,13 @@ const VehicleHandover = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const removeExistingFile = (type: 'protocols' | 'photos', url: string) => {
+    setExistingFiles(prev => ({
+      ...prev,
+      [type]: prev[type].filter(fileUrl => fileUrl !== url),
+    }));
   };
 
   const handleFileChange = (field: 'handoverProtocol' | 'photos') => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -179,22 +228,50 @@ const VehicleHandover = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="handoverProtocol">Protokół z wydania</Label>
-                <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                  <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                  <input
-                    id="handoverProtocol"
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={handleFileChange('handoverProtocol')}
-                  />
-                  <label htmlFor="handoverProtocol" className="cursor-pointer">
-                    <span className="text-primary hover:underline">Przeciągnij pliki lub kliknij aby wybrać</span>
-                  </label>
+                <div className="border-2 border-dashed rounded-lg p-6">
+                  <div className="text-center mb-4">
+                    <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                    <input
+                      id="handoverProtocol"
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={handleFileChange('handoverProtocol')}
+                    />
+                    <label htmlFor="handoverProtocol" className="cursor-pointer">
+                      <span className="text-primary hover:underline">Przeciągnij pliki lub kliknij aby wybrać</span>
+                    </label>
+                  </div>
+                  
+                  {/* Existing protocol files */}
+                  {existingFiles.protocols.length > 0 && (
+                    <div className="mb-4 space-y-2">
+                      <p className="text-sm font-medium">Istniejące pliki:</p>
+                      {existingFiles.protocols.map((url, index) => (
+                        <div key={`existing-${index}`} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                          <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline truncate">
+                            <FileText className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">Protokół {index + 1}</span>
+                          </a>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeExistingFile('protocols', url)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* New protocol files */}
                   {formData.handoverProtocol && formData.handoverProtocol.length > 0 && (
-                    <div className="mt-4 space-y-2">
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Nowe pliki:</p>
                       {formData.handoverProtocol.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                        <div key={`new-${index}`} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
                           <span className="truncate">{file.name}</span>
                           <Button
                             type="button"
@@ -231,31 +308,51 @@ const VehicleHandover = () => {
                       <span className="text-primary hover:underline">Przeciągnij zdjęcia lub kliknij aby wybrać</span>
                     </label>
                   </div>
-                  {formData.photos && formData.photos.length > 0 && (
-                    <div className="grid grid-cols-4 gap-2">
-                      {formData.photos.map((file, index) => (
-                        <div key={index} className="relative group aspect-square">
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-full object-cover rounded-lg"
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => {
-                              const newPhotos = formData.photos?.filter((_, i) => i !== index) || null;
-                              setFormData({ ...formData, photos: newPhotos?.length ? newPhotos : null });
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  
+                  <div className="grid grid-cols-4 gap-2">
+                    {/* Existing photos */}
+                    {existingFiles.photos.map((url, index) => (
+                      <div key={`existing-${index}`} className="relative group aspect-square">
+                        <img
+                          src={url}
+                          alt={`Istniejące ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => removeExistingFile('photos', url)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    
+                    {/* New photos */}
+                    {formData.photos && formData.photos.map((file, index) => (
+                      <div key={`new-${index}`} className="relative group aspect-square">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Nowe ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => {
+                            const newPhotos = formData.photos?.filter((_, i) => i !== index) || null;
+                            setFormData({ ...formData, photos: newPhotos?.length ? newPhotos : null });
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -268,8 +365,8 @@ const VehicleHandover = () => {
                 >
                   Clear form
                 </Button>
-                <Button type="submit" disabled={addHandoverMutation.isPending}>
-                  {addHandoverMutation.isPending ? 'Wysyłanie...' : 'Wyślij'}
+                <Button type="submit" disabled={addHandoverMutation.isPending || updateHandoverMutation.isPending}>
+                  {(addHandoverMutation.isPending || updateHandoverMutation.isPending) ? 'Zapisywanie...' : (existingHandover ? 'Zaktualizuj' : 'Wyślij')}
                 </Button>
               </div>
             </form>
