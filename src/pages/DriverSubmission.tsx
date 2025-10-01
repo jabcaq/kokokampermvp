@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Send, CheckCircle2, FileText } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UserPlus, Send, CheckCircle2, FileText, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 // Mock data - w przyszłości z bazy danych
@@ -19,12 +20,16 @@ const DriverSubmission = () => {
   const navigate = useNavigate();
   const [contract, setContract] = useState<typeof contractsData[string] | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [additionalDrivers, setAdditionalDrivers] = useState<number[]>([]);
   const [formData, setFormData] = useState({
     driverName: "",
     driverEmail: "",
     driverPhone: "",
     licenseNumber: "",
     licenseIssueDate: "",
+    documentType: "dowod",
+    documentNumber: "",
+    documentIssuedBy: "",
   });
 
   useEffect(() => {
@@ -43,10 +48,21 @@ const DriverSubmission = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Tutaj będzie wysyłanie danych do backendu
+    const driversCount = 1 + additionalDrivers.length;
     toast.success("Zgłoszenie wysłane pomyślnie!", {
-      description: "Dziękujemy za przesłanie danych kierowcy",
+      description: `Dziękujemy za przesłanie danych ${driversCount} ${driversCount === 1 ? 'kierowcy' : 'kierowców'}`,
     });
     setSubmitted(true);
+  };
+
+  const addAdditionalDriver = () => {
+    if (additionalDrivers.length < 2) {
+      setAdditionalDrivers([...additionalDrivers, additionalDrivers.length]);
+    }
+  };
+
+  const removeAdditionalDriver = (index: number) => {
+    setAdditionalDrivers(additionalDrivers.filter((_, i) => i !== index));
   };
 
   if (!contract) {
@@ -124,10 +140,10 @@ const DriverSubmission = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5" />
-              Twoje dane
+              Dane głównego kierowcy (najemca)
             </CardTitle>
             <CardDescription>
-              Podaj swoje dane aby zgłosić się jako kierowca do tej umowy
+              Podaj swoje dane jako główny kierowca tej umowy
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -202,9 +218,178 @@ const DriverSubmission = () => {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="documentType">Rodzaj dokumentu tożsamości *</Label>
+                <Select 
+                  value={formData.documentType}
+                  onValueChange={(value) => setFormData({ ...formData, documentType: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Wybierz dokument" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dowod">Dowód osobisty</SelectItem>
+                    <SelectItem value="paszport">Paszport</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="documentNumber">Numer dokumentu *</Label>
+                  <Input
+                    id="documentNumber"
+                    value={formData.documentNumber}
+                    onChange={(e) =>
+                      setFormData({ ...formData, documentNumber: e.target.value })
+                    }
+                    placeholder="DBZ976078"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="documentIssuedBy">Organ wydający *</Label>
+                  <Input
+                    id="documentIssuedBy"
+                    value={formData.documentIssuedBy}
+                    onChange={(e) =>
+                      setFormData({ ...formData, documentIssuedBy: e.target.value })
+                    }
+                    placeholder="Wójt gminy..."
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Dodatkowi kierowcy */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Dodatkowi kierowcy</h3>
+                    <p className="text-sm text-muted-foreground">Możesz dodać maksymalnie 2 dodatkowych kierowców</p>
+                  </div>
+                  {additionalDrivers.length < 2 && (
+                    <Button type="button" variant="outline" size="sm" onClick={addAdditionalDriver}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Dodaj
+                    </Button>
+                  )}
+                </div>
+
+                {additionalDrivers.map((driverIndex, arrayIndex) => (
+                  <Card key={driverIndex} className="border-2 bg-muted/30">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">Dodatkowy kierowca #{arrayIndex + 1}</CardTitle>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => removeAdditionalDriver(arrayIndex)}
+                        >
+                          Usuń
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor={`add_driver_${driverIndex}_name`}>Imię i nazwisko *</Label>
+                        <Input 
+                          id={`add_driver_${driverIndex}_name`} 
+                          name={`add_driver_${driverIndex}_name`} 
+                          placeholder="Monika Fedio" 
+                          required 
+                        />
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_email`}>Email *</Label>
+                          <Input 
+                            id={`add_driver_${driverIndex}_email`} 
+                            name={`add_driver_${driverIndex}_email`} 
+                            type="email"
+                            placeholder="email@example.com" 
+                            required 
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_phone`}>Telefon *</Label>
+                          <Input 
+                            id={`add_driver_${driverIndex}_phone`} 
+                            name={`add_driver_${driverIndex}_phone`} 
+                            placeholder="+48 500 123 456" 
+                            required 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_license`}>Numer prawa jazdy *</Label>
+                          <Input 
+                            id={`add_driver_${driverIndex}_license`} 
+                            name={`add_driver_${driverIndex}_license`} 
+                            placeholder="ABC123456" 
+                            required 
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_license_date`}>Data wydania prawa jazdy *</Label>
+                          <Input 
+                            id={`add_driver_${driverIndex}_license_date`} 
+                            name={`add_driver_${driverIndex}_license_date`} 
+                            type="date"
+                            required 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`add_driver_${driverIndex}_doc_type`}>Rodzaj dokumentu tożsamości *</Label>
+                        <Select name={`add_driver_${driverIndex}_doc_type`} defaultValue="dowod">
+                          <SelectTrigger>
+                            <SelectValue placeholder="Wybierz dokument" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="dowod">Dowód osobisty</SelectItem>
+                            <SelectItem value="paszport">Paszport</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_doc_number`}>Numer dokumentu *</Label>
+                          <Input 
+                            id={`add_driver_${driverIndex}_doc_number`} 
+                            name={`add_driver_${driverIndex}_doc_number`} 
+                            placeholder="DEW863370" 
+                            required 
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_doc_issued`}>Organ wydający *</Label>
+                          <Input 
+                            id={`add_driver_${driverIndex}_doc_issued`} 
+                            name={`add_driver_${driverIndex}_doc_issued`} 
+                            placeholder="Wójt gminy..." 
+                            required 
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
               <Button type="submit" className="w-full gap-2 shadow-md">
                 <Send className="h-4 w-4" />
-                Wyślij zgłoszenie
+                Wyślij zgłoszenie {additionalDrivers.length > 0 && `(${1 + additionalDrivers.length} ${additionalDrivers.length === 1 ? 'kierowca' : 'kierowców'})`}
               </Button>
             </form>
           </CardContent>
