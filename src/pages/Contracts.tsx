@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Calendar, Edit, Eye } from "lucide-react";
+import { Plus, Search, Calendar, Edit, Eye, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -10,65 +10,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-
-interface Contract {
-  id: number;
-  contractNumber: string;
-  clientName: string;
-  vehicle: string;
-  startDate: string;
-  endDate: string;
-  status: "active" | "pending" | "completed";
-  value: string;
-}
-
-const contracts: Contract[] = [
-  {
-    id: 1,
-    contractNumber: "UM/2024/001",
-    clientName: "Jan Kowalski",
-    vehicle: "Kamper XL-450",
-    startDate: "2024-03-15",
-    endDate: "2024-03-22",
-    status: "active",
-    value: "4,500 zł",
-  },
-  {
-    id: 2,
-    contractNumber: "UM/2024/002",
-    clientName: "Anna Nowak",
-    vehicle: "Przyczepa Camp-200",
-    startDate: "2024-03-14",
-    endDate: "2024-03-21",
-    status: "active",
-    value: "2,800 zł",
-  },
-  {
-    id: 3,
-    contractNumber: "UM/2024/003",
-    clientName: "Piotr Wiśniewski",
-    vehicle: "Kamper Comfort-300",
-    startDate: "2024-03-20",
-    endDate: "2024-03-27",
-    status: "pending",
-    value: "3,600 zł",
-  },
-  {
-    id: 4,
-    contractNumber: "UM/2024/004",
-    clientName: "Maria Wójcik",
-    vehicle: "Kamper Family-500",
-    startDate: "2024-03-10",
-    endDate: "2024-03-17",
-    status: "completed",
-    value: "5,200 zł",
-  },
-];
+import { useContracts } from "@/hooks/useContracts";
+import { format } from "date-fns";
 
 const statusConfig = {
   active: { label: "Aktywna", className: "bg-primary/10 text-primary border-primary/20" },
   pending: { label: "Oczekująca", className: "bg-secondary/10 text-secondary border-secondary/20" },
   completed: { label: "Zakończona", className: "bg-muted text-muted-foreground border-muted" },
+  cancelled: { label: "Anulowana", className: "bg-destructive/10 text-destructive border-destructive/20" },
 };
 
 const Contracts = () => {
@@ -76,6 +25,8 @@ const Contracts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [additionalDrivers, setAdditionalDrivers] = useState<number[]>([]);
   const { toast } = useToast();
+  
+  const { data: contractsData = [], isLoading } = useContracts();
   
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -102,11 +53,11 @@ const Contracts = () => {
     setAdditionalDrivers(additionalDrivers.filter((_, i) => i !== index));
   };
 
-  const filteredContracts = contracts.filter(
+  const filteredContracts = contractsData.filter(
     (contract) =>
-      contract.contractNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contract.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contract.vehicle.toLowerCase().includes(searchQuery.toLowerCase())
+      contract.contract_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (contract.client?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contract.vehicle_model.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -523,49 +474,63 @@ const Contracts = () => {
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle>Lista umów</CardTitle>
-          <CardDescription>Wszystkie umowy w systemie</CardDescription>
+          <CardDescription>
+            Wyświetlono {filteredContracts.length} {filteredContracts.length === 1 ? 'umowę' : 'umów'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {filteredContracts.map((contract) => (
-              <div
-                key={contract.id}
-                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors gap-4"
-              >
-                <div className="flex-1 space-y-2 w-full sm:w-auto">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="font-semibold text-foreground">{contract.contractNumber}</span>
-                    <Badge variant="outline" className={statusConfig[contract.status].className}>
-                      {statusConfig[contract.status].label}
-                    </Badge>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : filteredContracts.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Nie znaleziono umów</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredContracts.map((contract) => (
+                <div
+                  key={contract.id}
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors gap-4"
+                >
+                  <div className="flex-1 space-y-2 w-full sm:w-auto">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="font-semibold text-foreground">{contract.contract_number}</span>
+                      <Badge variant="outline" className={statusConfig[contract.status].className}>
+                        {statusConfig[contract.status].label}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Klient: <span className="text-foreground font-medium">{contract.client?.name || 'Brak danych'}</span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Pojazd: <span className="text-foreground font-medium">{contract.vehicle_model}</span>
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        {format(new Date(contract.start_date), 'dd.MM.yyyy')} - {format(new Date(contract.end_date), 'dd.MM.yyyy')}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Klient: <span className="text-foreground font-medium">{contract.clientName}</span>
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Pojazd: <span className="text-foreground font-medium">{contract.vehicle}</span>
-                  </p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>
-                      {contract.startDate} - {contract.endDate}
-                    </span>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <div className="text-right flex-1 sm:flex-none">
+                      <p className="text-sm text-muted-foreground">Wartość</p>
+                      <p className="text-xl font-bold text-primary">
+                        {contract.value ? `${contract.value.toFixed(2)} zł` : 'Brak danych'}
+                      </p>
+                    </div>
+                    <Link to={`/contracts/${contract.id}`}>
+                      <Button variant="outline" size="icon" className="shrink-0">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </Link>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <div className="text-right flex-1 sm:flex-none">
-                    <p className="text-sm text-muted-foreground">Wartość</p>
-                    <p className="text-xl font-bold text-primary">{contract.value}</p>
-                  </div>
-                  <Link to={`/contracts/${contract.id}`}>
-                    <Button variant="outline" size="icon" className="shrink-0">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

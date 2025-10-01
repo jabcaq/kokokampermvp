@@ -1,0 +1,114 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface Contract {
+  id: string;
+  contract_number: string;
+  client_id: string;
+  vehicle_model: string;
+  registration_number: string;
+  start_date: string;
+  end_date: string;
+  status: 'active' | 'pending' | 'completed' | 'cancelled';
+  value: number | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export const useContracts = () => {
+  return useQuery({
+    queryKey: ['contracts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contracts')
+        .select(`
+          *,
+          client:clients(name)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
+export const useContract = (id: string | undefined) => {
+  return useQuery({
+    queryKey: ['contract', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('contracts')
+        .select(`
+          *,
+          client:clients(*)
+        `)
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+};
+
+export const useContractsByClient = (clientId: string | undefined) => {
+  return useQuery({
+    queryKey: ['contracts', 'client', clientId],
+    queryFn: async () => {
+      if (!clientId) return [];
+      const { data, error } = await supabase
+        .from('contracts')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Contract[];
+    },
+    enabled: !!clientId,
+  });
+};
+
+export const useAddContract = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (contract: Omit<Contract, 'id' | 'created_at' | 'updated_at'>) => {
+      const { data, error } = await supabase
+        .from('contracts')
+        .insert([contract])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+    },
+  });
+};
+
+export const useUpdateContract = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Contract> }) => {
+      const { data, error } = await supabase
+        .from('contracts')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+    },
+  });
+};
