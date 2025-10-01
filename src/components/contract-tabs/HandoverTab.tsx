@@ -1,9 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Truck, ExternalLink, Edit } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Truck, ExternalLink, Edit, FileText, Image as ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import type { VehicleHandover } from "@/hooks/useVehicleHandovers";
 
 interface HandoverTabProps {
@@ -18,6 +20,7 @@ interface HandoverTabProps {
 
 export const HandoverTab = ({ contractId, contractNumber, tenantName, startDate, endDate, vehicleModel, handovers }: HandoverTabProps) => {
   const navigate = useNavigate();
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   const handleOpenForm = () => {
     const params = new URLSearchParams({
@@ -76,6 +79,7 @@ export const HandoverTab = ({ contractId, contractNumber, tenantName, startDate,
                     Edytuj
                   </Button>
                 </div>
+                
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Przebieg</Label>
@@ -90,6 +94,58 @@ export const HandoverTab = ({ contractId, contractNumber, tenantName, startDate,
                     <p className="font-medium">{format(new Date(handover.created_at), 'dd.MM.yyyy HH:mm')}</p>
                   </div>
                 </div>
+
+                {/* Protocol Files */}
+                {handover.handover_protocol_files && Array.isArray(handover.handover_protocol_files) && handover.handover_protocol_files.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Pliki protokołu
+                    </Label>
+                    <div className="flex flex-wrap gap-2">
+                      {handover.handover_protocol_files.map((file: any, index: number) => (
+                        <a 
+                          key={index}
+                          href={file.url || file}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-2 bg-muted rounded-md text-sm hover:bg-muted/80 transition-colors flex items-center gap-2"
+                        >
+                          <FileText className="h-4 w-4" />
+                          Plik {index + 1}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Photos Gallery */}
+                {handover.photos && Array.isArray(handover.photos) && handover.photos.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4" />
+                      Zdjęcia ({handover.photos.length})
+                    </Label>
+                    <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                      {handover.photos.map((photo: any, index: number) => {
+                        const photoUrl = photo.url || photo;
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => setSelectedImage(photoUrl)}
+                            className="aspect-square rounded-lg overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-pointer"
+                          >
+                            <img 
+                              src={photoUrl}
+                              alt={`Zdjęcie ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </CardContent>
@@ -101,6 +157,22 @@ export const HandoverTab = ({ contractId, contractNumber, tenantName, startDate,
           </CardContent>
         </Card>
       )}
+
+      {/* Image Preview Dialog */}
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Podgląd zdjęcia</DialogTitle>
+          </DialogHeader>
+          {selectedImage && (
+            <img 
+              src={selectedImage}
+              alt="Podgląd"
+              className="w-full h-auto rounded-lg"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

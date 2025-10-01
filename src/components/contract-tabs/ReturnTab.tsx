@@ -1,9 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Package, ExternalLink, Edit } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Package, ExternalLink, Edit, Image as ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import type { VehicleReturn } from "@/hooks/useVehicleReturns";
 
 interface ReturnTabProps {
@@ -18,6 +20,7 @@ interface ReturnTabProps {
 
 export const ReturnTab = ({ contractId, contractNumber, tenantName, startDate, endDate, vehicleModel, returns }: ReturnTabProps) => {
   const navigate = useNavigate();
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   const handleOpenForm = () => {
     const params = new URLSearchParams({
@@ -108,6 +111,34 @@ export const ReturnTab = ({ contractId, contractNumber, tenantName, startDate, e
                     <p className="text-muted-foreground">{returnData.return_notes}</p>
                   </div>
                 )}
+
+                {/* Photos Gallery */}
+                {returnData.photos && Array.isArray(returnData.photos) && returnData.photos.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4" />
+                      Zdjęcia ({returnData.photos.length})
+                    </Label>
+                    <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                      {returnData.photos.map((photo: any, index: number) => {
+                        const photoUrl = photo.url || photo;
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => setSelectedImage(photoUrl)}
+                            className="aspect-square rounded-lg overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-pointer"
+                          >
+                            <img 
+                              src={photoUrl}
+                              alt={`Zdjęcie ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </CardContent>
@@ -119,6 +150,22 @@ export const ReturnTab = ({ contractId, contractNumber, tenantName, startDate, e
           </CardContent>
         </Card>
       )}
+
+      {/* Image Preview Dialog */}
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Podgląd zdjęcia</DialogTitle>
+          </DialogHeader>
+          {selectedImage && (
+            <img 
+              src={selectedImage}
+              alt="Podgląd"
+              className="w-full h-auto rounded-lg"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
