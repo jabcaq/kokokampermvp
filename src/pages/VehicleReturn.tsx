@@ -6,11 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAddVehicleReturn } from "@/hooks/useVehicleReturns";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 const VehicleReturn = () => {
   const [searchParams] = useSearchParams();
@@ -36,6 +36,28 @@ const VehicleReturn = () => {
     returnNotes: "",
   });
 
+  const uploadPhotos = async (photos: File[]): Promise<string[]> => {
+    const uploadPromises = photos.map(async (photo) => {
+      const fileExt = photo.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `return-photos/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('vehicle-documents')
+        .upload(filePath, photo);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('vehicle-documents')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    });
+
+    return Promise.all(uploadPromises);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -58,6 +80,11 @@ const VehicleReturn = () => {
     }
 
     try {
+      // Upload photos to storage
+      const photoUrls = formData.photos 
+        ? await uploadPhotos(formData.photos)
+        : [];
+
       await addReturnMutation.mutateAsync({
         contract_id: contractId,
         mileage: parseInt(formData.mileage),
@@ -68,7 +95,7 @@ const VehicleReturn = () => {
         deposit_refunded_cash: formData.depositRefundedCash,
         vehicle_issue: formData.vehicleIssue,
         return_notes: formData.returnNotes || null,
-        photos: [],
+        photos: photoUrls,
       });
 
       // Reset form
@@ -84,7 +111,12 @@ const VehicleReturn = () => {
         returnNotes: "",
       });
     } catch (error) {
-      // Error is handled by the mutation
+      console.error('Submission error:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie udało się przesłać danych.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -224,23 +256,45 @@ const VehicleReturn = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="photos">Zdjęcia *</Label>
-                <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                  <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                  <input
-                    id="photos"
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-                  <label htmlFor="photos" className="cursor-pointer">
-                    <span className="text-primary hover:underline">Drop files here or browse</span>
-                  </label>
-                  {formData.photos && (
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {formData.photos.length} zdjęć wybranych
-                    </p>
+                <div className="border-2 border-dashed rounded-lg p-6">
+                  <div className="text-center mb-4">
+                    <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                    <input
+                      id="photos"
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                    <label htmlFor="photos" className="cursor-pointer">
+                      <span className="text-primary hover:underline">Przeciągnij zdjęcia lub kliknij aby wybrać</span>
+                    </label>
+                  </div>
+                  {formData.photos && formData.photos.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {formData.photos.map((file, index) => (
+                        <div key={index} className="relative group aspect-square">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => {
+                              const newPhotos = formData.photos?.filter((_, i) => i !== index) || null;
+                              setFormData({ ...formData, photos: newPhotos?.length ? newPhotos : null });
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
