@@ -283,34 +283,136 @@ export type Database = {
       }
       inquiries: {
         Row: {
+          budget_from: number | null
+          budget_to: number | null
+          camper_experience: boolean | null
+          camper_layout: string | null
+          competitor_vehicle: string | null
+          countries: string | null
           created_at: string | null
+          daily_car: string | null
+          departure_date: string | null
+          driver_license: string | null
           email: string
+          first_name: string | null
+          flexible_dates: boolean | null
+          gearbox: string | null
+          height: number | null
           id: string
+          inquiry_type: string | null
+          last_name: string | null
+          meals: string | null
           message: string
           name: string
+          number_of_bikes: number | null
+          number_of_fuel_tanks: number | null
+          number_of_people: number | null
+          number_of_skis: number | null
+          other_notes: string | null
+          partner_height: number | null
+          phone: string | null
+          planned_camping: string | null
+          promotion_code: string | null
+          required_equipment: string | null
+          return_date: string | null
+          sports_equipment: string | null
           status: Database["public"]["Enums"]["inquiry_status"] | null
           subject: string | null
+          travel_companions: string | null
+          tuba_pay_rental: boolean | null
           updated_at: string | null
+          vacation_description: string | null
+          vacation_type: string | null
+          vehicle: string | null
+          what_to_rent: string | null
         }
         Insert: {
+          budget_from?: number | null
+          budget_to?: number | null
+          camper_experience?: boolean | null
+          camper_layout?: string | null
+          competitor_vehicle?: string | null
+          countries?: string | null
           created_at?: string | null
+          daily_car?: string | null
+          departure_date?: string | null
+          driver_license?: string | null
           email: string
+          first_name?: string | null
+          flexible_dates?: boolean | null
+          gearbox?: string | null
+          height?: number | null
           id?: string
+          inquiry_type?: string | null
+          last_name?: string | null
+          meals?: string | null
           message: string
           name: string
+          number_of_bikes?: number | null
+          number_of_fuel_tanks?: number | null
+          number_of_people?: number | null
+          number_of_skis?: number | null
+          other_notes?: string | null
+          partner_height?: number | null
+          phone?: string | null
+          planned_camping?: string | null
+          promotion_code?: string | null
+          required_equipment?: string | null
+          return_date?: string | null
+          sports_equipment?: string | null
           status?: Database["public"]["Enums"]["inquiry_status"] | null
           subject?: string | null
+          travel_companions?: string | null
+          tuba_pay_rental?: boolean | null
           updated_at?: string | null
+          vacation_description?: string | null
+          vacation_type?: string | null
+          vehicle?: string | null
+          what_to_rent?: string | null
         }
         Update: {
+          budget_from?: number | null
+          budget_to?: number | null
+          camper_experience?: boolean | null
+          camper_layout?: string | null
+          competitor_vehicle?: string | null
+          countries?: string | null
           created_at?: string | null
+          daily_car?: string | null
+          departure_date?: string | null
+          driver_license?: string | null
           email?: string
+          first_name?: string | null
+          flexible_dates?: boolean | null
+          gearbox?: string | null
+          height?: number | null
           id?: string
+          inquiry_type?: string | null
+          last_name?: string | null
+          meals?: string | null
           message?: string
           name?: string
+          number_of_bikes?: number | null
+          number_of_fuel_tanks?: number | null
+          number_of_people?: number | null
+          number_of_skis?: number | null
+          other_notes?: string | null
+          partner_height?: number | null
+          phone?: string | null
+          planned_camping?: string | null
+          promotion_code?: string | null
+          required_equipment?: string | null
+          return_date?: string | null
+          sports_equipment?: string | null
           status?: Database["public"]["Enums"]["inquiry_status"] | null
           subject?: string | null
+          travel_companions?: string | null
+          tuba_pay_rental?: boolean | null
           updated_at?: string | null
+          vacation_description?: string | null
+          vacation_type?: string | null
+          vehicle?: string | null
+          what_to_rent?: string | null
         }
         Relationships: []
       }

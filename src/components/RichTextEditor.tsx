@@ -39,6 +39,40 @@ interface RichTextEditorProps {
     subject?: string;
     message: string;
     created_at?: string;
+    vehicle?: string | null;
+    competitor_vehicle?: string | null;
+    gearbox?: string | null;
+    promotion_code?: string | null;
+    departure_date?: string | null;
+    return_date?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    phone?: string | null;
+    number_of_people?: number | null;
+    tuba_pay_rental?: boolean | null;
+    what_to_rent?: string | null;
+    travel_companions?: string | null;
+    inquiry_type?: string | null;
+    flexible_dates?: boolean | null;
+    height?: number | null;
+    partner_height?: number | null;
+    daily_car?: string | null;
+    camper_experience?: boolean | null;
+    driver_license?: string | null;
+    sports_equipment?: string | null;
+    number_of_bikes?: number | null;
+    number_of_skis?: number | null;
+    vacation_type?: string | null;
+    vacation_description?: string | null;
+    countries?: string | null;
+    planned_camping?: string | null;
+    meals?: string | null;
+    required_equipment?: string | null;
+    number_of_fuel_tanks?: number | null;
+    camper_layout?: string | null;
+    budget_from?: number | null;
+    budget_to?: number | null;
+    other_notes?: string | null;
   };
 }
 
@@ -183,18 +217,32 @@ export const RichTextEditor = ({ content, onChange, placeholder, inquiryData }: 
                         <Info className="h-4 w-4" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-96">
+                    <PopoverContent className="w-96 max-h-[80vh] overflow-y-auto">
                       <div className="space-y-3">
                         <h4 className="font-semibold text-sm">Szczegóły zapytania</h4>
                         <div className="space-y-2 text-sm">
-                          <div>
-                            <span className="font-medium">Imię i nazwisko:</span>
-                            <p className="text-muted-foreground">{inquiryData.name}</p>
-                          </div>
+                          {inquiryData.first_name && (
+                            <div>
+                              <span className="font-medium">Imię:</span>
+                              <p className="text-muted-foreground">{inquiryData.first_name}</p>
+                            </div>
+                          )}
+                          {inquiryData.last_name && (
+                            <div>
+                              <span className="font-medium">Nazwisko:</span>
+                              <p className="text-muted-foreground">{inquiryData.last_name}</p>
+                            </div>
+                          )}
                           <div>
                             <span className="font-medium">Email:</span>
                             <p className="text-muted-foreground">{inquiryData.email}</p>
                           </div>
+                          {inquiryData.phone && (
+                            <div>
+                              <span className="font-medium">Numer telefonu:</span>
+                              <p className="text-muted-foreground">{inquiryData.phone}</p>
+                            </div>
+                          )}
                           {inquiryData.subject && (
                             <div>
                               <span className="font-medium">Temat:</span>
@@ -205,6 +253,192 @@ export const RichTextEditor = ({ content, onChange, placeholder, inquiryData }: 
                             <span className="font-medium">Wiadomość:</span>
                             <p className="text-muted-foreground">{inquiryData.message}</p>
                           </div>
+                          {inquiryData.vehicle && (
+                            <div>
+                              <span className="font-medium">Pojazd:</span>
+                              <p className="text-muted-foreground">{inquiryData.vehicle}</p>
+                            </div>
+                          )}
+                          {inquiryData.competitor_vehicle && (
+                            <div>
+                              <span className="font-medium">Konkurencyjny pojazd:</span>
+                              <p className="text-muted-foreground">{inquiryData.competitor_vehicle}</p>
+                            </div>
+                          )}
+                          {inquiryData.gearbox && (
+                            <div>
+                              <span className="font-medium">Skrzynia biegów:</span>
+                              <p className="text-muted-foreground">{inquiryData.gearbox}</p>
+                            </div>
+                          )}
+                          {inquiryData.promotion_code && (
+                            <div>
+                              <span className="font-medium">Promocja / kod:</span>
+                              <p className="text-muted-foreground">{inquiryData.promotion_code}</p>
+                            </div>
+                          )}
+                          {inquiryData.departure_date && (
+                            <div>
+                              <span className="font-medium">Data wyjazdu:</span>
+                              <p className="text-muted-foreground">{new Date(inquiryData.departure_date).toLocaleDateString('pl-PL')}</p>
+                            </div>
+                          )}
+                          {inquiryData.return_date && (
+                            <div>
+                              <span className="font-medium">Data powrotu:</span>
+                              <p className="text-muted-foreground">{new Date(inquiryData.return_date).toLocaleDateString('pl-PL')}</p>
+                            </div>
+                          )}
+                          {inquiryData.number_of_people && (
+                            <div>
+                              <span className="font-medium">Ilość osób:</span>
+                              <p className="text-muted-foreground">{inquiryData.number_of_people}</p>
+                            </div>
+                          )}
+                          {inquiryData.tuba_pay_rental !== null && inquiryData.tuba_pay_rental !== undefined && (
+                            <div>
+                              <span className="font-medium">Wynajem na raty Tuba Pay:</span>
+                              <p className="text-muted-foreground">{inquiryData.tuba_pay_rental ? 'Tak' : 'Nie'}</p>
+                            </div>
+                          )}
+                          {inquiryData.what_to_rent && (
+                            <div>
+                              <span className="font-medium">Co chcesz wypożyczyć:</span>
+                              <p className="text-muted-foreground">{inquiryData.what_to_rent}</p>
+                            </div>
+                          )}
+                          {inquiryData.travel_companions && (
+                            <div>
+                              <span className="font-medium">Z kim podróżujesz:</span>
+                              <p className="text-muted-foreground">{inquiryData.travel_companions}</p>
+                            </div>
+                          )}
+                          {inquiryData.inquiry_type && (
+                            <div>
+                              <span className="font-medium">Typ zapytania:</span>
+                              <p className="text-muted-foreground">{inquiryData.inquiry_type}</p>
+                            </div>
+                          )}
+                          {inquiryData.flexible_dates !== null && inquiryData.flexible_dates !== undefined && (
+                            <div>
+                              <span className="font-medium">Czy termin elastyczny:</span>
+                              <p className="text-muted-foreground">{inquiryData.flexible_dates ? 'Tak' : 'Nie'}</p>
+                            </div>
+                          )}
+                          {inquiryData.height && (
+                            <div>
+                              <span className="font-medium">Wzrost (m):</span>
+                              <p className="text-muted-foreground">{inquiryData.height}</p>
+                            </div>
+                          )}
+                          {inquiryData.partner_height && (
+                            <div>
+                              <span className="font-medium">Wzrost partner:</span>
+                              <p className="text-muted-foreground">{inquiryData.partner_height}</p>
+                            </div>
+                          )}
+                          {inquiryData.daily_car && (
+                            <div>
+                              <span className="font-medium">Auto na co dzień:</span>
+                              <p className="text-muted-foreground">{inquiryData.daily_car}</p>
+                            </div>
+                          )}
+                          {inquiryData.camper_experience !== null && inquiryData.camper_experience !== undefined && (
+                            <div>
+                              <span className="font-medium">Czy prowadzileś kampera:</span>
+                              <p className="text-muted-foreground">{inquiryData.camper_experience ? 'Tak' : 'Nie'}</p>
+                            </div>
+                          )}
+                          {inquiryData.driver_license && (
+                            <div>
+                              <span className="font-medium">Prawo jazdy:</span>
+                              <p className="text-muted-foreground">{inquiryData.driver_license}</p>
+                            </div>
+                          )}
+                          {inquiryData.sports_equipment && (
+                            <div>
+                              <span className="font-medium">Sprzęt sportowy:</span>
+                              <p className="text-muted-foreground">{inquiryData.sports_equipment}</p>
+                            </div>
+                          )}
+                          {inquiryData.number_of_bikes && (
+                            <div>
+                              <span className="font-medium">Liczba rowerów:</span>
+                              <p className="text-muted-foreground">{inquiryData.number_of_bikes}</p>
+                            </div>
+                          )}
+                          {inquiryData.number_of_skis && (
+                            <div>
+                              <span className="font-medium">Liczba nart:</span>
+                              <p className="text-muted-foreground">{inquiryData.number_of_skis}</p>
+                            </div>
+                          )}
+                          {inquiryData.vacation_type && (
+                            <div>
+                              <span className="font-medium">Typ wakacji:</span>
+                              <p className="text-muted-foreground">{inquiryData.vacation_type}</p>
+                            </div>
+                          )}
+                          {inquiryData.vacation_description && (
+                            <div>
+                              <span className="font-medium">Opis wakacji:</span>
+                              <p className="text-muted-foreground">{inquiryData.vacation_description}</p>
+                            </div>
+                          )}
+                          {inquiryData.countries && (
+                            <div>
+                              <span className="font-medium">Kraje:</span>
+                              <p className="text-muted-foreground">{inquiryData.countries}</p>
+                            </div>
+                          )}
+                          {inquiryData.planned_camping && (
+                            <div>
+                              <span className="font-medium">Planowany kemping:</span>
+                              <p className="text-muted-foreground">{inquiryData.planned_camping}</p>
+                            </div>
+                          )}
+                          {inquiryData.meals && (
+                            <div>
+                              <span className="font-medium">Posiłki:</span>
+                              <p className="text-muted-foreground">{inquiryData.meals}</p>
+                            </div>
+                          )}
+                          {inquiryData.required_equipment && (
+                            <div>
+                              <span className="font-medium">Potrzebne wyposażenie:</span>
+                              <p className="text-muted-foreground">{inquiryData.required_equipment}</p>
+                            </div>
+                          )}
+                          {inquiryData.number_of_fuel_tanks && (
+                            <div>
+                              <span className="font-medium">Liczba paliw6w:</span>
+                              <p className="text-muted-foreground">{inquiryData.number_of_fuel_tanks}</p>
+                            </div>
+                          )}
+                          {inquiryData.camper_layout && (
+                            <div>
+                              <span className="font-medium">Układ kampera:</span>
+                              <p className="text-muted-foreground">{inquiryData.camper_layout}</p>
+                            </div>
+                          )}
+                          {inquiryData.budget_from && (
+                            <div>
+                              <span className="font-medium">Budżet od:</span>
+                              <p className="text-muted-foreground">{inquiryData.budget_from} zł</p>
+                            </div>
+                          )}
+                          {inquiryData.budget_to && (
+                            <div>
+                              <span className="font-medium">Budżet do:</span>
+                              <p className="text-muted-foreground">{inquiryData.budget_to} zł</p>
+                            </div>
+                          )}
+                          {inquiryData.other_notes && (
+                            <div>
+                              <span className="font-medium">Inne uwagi:</span>
+                              <p className="text-muted-foreground">{inquiryData.other_notes}</p>
+                            </div>
+                          )}
                           {inquiryData.created_at && (
                             <div>
                               <span className="font-medium">Data:</span>

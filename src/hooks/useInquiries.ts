@@ -10,6 +10,41 @@ export interface Inquiry {
   status: 'new' | 'in_progress' | 'completed' | 'archived';
   created_at?: string;
   updated_at?: string;
+  // Form fields
+  vehicle?: string | null;
+  competitor_vehicle?: string | null;
+  gearbox?: string | null;
+  promotion_code?: string | null;
+  departure_date?: string | null;
+  return_date?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  phone?: string | null;
+  number_of_people?: number | null;
+  tuba_pay_rental?: boolean | null;
+  what_to_rent?: string | null;
+  travel_companions?: string | null;
+  inquiry_type?: string | null;
+  flexible_dates?: boolean | null;
+  height?: number | null;
+  partner_height?: number | null;
+  daily_car?: string | null;
+  camper_experience?: boolean | null;
+  driver_license?: string | null;
+  sports_equipment?: string | null;
+  number_of_bikes?: number | null;
+  number_of_skis?: number | null;
+  vacation_type?: string | null;
+  vacation_description?: string | null;
+  countries?: string | null;
+  planned_camping?: string | null;
+  meals?: string | null;
+  required_equipment?: string | null;
+  number_of_fuel_tanks?: number | null;
+  camper_layout?: string | null;
+  budget_from?: number | null;
+  budget_to?: number | null;
+  other_notes?: string | null;
 }
 
 export const useInquiries = () => {
