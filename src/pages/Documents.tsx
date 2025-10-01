@@ -23,6 +23,7 @@ import {
 
 const Documents = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [rodzajFilter, setRodzajFilter] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteDocumentId, setDeleteDocumentId] = useState<string | null>(null);
   const [sortField, setSortField] = useState<"rodzaj" | "nazwa_pliku" | "data">("data");
@@ -35,13 +36,21 @@ const Documents = () => {
   const addDocumentMutation = useAddDocument();
   const deleteDocumentMutation = useDeleteDocument();
 
+  // Get unique rodzaj values for filter
+  const uniqueRodzaje = Array.from(new Set(documents.map(doc => doc.rodzaj))).sort();
+
   const filteredDocuments = documents.filter(
-    (doc) =>
-      doc.rodzaj.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.nazwa_pliku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.client?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.contract?.contract_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (doc.umowa_id && doc.umowa_id.toLowerCase().includes(searchQuery.toLowerCase()))
+    (doc) => {
+      const matchesSearch = doc.rodzaj.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.nazwa_pliku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.client?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.contract?.contract_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (doc.umowa_id && doc.umowa_id.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      const matchesRodzaj = rodzajFilter === "all" || doc.rodzaj === rodzajFilter;
+      
+      return matchesSearch && matchesRodzaj;
+    }
   );
 
   const sortedDocuments = [...filteredDocuments].sort((a, b) => {
@@ -223,14 +232,31 @@ const Documents = () => {
         </Dialog>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Szukaj dokumentów..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Szukaj dokumentów..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <div className="w-full sm:w-48">
+          <Select value={rodzajFilter} onValueChange={setRodzajFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filtruj po rodzaju" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Wszystkie rodzaje</SelectItem>
+              {uniqueRodzaje.map((rodzaj) => (
+                <SelectItem key={rodzaj} value={rodzaj}>
+                  {rodzaj}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {isLoading ? (
@@ -248,7 +274,7 @@ const Documents = () => {
             <TableHeader>
               <TableRow>
                 <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  className="cursor-pointer hover:bg-muted/50 transition-colors min-w-[120px]"
                   onClick={() => handleSort("rodzaj")}
                 >
                   <div className="flex items-center gap-2">
@@ -256,11 +282,11 @@ const Documents = () => {
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead>Umowa (system)</TableHead>
-                <TableHead>Umowa (stara baza)</TableHead>
+                <TableHead className="min-w-[140px]">Umowa (system)</TableHead>
+                <TableHead className="min-w-[140px]">Umowa (stara baza)</TableHead>
                 <TableHead>Folder</TableHead>
                 <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  className="cursor-pointer hover:bg-muted/50 transition-colors min-w-[150px]"
                   onClick={() => handleSort("nazwa_pliku")}
                 >
                   <div className="flex items-center gap-2">
@@ -268,11 +294,11 @@ const Documents = () => {
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead>Link</TableHead>
-                <TableHead>Path</TableHead>
-                <TableHead>Klient</TableHead>
+                <TableHead className="w-[80px]">Link</TableHead>
+                <TableHead className="min-w-[120px]">Path</TableHead>
+                <TableHead className="min-w-[120px]">Klient</TableHead>
                 <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  className="cursor-pointer hover:bg-muted/50 transition-colors w-[110px]"
                   onClick={() => handleSort("data")}
                 >
                   <div className="flex items-center gap-2">
@@ -280,24 +306,24 @@ const Documents = () => {
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead>Rok</TableHead>
-                <TableHead className="text-right">Akcje</TableHead>
+                <TableHead className="w-[70px]">Rok</TableHead>
+                <TableHead className="text-right w-[80px]">Akcje</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedDocuments.map((doc) => (
                 <TableRow key={doc.id}>
                   <TableCell className="font-medium">{doc.rodzaj}</TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-sm">
                     {doc.contract?.contract_number || "—"}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-sm">
                     {doc.umowa_id || "—"}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-sm max-w-[120px] truncate">
                     {doc.folder || "—"}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-sm max-w-[150px] truncate">
                     {doc.nazwa_pliku}
                   </TableCell>
                   <TableCell>
@@ -306,22 +332,22 @@ const Documents = () => {
                         href={doc.link} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-primary hover:underline"
+                        className="text-primary hover:underline text-sm"
                       >
                         Link
                       </a>
                     ) : "—"}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-xs max-w-[150px] truncate">
+                  <TableCell className="text-muted-foreground text-xs max-w-[120px] truncate" title={doc.path || ""}>
                     {doc.path || "—"}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-sm">
                     {doc.client?.name || "—"}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                     {doc.data ? new Date(doc.data).toLocaleDateString('pl-PL') : "—"}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-sm">
                     {doc.rok || "—"}
                   </TableCell>
                   <TableCell className="text-right">
