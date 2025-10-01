@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Bell, Check, CheckCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,6 +8,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNotifications, useMarkNotificationAsRead, useMarkAllAsRead } from "@/hooks/useNotifications";
@@ -15,8 +17,9 @@ import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
 
 export const NotificationBell = () => {
+  const [filter, setFilter] = useState<'unread' | 'read' | 'all'>('unread');
   const navigate = useNavigate();
-  const { notifications, unreadCount } = useNotifications();
+  const { notifications, unreadCount } = useNotifications(filter);
   const markAsReadMutation = useMarkNotificationAsRead();
   const markAllAsReadMutation = useMarkAllAsRead();
 
@@ -69,10 +72,10 @@ export const NotificationBell = () => {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-96 bg-background border shadow-lg z-50">
+      <DropdownMenuContent align="end" className="w-[420px] bg-background border shadow-lg z-50">
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="font-semibold text-foreground">Powiadomienia</h3>
-          {unreadCount > 0 && (
+          {unreadCount > 0 && filter === 'unread' && (
             <Button
               variant="ghost"
               size="sm"
@@ -84,12 +87,28 @@ export const NotificationBell = () => {
             </Button>
           )}
         </div>
+
+        <div className="p-2">
+          <Tabs value={filter} onValueChange={(v) => setFilter(v as 'unread' | 'read' | 'all')} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="unread" className="text-xs">
+                Nowe {unreadCount > 0 && `(${unreadCount})`}
+              </TabsTrigger>
+              <TabsTrigger value="read" className="text-xs">Przeczytane</TabsTrigger>
+              <TabsTrigger value="all" className="text-xs">Wszystkie</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
         
-        <ScrollArea className="max-h-[400px]">
+        <ScrollArea className="max-h-[500px]">
           {notifications.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Brak nowych powiadomień</p>
+              <p>
+                {filter === 'unread' && 'Brak nowych powiadomień'}
+                {filter === 'read' && 'Brak przeczytanych powiadomień'}
+                {filter === 'all' && 'Brak powiadomień'}
+              </p>
             </div>
           ) : (
             <div className="divide-y">
@@ -97,7 +116,9 @@ export const NotificationBell = () => {
                 <div
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
-                  className="p-4 cursor-pointer transition-colors hover:bg-muted/50 bg-primary/5"
+                  className={`p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
+                    !notification.read ? 'bg-primary/5' : ''
+                  }`}
                 >
                   <div className="flex gap-3">
                     <div className="text-2xl flex-shrink-0">
@@ -108,7 +129,9 @@ export const NotificationBell = () => {
                         <h4 className="font-medium text-sm text-foreground truncate">
                           {notification.title}
                         </h4>
-                        <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1" />
+                        {!notification.read && (
+                          <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1" />
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                         {notification.message}

@@ -13,20 +13,41 @@ export interface Notification {
   updated_at: string;
 }
 
-export const useNotifications = () => {
+export const useNotifications = (filter: 'all' | 'unread' | 'read' = 'unread') => {
   const queryClient = useQueryClient();
 
   const { data: notifications, isLoading } = useQuery({
-    queryKey: ['notifications'],
+    queryKey: ['notifications', filter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('notifications')
         .select('*')
-        .eq('read', false)  // Pobierz tylko nieprzeczytane
         .order('created_at', { ascending: false });
+      
+      if (filter === 'unread') {
+        query = query.eq('read', false);
+      } else if (filter === 'read') {
+        query = query.eq('read', true);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data as Notification[];
+    },
+  });
+
+  // Always get unread count
+  const { data: unreadData } = useQuery({
+    queryKey: ['notifications', 'unread-count'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: false })
+        .eq('read', false);
+      
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -52,7 +73,7 @@ export const useNotifications = () => {
     };
   }, [queryClient]);
 
-  const unreadCount = notifications?.length || 0;
+  const unreadCount = unreadData?.length || 0;
 
   return { notifications: notifications || [], isLoading, unreadCount };
 };
