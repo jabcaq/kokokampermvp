@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useContracts, useDeleteContract } from "@/hooks/useContracts";
+import { useContracts, useDeleteContract, useAddContract } from "@/hooks/useContracts";
+import { useClients } from "@/hooks/useClients";
 import { useVehicles } from "@/hooks/useVehicles";
 import { format } from "date-fns";
 import {
@@ -37,6 +38,7 @@ const Contracts = () => {
   const [additionalDrivers, setAdditionalDrivers] = useState<number[]>([]);
   const [deleteContractId, setDeleteContractId] = useState<string | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [vehicleData, setVehicleData] = useState({
     model: "",
     vin: "",
@@ -50,7 +52,9 @@ const Contracts = () => {
   
   const { data: contractsData = [], isLoading } = useContracts();
   const { data: vehicles = [] } = useVehicles();
+  const { data: clients = [] } = useClients();
   const deleteContractMutation = useDeleteContract();
+  const addContractMutation = useAddContract();
   
   const handleVehicleSelect = (vehicleId: string) => {
     setSelectedVehicleId(vehicleId);
@@ -68,29 +72,48 @@ const Contracts = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
-    // Here you would normally save to backend
-    toast({
-      title: "Umowa utworzona",
-      description: "Nowa umowa została pomyślnie dodana do systemu.",
-    });
-    
-    setIsDialogOpen(false);
-    setAdditionalDrivers([]);
-    setSelectedVehicleId("");
-    setVehicleData({
-      model: "",
-      vin: "",
-      registration_number: "",
-      next_inspection_date: "",
-      insurance_policy_number: "",
-      insurance_valid_until: "",
-      additional_info: ""
-    });
-    e.currentTarget.reset();
+    try {
+      await addContractMutation.mutateAsync({
+        contract_number: formData.get('umowa_numer') as string,
+        client_id: selectedClientId,
+        vehicle_model: vehicleData.model,
+        registration_number: vehicleData.registration_number,
+        start_date: formData.get('okres_od') as string,
+        end_date: formData.get('okres_do') as string,
+        status: 'pending',
+        value: null,
+      });
+      
+      toast({
+        title: "Umowa utworzona",
+        description: "Nowa umowa została pomyślnie dodana do systemu.",
+      });
+      
+      setIsDialogOpen(false);
+      setAdditionalDrivers([]);
+      setSelectedVehicleId("");
+      setSelectedClientId("");
+      setVehicleData({
+        model: "",
+        vin: "",
+        registration_number: "",
+        next_inspection_date: "",
+        insurance_policy_number: "",
+        insurance_valid_until: "",
+        additional_info: ""
+      });
+      e.currentTarget.reset();
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się utworzyć umowy.",
+        variant: "destructive",
+      });
+    }
   };
 
   const addAdditionalDriver = () => {
@@ -153,6 +176,21 @@ const Contracts = () => {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-foreground">Podstawowe informacje</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="client_id">Klient *</Label>
+                    <Select value={selectedClientId} onValueChange={setSelectedClientId} required>
+                      <SelectTrigger id="client_id">
+                        <SelectValue placeholder="Wybierz klienta" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.name} - {client.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="nazwa_firmy">Nazwa firmy</Label>
                     <Input id="nazwa_firmy" name="nazwa_firmy" defaultValue="KOKO KAMPER" placeholder="KOKO KAMPER" required />
