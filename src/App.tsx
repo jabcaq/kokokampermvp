@@ -12,6 +12,7 @@ import Fleet from "./pages/Fleet";
 import VehicleDetails from "./pages/VehicleDetails";
 import Drivers from "./pages/Drivers";
 import DriverSubmission from "./pages/DriverSubmission";
+import Inquiries from "./pages/Inquiries";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/fleet" element={<Fleet />} />
             <Route path="/fleet/:id" element={<VehicleDetails />} />
             <Route path="/drivers" element={<Drivers />} />
+            <Route path="/inquiries" element={<Inquiries />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
