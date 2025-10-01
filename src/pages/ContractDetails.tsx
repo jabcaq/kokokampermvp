@@ -18,6 +18,8 @@ import { format } from "date-fns";
 import { DriversTab } from "@/components/contract-tabs/DriversTab";
 import { HandoverTab } from "@/components/contract-tabs/HandoverTab";
 import { ReturnTab } from "@/components/contract-tabs/ReturnTab";
+import { ContractActionsPanel } from "@/components/contract-actions/ContractActionsPanel";
+import { AccountingPanel } from "@/components/contract-actions/AccountingPanel";
 
 const statusConfig = {
   active: { label: "Aktywna", className: "bg-primary/10 text-primary border-primary/20" },
@@ -222,6 +224,19 @@ const ContractDetails = () => {
             </>
           )}
         </div>
+      </div>
+
+      {/* Action Panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ContractActionsPanel 
+          contractId={contract.id}
+          contractNumber={contract.contract_number}
+          clientEmail={contract.company_email || contract.tenant_email}
+        />
+        <AccountingPanel 
+          contractId={contract.id}
+          contractNumber={contract.contract_number}
+        />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

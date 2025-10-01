@@ -16,6 +16,7 @@ import DriverSubmission from "./pages/DriverSubmission";
 import VehicleHandover from "./pages/VehicleHandover";
 import VehicleReturn from "./pages/VehicleReturn";
 import Inquiries from "./pages/Inquiries";
+import AccountingUpload from "./pages/AccountingUpload";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/driver-form/:contractId" element={<DriverSubmission />} />
           <Route path="/vehicle-handover" element={<VehicleHandover />} />
           <Route path="/vehicle-return" element={<VehicleReturn />} />
+          <Route path="/accounting-upload/:invoiceId" element={<AccountingUpload />} />
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/clients" element={<Clients />} />

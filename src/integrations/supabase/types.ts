@@ -44,6 +44,103 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_documents: {
+        Row: {
+          contract_id: string
+          created_at: string | null
+          document_type: string
+          file_url: string | null
+          generated_at: string | null
+          id: string
+          sent_at: string | null
+          sent_to_email: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string | null
+          document_type: string
+          file_url?: string | null
+          generated_at?: string | null
+          id?: string
+          sent_at?: string | null
+          sent_to_email?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string | null
+          document_type?: string
+          file_url?: string | null
+          generated_at?: string | null
+          id?: string
+          sent_at?: string | null
+          sent_to_email?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_documents_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_invoices: {
+        Row: {
+          amount: number
+          contract_id: string
+          created_at: string | null
+          id: string
+          invoice_file_url: string | null
+          invoice_type: string
+          invoice_uploaded_at: string | null
+          notes: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          contract_id: string
+          created_at?: string | null
+          id?: string
+          invoice_file_url?: string | null
+          invoice_type: string
+          invoice_uploaded_at?: string | null
+          notes?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          contract_id?: string
+          created_at?: string | null
+          id?: string
+          invoice_file_url?: string | null
+          invoice_type?: string
+          invoice_uploaded_at?: string | null
+          notes?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_invoices_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           additional_drivers: Json | null
