@@ -5,6 +5,7 @@ export interface Document {
   id: string;
   rodzaj: string;
   contract_id: string | null;
+  umowa_id: string | null;
   client_id: string | null;
   folder: string | null;
   nazwa_pliku: string;
@@ -14,6 +15,10 @@ export interface Document {
   rok: number | null;
   created_at: string;
   updated_at: string;
+  contract?: {
+    contract_number: string;
+    tenant_name: string;
+  };
   client?: {
     name: string;
   };
@@ -27,6 +32,7 @@ export const useDocuments = () => {
         .from('documents')
         .select(`
           *,
+          contract:contracts(contract_number, tenant_name),
           client:clients(name)
         `)
         .order('created_at', { ascending: false });
@@ -41,7 +47,7 @@ export const useAddDocument = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (document: Omit<Document, 'id' | 'created_at' | 'updated_at' | 'client'>) => {
+    mutationFn: async (document: Omit<Document, 'id' | 'created_at' | 'updated_at' | 'contract' | 'client'>) => {
       const { data, error } = await supabase
         .from('documents')
         .insert([document])

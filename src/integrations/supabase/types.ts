@@ -294,6 +294,7 @@ export type Database = {
           path: string | null
           rodzaj: string
           rok: number | null
+          umowa_id: string | null
           updated_at: string
         }
         Insert: {
@@ -308,6 +309,7 @@ export type Database = {
           path?: string | null
           rodzaj: string
           rok?: number | null
+          umowa_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -322,6 +324,7 @@ export type Database = {
           path?: string | null
           rodzaj?: string
           rok?: number | null
+          umowa_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -330,6 +333,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
         ]

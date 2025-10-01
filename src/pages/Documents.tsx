@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { useDocuments, useAddDocument, useDeleteDocument } from "@/hooks/useDocuments";
 import { useClients } from "@/hooks/useClients";
+import { useContracts } from "@/hooks/useContracts";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -30,6 +31,7 @@ const Documents = () => {
   
   const { data: documents = [], isLoading } = useDocuments();
   const { data: clients = [] } = useClients();
+  const { data: contracts = [] } = useContracts();
   const addDocumentMutation = useAddDocument();
   const deleteDocumentMutation = useDeleteDocument();
 
@@ -38,7 +40,8 @@ const Documents = () => {
       doc.rodzaj.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.nazwa_pliku.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.client?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (doc.contract_id && doc.contract_id.toLowerCase().includes(searchQuery.toLowerCase()))
+      doc.contract?.contract_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (doc.umowa_id && doc.umowa_id.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const sortedDocuments = [...filteredDocuments].sort((a, b) => {
@@ -74,6 +77,7 @@ const Documents = () => {
       await addDocumentMutation.mutateAsync({
         rodzaj: formData.get("rodzaj") as string,
         contract_id: formData.get("contract_id") as string || null,
+        umowa_id: formData.get("umowa_id") as string || null,
         client_id: formData.get("client_id") as string || null,
         folder: formData.get("folder") as string || null,
         nazwa_pliku: formData.get("nazwa_pliku") as string,
@@ -166,8 +170,23 @@ const Documents = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="contract_id">Umowa (numer)</Label>
-                  <Input id="contract_id" name="contract_id" placeholder="Numer umowy" />
+                  <Label htmlFor="contract_id">Umowa (system)</Label>
+                  <Select name="contract_id">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Wybierz umowę" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {contracts.map((contract) => (
+                        <SelectItem key={contract.id} value={contract.id}>
+                          {contract.contract_number}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="umowa_id">Numer umowy (stara baza)</Label>
+                  <Input id="umowa_id" name="umowa_id" placeholder="Numer z poprzedniej bazy" />
                 </div>
               </div>
 
@@ -237,7 +256,8 @@ const Documents = () => {
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead>Umowa</TableHead>
+                <TableHead>Umowa (system)</TableHead>
+                <TableHead>Umowa (stara baza)</TableHead>
                 <TableHead>Folder</TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50 transition-colors"
@@ -269,7 +289,10 @@ const Documents = () => {
                 <TableRow key={doc.id}>
                   <TableCell className="font-medium">{doc.rodzaj}</TableCell>
                   <TableCell className="text-muted-foreground">
-                    {doc.contract_id || "—"}
+                    {doc.contract?.contract_number || "—"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {doc.umowa_id || "—"}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {doc.folder || "—"}
