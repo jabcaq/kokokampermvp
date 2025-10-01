@@ -183,9 +183,23 @@ const ContractDetails = () => {
           </Button>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-4xl font-bold text-foreground">Umowa {displayData?.contract_number}</h1>
-            <Badge variant="outline" className={statusConfig[displayData?.status as keyof typeof statusConfig]?.className}>
-              {statusConfig[displayData?.status as keyof typeof statusConfig]?.label}
-            </Badge>
+            {isEditing ? (
+              <Select value={displayData?.status} onValueChange={(value) => updateField('status', value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Wybierz status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Oczekująca</SelectItem>
+                  <SelectItem value="active">Aktywna</SelectItem>
+                  <SelectItem value="completed">Zakończona</SelectItem>
+                  <SelectItem value="cancelled">Anulowana</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Badge variant="outline" className={statusConfig[displayData?.status as keyof typeof statusConfig]?.className}>
+                {statusConfig[displayData?.status as keyof typeof statusConfig]?.label}
+              </Badge>
+            )}
           </div>
           <p className="text-muted-foreground mt-2">Szczegóły umowy najmu</p>
         </div>
@@ -610,7 +624,7 @@ const ContractDetails = () => {
               {isEditing ? (
                 <Input type="number" step="0.01" value={displayData?.value ?? ''} onChange={(e) => updateField('value', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.value ? `${displayData.value} zł` : 'Nie podano'}</p>
+                <p className="font-medium text-foreground">{displayData?.value ? `${displayData.value} PLN` : 'Nie podano'}</p>
               )}
             </div>
           </div>
@@ -648,7 +662,9 @@ const ContractDetails = () => {
                     updateField('payments', newPayments);
                   }} />
                 ) : (
-                  <p className="font-medium text-foreground">{displayData?.payments?.rezerwacyjna?.wysokosc || 'Nie podano'}</p>
+                  <p className="font-medium text-foreground">
+                    {displayData?.payments?.rezerwacyjna?.wysokosc ? `${displayData.payments.rezerwacyjna.wysokosc} PLN` : 'Nie podano'}
+                  </p>
                 )}
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -686,7 +702,9 @@ const ContractDetails = () => {
                     updateField('payments', newPayments);
                   }} />
                 ) : (
-                  <p className="font-medium text-foreground">{displayData?.payments?.zasadnicza?.wysokosc || 'Nie podano'}</p>
+                  <p className="font-medium text-foreground">
+                    {displayData?.payments?.zasadnicza?.wysokosc ? `${displayData.payments.zasadnicza.wysokosc} PLN` : 'Nie podano'}
+                  </p>
                 )}
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -724,7 +742,9 @@ const ContractDetails = () => {
                     updateField('payments', newPayments);
                   }} />
                 ) : (
-                  <p className="font-medium text-foreground">{displayData?.payments?.kaucja?.wysokosc || 'Nie podano'}</p>
+                  <p className="font-medium text-foreground">
+                    {displayData?.payments?.kaucja?.wysokosc ? `${displayData.payments.kaucja.wysokosc} PLN` : 'Nie podano'}
+                  </p>
                 )}
               </div>
               <div className="space-y-2 md:col-span-2">
