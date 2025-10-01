@@ -86,10 +86,10 @@ export const NotificationBell = () => {
         </div>
         
         <ScrollArea className="max-h-[400px]">
-          {!notifications || notifications.length === 0 ? (
+          {notifications.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Brak powiadomień</p>
+              <p>Brak nowych powiadomień</p>
             </div>
           ) : (
             <div className="divide-y">
@@ -97,9 +97,7 @@ export const NotificationBell = () => {
                 <div
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
-                  className={`p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
-                    !notification.read ? 'bg-primary/5' : ''
-                  }`}
+                  className="p-4 cursor-pointer transition-colors hover:bg-muted/50 bg-primary/5"
                 >
                   <div className="flex gap-3">
                     <div className="text-2xl flex-shrink-0">
@@ -110,9 +108,7 @@ export const NotificationBell = () => {
                         <h4 className="font-medium text-sm text-foreground truncate">
                           {notification.title}
                         </h4>
-                        {!notification.read && (
-                          <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1" />
-                        )}
+                        <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1" />
                       </div>
                       <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                         {notification.message}

@@ -22,6 +22,7 @@ export const useNotifications = () => {
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
+        .eq('read', false)  // Pobierz tylko nieprzeczytane
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -51,9 +52,9 @@ export const useNotifications = () => {
     };
   }, [queryClient]);
 
-  const unreadCount = notifications?.filter(n => !n.read).length || 0;
+  const unreadCount = notifications?.length || 0;
 
-  return { notifications, isLoading, unreadCount };
+  return { notifications: notifications || [], isLoading, unreadCount };
 };
 
 export const useMarkNotificationAsRead = () => {
