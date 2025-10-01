@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Send, CheckCircle } from "lucide-react";
+import { FileText, Send, CheckCircle, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAddContractDocument } from "@/hooks/useContractDocuments";
 
@@ -102,6 +102,15 @@ export const ContractActionsPanel = ({
     }
   };
 
+  const handleCopyDriverForm = () => {
+    const driverFormLink = `${window.location.origin}/driver-form/${contractId}`;
+    navigator.clipboard.writeText(driverFormLink);
+    toast({
+      title: "Link skopiowany",
+      description: "Link do formularza kierowcy został skopiowany do schowka",
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -125,6 +134,14 @@ export const ContractActionsPanel = ({
         >
           <Send className="h-3 w-3 mr-1.5" />
           Wyślij do klienta
+        </Button>
+        <Button 
+          onClick={handleCopyDriverForm}
+          variant="outline"
+          size="sm"
+        >
+          <UserPlus className="h-3 w-3 mr-1.5" />
+          Formularz kierowcy
         </Button>
         <Button 
           onClick={handleSendVerification}
