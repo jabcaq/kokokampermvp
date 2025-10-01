@@ -5,96 +5,41 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, FileText, Upload, AlertCircle, Truck, Caravan } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, AlertCircle, Truck, Caravan } from "lucide-react";
 import { toast } from "sonner";
 import { format, differenceInDays } from "date-fns";
 import { pl } from "date-fns/locale";
-
-interface Vehicle {
-  id: string;
-  name: string;
-  type: "kamper" | "przyczepa";
-  brand: string;
-  model: string;
-  year: number;
-  registrationNumber: string;
-  status: "dostepny" | "wynajety" | "serwis";
-  location: string;
-  insurancePolicyNumber: string;
-  lastTechnicalInspection: Date;
-  policyExpiryDate: Date;
-  policyFileUrl?: string;
-}
-
-// Mock data - w przyszłości będzie z bazy danych
-const mockVehicles: Vehicle[] = [
-  {
-    id: "1",
-    name: "Kamper XYZ",
-    type: "kamper",
-    brand: "Fiat",
-    model: "Ducato Roller Team",
-    year: 2022,
-    registrationNumber: "WW 12345",
-    status: "dostepny",
-    location: "Warszawa",
-    insurancePolicyNumber: "POL/2024/12345",
-    lastTechnicalInspection: new Date(2024, 3, 15),
-    policyExpiryDate: new Date(2025, 5, 30),
-  },
-  {
-    id: "2",
-    name: "Przyczepa ABC",
-    type: "przyczepa",
-    brand: "Niewiadów",
-    model: "N126E",
-    year: 2021,
-    registrationNumber: "KR 67890",
-    status: "wynajety",
-    location: "Kraków",
-    insurancePolicyNumber: "POL/2024/67890",
-    lastTechnicalInspection: new Date(2024, 1, 20),
-    policyExpiryDate: new Date(2025, 3, 15),
-  },
-  {
-    id: "3",
-    name: "Kamper 123",
-    type: "kamper",
-    brand: "Mercedes",
-    model: "Sprinter Hymer",
-    year: 2023,
-    registrationNumber: "GD 11223",
-    status: "dostepny",
-    location: "Gdańsk",
-    insurancePolicyNumber: "POL/2024/11223",
-    lastTechnicalInspection: new Date(2024, 6, 10),
-    policyExpiryDate: new Date(2025, 8, 20),
-  },
-  {
-    id: "4",
-    name: "Przyczepa Mini",
-    type: "przyczepa",
-    brand: "Knaus",
-    model: "Sport 400",
-    year: 2020,
-    registrationNumber: "PO 33445",
-    status: "serwis",
-    location: "Poznań",
-    insurancePolicyNumber: "POL/2024/33445",
-    lastTechnicalInspection: new Date(2023, 11, 5),
-    policyExpiryDate: new Date(2024, 11, 30),
-  },
-];
+import { useVehicle } from "@/hooks/useVehicles";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const VehicleDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [vehicle, setVehicle] = useState<Vehicle | undefined>(
-    mockVehicles.find((v) => v.id === id)
-  );
+  const { data: vehicle, isLoading, error } = useVehicle(id);
   const [uploadingFile, setUploadingFile] = useState(false);
 
-  if (!vehicle) {
+  if (isLoading) {
+    return (
+      <div className="space-y-8 animate-fade-in">
+        <Skeleton className="h-10 w-40" />
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-16 w-16 rounded-lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-64" />
+          <Skeleton className="h-64" />
+          <Skeleton className="h-64" />
+          <Skeleton className="h-64" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !vehicle) {
     return (
       <div className="space-y-8 animate-fade-in">
         <Button onClick={() => navigate("/fleet")} variant="outline" className="gap-2">
@@ -111,11 +56,22 @@ const VehicleDetails = () => {
   }
 
   const today = new Date();
-  const nextTechnicalInspection = new Date(vehicle.lastTechnicalInspection);
-  nextTechnicalInspection.setFullYear(nextTechnicalInspection.getFullYear() + 1);
   
-  const daysToInspection = differenceInDays(nextTechnicalInspection, today);
-  const daysToPolicy = differenceInDays(vehicle.policyExpiryDate, today);
+  // Obliczenia dla badania technicznego
+  const nextTechnicalInspection = vehicle.next_inspection_date 
+    ? new Date(vehicle.next_inspection_date)
+    : null;
+  const daysToInspection = nextTechnicalInspection 
+    ? differenceInDays(nextTechnicalInspection, today)
+    : null;
+
+  // Obliczenia dla polisy
+  const policyExpiryDate = vehicle.insurance_valid_until
+    ? new Date(vehicle.insurance_valid_until)
+    : null;
+  const daysToPolicy = policyExpiryDate
+    ? differenceInDays(policyExpiryDate, today)
+    : null;
 
   const getCountdownBadge = (days: number) => {
     if (days < 0) {
@@ -135,12 +91,8 @@ const VehicleDetails = () => {
     if (!file) return;
 
     setUploadingFile(true);
-    // Symulacja uploadu - w przyszłości będzie upload do bazy
+    // TODO: Implementacja uploadu do storage
     setTimeout(() => {
-      setVehicle({
-        ...vehicle,
-        policyFileUrl: URL.createObjectURL(file),
-      });
       setUploadingFile(false);
       toast.success("Plik polisy został dodany", {
         description: file.name,
@@ -166,9 +118,11 @@ const VehicleDetails = () => {
           )}
         </div>
         <div>
-          <h1 className="text-4xl font-bold text-foreground">{vehicle.name}</h1>
+          <h1 className="text-4xl font-bold text-foreground">
+            {vehicle.name || `${vehicle.brand || ''} ${vehicle.model}`.trim() || 'Pojazd'}
+          </h1>
           <p className="text-muted-foreground">
-            {vehicle.brand} {vehicle.model} ({vehicle.year})
+            {vehicle.brand && `${vehicle.brand} `}{vehicle.model}{vehicle.year && ` (${vehicle.year})`}
           </p>
         </div>
       </div>
@@ -181,26 +135,36 @@ const VehicleDetails = () => {
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Numer rejestracyjny:</span>
-              <span className="font-bold text-lg text-foreground">{vehicle.registrationNumber}</span>
+              <span className="font-bold text-lg text-foreground">{vehicle.registration_number}</span>
             </div>
+            {vehicle.vin && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">VIN:</span>
+                <span className="font-medium text-foreground">{vehicle.vin}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Typ pojazdu:</span>
               <span className="font-medium text-foreground">
-                {vehicle.type === "kamper" ? "Kamper" : "Przyczepa"}
+                {vehicle.type === "kamper" ? "Kamper" : vehicle.type === "przyczepa" ? "Przyczepa" : "Brak danych"}
               </span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Lokalizacja:</span>
-              <span className="font-medium text-foreground">{vehicle.location}</span>
-            </div>
+            {vehicle.location && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Lokalizacja:</span>
+                <span className="font-medium text-foreground">{vehicle.location}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Status:</span>
               <Badge>
-                {vehicle.status === "dostepny"
+                {vehicle.status === "available"
                   ? "Dostępny"
-                  : vehicle.status === "wynajety"
+                  : vehicle.status === "rented"
                   ? "Wynajęty"
-                  : "W serwisie"}
+                  : vehicle.status === "maintenance"
+                  ? "W serwisie"
+                  : "Zarchiwizowany"}
               </Badge>
             </div>
           </CardContent>
@@ -211,53 +175,55 @@ const VehicleDetails = () => {
             <CardTitle>Polisa ubezpieczeniowa</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Numer polisy:</span>
-              <span className="font-bold text-foreground">{vehicle.insurancePolicyNumber}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Data wygaśnięcia:</span>
-              <span className="font-medium text-foreground">
-                {format(vehicle.policyExpiryDate, "dd MMMM yyyy", { locale: pl })}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Czas do odnowienia:</span>
-              <Badge
-                className={
-                  daysToPolicy < 0
-                    ? "bg-destructive/10 text-destructive"
-                    : daysToPolicy <= 30
-                    ? "bg-orange-500/10 text-orange-600"
-                    : "bg-primary/10 text-primary"
-                }
-              >
-                <policyBadge.icon className="h-3 w-3 mr-1" />
-                {policyBadge.label}
-              </Badge>
-            </div>
-            <div className="pt-2 border-t">
-              <Label htmlFor="policy-file" className="text-sm text-muted-foreground mb-2 block">
-                Plik polisy
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="policy-file"
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={handleFileUpload}
-                  disabled={uploadingFile}
-                  className="flex-1"
-                />
-                {vehicle.policyFileUrl && (
-                  <Button variant="outline" asChild>
-                    <a href={vehicle.policyFileUrl} target="_blank" rel="noopener noreferrer">
-                      <FileText className="h-4 w-4" />
-                    </a>
-                  </Button>
+            {vehicle.insurance_policy_number ? (
+              <>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Numer polisy:</span>
+                  <span className="font-bold text-foreground">{vehicle.insurance_policy_number}</span>
+                </div>
+                {policyExpiryDate && (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Data wygaśnięcia:</span>
+                      <span className="font-medium text-foreground">
+                        {format(policyExpiryDate, "dd MMMM yyyy", { locale: pl })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Czas do odnowienia:</span>
+                      <Badge
+                        className={
+                          daysToPolicy! < 0
+                            ? "bg-destructive/10 text-destructive"
+                            : daysToPolicy! <= 30
+                            ? "bg-orange-500/10 text-orange-600"
+                            : "bg-primary/10 text-primary"
+                        }
+                      >
+                        <policyBadge.icon className="h-3 w-3 mr-1" />
+                        {policyBadge.label}
+                      </Badge>
+                    </div>
+                  </>
                 )}
-              </div>
-            </div>
+                <div className="pt-2 border-t">
+                  <Label htmlFor="policy-file" className="text-sm text-muted-foreground mb-2 block">
+                    Plik polisy
+                  </Label>
+                  <Input
+                    id="policy-file"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={handleFileUpload}
+                    disabled={uploadingFile}
+                  />
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Brak danych o polisie ubezpieczeniowej
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -266,33 +232,35 @@ const VehicleDetails = () => {
             <CardTitle>Badanie techniczne</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Ostatnie badanie:</span>
-              <span className="font-medium text-foreground">
-                {format(vehicle.lastTechnicalInspection, "dd MMMM yyyy", { locale: pl })}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Następne badanie:</span>
-              <span className="font-medium text-foreground">
-                {format(nextTechnicalInspection, "dd MMMM yyyy", { locale: pl })}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Czas do badania:</span>
-              <Badge
-                className={
-                  daysToInspection < 0
-                    ? "bg-destructive/10 text-destructive"
-                    : daysToInspection <= 30
-                    ? "bg-orange-500/10 text-orange-600"
-                    : "bg-primary/10 text-primary"
-                }
-              >
-                <inspectionBadge.icon className="h-3 w-3 mr-1" />
-                {inspectionBadge.label}
-              </Badge>
-            </div>
+            {nextTechnicalInspection ? (
+              <>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Następne badanie:</span>
+                  <span className="font-medium text-foreground">
+                    {format(nextTechnicalInspection, "dd MMMM yyyy", { locale: pl })}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Czas do badania:</span>
+                  <Badge
+                    className={
+                      daysToInspection! < 0
+                        ? "bg-destructive/10 text-destructive"
+                        : daysToInspection! <= 30
+                        ? "bg-orange-500/10 text-orange-600"
+                        : "bg-primary/10 text-primary"
+                    }
+                  >
+                    <inspectionBadge.icon className="h-3 w-3 mr-1" />
+                    {inspectionBadge.label}
+                  </Badge>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Brak danych o badaniu technicznym
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -302,7 +270,7 @@ const VehicleDetails = () => {
             <CardDescription>Nadchodzące terminy</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {daysToInspection <= 60 && (
+            {daysToInspection !== null && daysToInspection <= 60 && nextTechnicalInspection && (
               <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
                 <AlertCircle
                   className={`h-5 w-5 mt-0.5 ${
@@ -319,7 +287,7 @@ const VehicleDetails = () => {
                 </div>
               </div>
             )}
-            {daysToPolicy <= 60 && (
+            {daysToPolicy !== null && daysToPolicy <= 60 && policyExpiryDate && (
               <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
                 <AlertCircle
                   className={`h-5 w-5 mt-0.5 ${
@@ -331,12 +299,12 @@ const VehicleDetails = () => {
                   <p className="text-xs text-muted-foreground">
                     {daysToPolicy < 0
                       ? "Polisa wygasła - pojazd nie może być wynajęty"
-                      : `Za ${daysToPolicy} dni - ${format(vehicle.policyExpiryDate, "dd.MM.yyyy")}`}
+                      : `Za ${daysToPolicy} dni - ${format(policyExpiryDate, "dd.MM.yyyy")}`}
                   </p>
                 </div>
               </div>
             )}
-            {daysToInspection > 60 && daysToPolicy > 60 && (
+            {((daysToInspection === null || daysToInspection > 60) && (daysToPolicy === null || daysToPolicy > 60)) && (
               <p className="text-sm text-muted-foreground text-center py-4">
                 Brak nadchodzących terminów w najbliższych 60 dniach
               </p>
