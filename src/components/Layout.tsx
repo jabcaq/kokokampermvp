@@ -1,5 +1,5 @@
 import { Link, useLocation, Outlet } from "react-router-dom";
-import { Home, Users, FileText, UserPlus, Truck, Menu, Mail } from "lucide-react";
+import { Home, Users, FileText, UserPlus, Truck, Menu, Mail, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
@@ -11,6 +11,7 @@ const navItems = [
   { path: "/clients", label: "Klienci", icon: Users },
   { path: "/contracts", label: "Umowy", icon: FileText },
   { path: "/fleet", label: "Flota", icon: Truck },
+  { path: "/protocols", label: "Protokoły", icon: ClipboardCheck },
   { path: "/inquiries", label: "Zapytania", icon: Mail },
 ];
 

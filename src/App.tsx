@@ -16,6 +16,7 @@ import DriverSubmission from "./pages/DriverSubmission";
 import VehicleHandover from "./pages/VehicleHandover";
 import VehicleReturn from "./pages/VehicleReturn";
 import Inquiries from "./pages/Inquiries";
+import Protocols from "./pages/Protocols";
 import AccountingUpload from "./pages/AccountingUpload";
 import NotFound from "./pages/NotFound";
 
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/fleet/:id" element={<VehicleDetails />} />
             <Route path="/drivers" element={<Drivers />} />
             <Route path="/inquiries" element={<Inquiries />} />
+            <Route path="/protocols" element={<Protocols />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
