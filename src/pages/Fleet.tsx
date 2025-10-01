@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Truck, Caravan, Plus, Search, Calendar, MapPin, Trash2 } from "lucide-react";
+import { Truck, Caravan, Plus, Search, Calendar, MapPin, Trash2, Archive } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -19,77 +19,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useVehicles, useAddVehicle, useUpdateVehicle, useDeleteVehicle } from "@/hooks/useVehicles";
 
 type VehicleType = "kamper" | "przyczepa";
 type VehicleStatus = "dostepny" | "wynajety" | "serwis";
 
-interface Vehicle {
-  id: string;
-  name: string;
-  type: VehicleType;
-  brand: string;
-  model: string;
-  year: number;
-  registrationNumber: string;
-  status: VehicleStatus;
-  location: string;
-}
-
-const mockVehicles: Vehicle[] = [
-  {
-    id: "1",
-    name: "Kamper XYZ",
-    type: "kamper",
-    brand: "Fiat",
-    model: "Ducato Roller Team",
-    year: 2022,
-    registrationNumber: "WW 12345",
-    status: "dostepny",
-    location: "Warszawa",
-  },
-  {
-    id: "2",
-    name: "Przyczepa ABC",
-    type: "przyczepa",
-    brand: "Niewiadów",
-    model: "N126E",
-    year: 2021,
-    registrationNumber: "KR 67890",
-    status: "wynajety",
-    location: "Kraków",
-  },
-  {
-    id: "3",
-    name: "Kamper 123",
-    type: "kamper",
-    brand: "Mercedes",
-    model: "Sprinter Hymer",
-    year: 2023,
-    registrationNumber: "GD 11223",
-    status: "dostepny",
-    location: "Gdańsk",
-  },
-  {
-    id: "4",
-    name: "Przyczepa Mini",
-    type: "przyczepa",
-    brand: "Knaus",
-    model: "Sport 400",
-    year: 2020,
-    registrationNumber: "PO 33445",
-    status: "serwis",
-    location: "Poznań",
-  },
-];
-
 const Fleet = () => {
   const navigate = useNavigate();
-  const [vehicles, setVehicles] = useState<Vehicle[]>(mockVehicles);
+  const { data: vehicles, isLoading } = useVehicles();
+  const addVehicleMutation = useAddVehicle();
+  const updateVehicleMutation = useUpdateVehicle();
+  const deleteVehicleMutation = useDeleteVehicle();
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | VehicleType>("all");
   const [filterStatus, setFilterStatus] = useState<"all" | VehicleStatus>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteVehicleId, setDeleteVehicleId] = useState<string | null>(null);
+  const [archiveVehicleId, setArchiveVehicleId] = useState<string | null>(null);
   const [newVehicle, setNewVehicle] = useState({
     name: "",
     type: "kamper" as VehicleType,
@@ -97,36 +44,81 @@ const Fleet = () => {
     model: "",
     year: new Date().getFullYear(),
     registrationNumber: "",
+    vin: "",
     location: "",
   });
 
-  const handleAddVehicle = (e: React.FormEvent) => {
+  const handleAddVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
-    const vehicle: Vehicle = {
-      id: (vehicles.length + 1).toString(),
-      ...newVehicle,
-      status: "dostepny",
-    };
-    setVehicles([...vehicles, vehicle]);
-    setIsDialogOpen(false);
-    toast.success("Pojazd dodany do floty!", {
-      description: `${vehicle.brand} ${vehicle.model}`,
-    });
-    setNewVehicle({
-      name: "",
-      type: "kamper",
-      brand: "",
-      model: "",
-      year: new Date().getFullYear(),
-      registrationNumber: "",
-      location: "",
-    });
+    try {
+      await addVehicleMutation.mutateAsync({
+        name: newVehicle.name,
+        type: newVehicle.type,
+        brand: newVehicle.brand,
+        model: newVehicle.model,
+        year: newVehicle.year,
+        registration_number: newVehicle.registrationNumber,
+        vin: newVehicle.vin,
+        location: newVehicle.location,
+        status: "available",
+        next_inspection_date: null,
+        insurance_policy_number: null,
+        insurance_valid_until: null,
+        additional_info: null,
+      });
+      setIsDialogOpen(false);
+      toast.success("Pojazd dodany do floty!", {
+        description: `${newVehicle.brand} ${newVehicle.model}`,
+      });
+      setNewVehicle({
+        name: "",
+        type: "kamper",
+        brand: "",
+        model: "",
+        year: new Date().getFullYear(),
+        registrationNumber: "",
+        vin: "",
+        location: "",
+      });
+    } catch (error) {
+      toast.error("Błąd podczas dodawania pojazdu");
+    }
   };
 
-  const handleDeleteVehicle = (id: string) => {
-    setVehicles(vehicles.filter(v => v.id !== id));
-    toast.success("Pojazd usunięty z floty!");
-    setDeleteVehicleId(null);
+  const handleDeleteVehicle = async (id: string) => {
+    try {
+      await deleteVehicleMutation.mutateAsync(id);
+      toast.success("Pojazd usunięty z floty!");
+      setDeleteVehicleId(null);
+    } catch (error) {
+      toast.error("Błąd podczas usuwania pojazdu");
+    }
+  };
+
+  const handleArchiveVehicle = async (id: string) => {
+    try {
+      await updateVehicleMutation.mutateAsync({
+        id,
+        updates: { status: "archived" },
+      });
+      toast.success("Pojazd zarchiwizowany!");
+      setArchiveVehicleId(null);
+    } catch (error) {
+      toast.error("Błąd podczas archiwizacji pojazdu");
+    }
+  };
+
+  const mapStatus = (dbStatus: string): VehicleStatus => {
+    switch (dbStatus) {
+      case "available":
+        return "dostepny";
+      case "rented":
+        return "wynajety";
+      case "maintenance":
+        return "serwis";
+      default:
+        return "dostepny";
+    }
   };
 
   const getStatusBadge = (status: VehicleStatus) => {
@@ -138,23 +130,41 @@ const Fleet = () => {
     return variants[status];
   };
 
-  const filteredVehicles = vehicles.filter((vehicle) => {
+  // Filter out archived vehicles and map to UI format
+  const activeVehicles = (vehicles || [])
+    .filter((v) => v.status !== "archived")
+    .map((v) => ({
+      ...v,
+      name: v.name || v.model,
+      registrationNumber: v.registration_number,
+      uiStatus: mapStatus(v.status),
+    }));
+
+  const filteredVehicles = activeVehicles.filter((vehicle) => {
     const matchesSearch =
-      vehicle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.registrationNumber.toLowerCase().includes(searchQuery.toLowerCase());
+      (vehicle.name?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+      (vehicle.brand?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+      (vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+      vehicle.registration_number.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = filterType === "all" || vehicle.type === filterType;
-    const matchesStatus = filterStatus === "all" || vehicle.status === filterStatus;
+    const matchesStatus = filterStatus === "all" || vehicle.uiStatus === filterStatus;
     return matchesSearch && matchesType && matchesStatus;
   });
 
   const stats = {
-    total: vehicles.length,
-    kampers: vehicles.filter((v) => v.type === "kamper").length,
-    trailers: vehicles.filter((v) => v.type === "przyczepa").length,
-    available: vehicles.filter((v) => v.status === "dostepny").length,
+    total: activeVehicles.length,
+    kampers: activeVehicles.filter((v) => v.type === "kamper").length,
+    trailers: activeVehicles.filter((v) => v.type === "przyczepa").length,
+    available: activeVehicles.filter((v) => v.status === "available").length,
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-muted-foreground">Ładowanie floty...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -256,6 +266,16 @@ const Fleet = () => {
                     required
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="vin">VIN *</Label>
+                <Input
+                  id="vin"
+                  value={newVehicle.vin}
+                  onChange={(e) => setNewVehicle({ ...newVehicle, vin: e.target.value })}
+                  placeholder="np. ZFA25000003X12345"
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="location">Lokalizacja *</Label>
@@ -376,12 +396,12 @@ const Fleet = () => {
                   <div>
                     <CardTitle className="text-lg">{vehicle.name}</CardTitle>
                     <CardDescription className="text-xs mt-1">
-                      {vehicle.registrationNumber}
+                      {vehicle.registration_number}
                     </CardDescription>
                   </div>
                 </div>
-                <Badge className={getStatusBadge(vehicle.status).className}>
-                  {getStatusBadge(vehicle.status).label}
+                <Badge className={getStatusBadge(vehicle.uiStatus).className}>
+                  {getStatusBadge(vehicle.uiStatus).label}
                 </Badge>
               </div>
             </CardHeader>
@@ -415,18 +435,32 @@ const Fleet = () => {
               >
                 Szczegóły pojazdu
               </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="w-full mt-2"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDeleteVehicleId(vehicle.id);
-                }}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Usuń pojazd
-              </Button>
+              <div className="flex gap-2 mt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setArchiveVehicleId(vehicle.id);
+                  }}
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archiwizuj
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="flex-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteVehicleId(vehicle.id);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Usuń
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -447,8 +481,8 @@ const Fleet = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Czy na pewno chcesz usunąć ten pojazd?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ta operacja jest nieodwracalna. Wszystkie dane pojazdu zostaną trwale usunięte.
-              Upewnij się, że pojazd nie ma aktywnych wynajmów.
+              Ta operacja jest nieodwracalna. Wszystkie dane pojazdu zostaną trwale usunięte z bazy danych.
+              Upewnij się, że pojazd nie ma aktywnych wynajmów. Jeśli chcesz tylko ukryć pojazd, użyj opcji "Archiwizuj".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -458,6 +492,26 @@ const Fleet = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Usuń
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!archiveVehicleId} onOpenChange={() => setArchiveVehicleId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Czy na pewno chcesz zarchiwizować ten pojazd?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Pojazd zostanie ukryty w liście floty, ale wszystkie dane pozostaną w bazie danych.
+              Możesz przywrócić pojazd edytując jego status w bazie danych.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => archiveVehicleId && handleArchiveVehicle(archiveVehicleId)}
+            >
+              Archiwizuj
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

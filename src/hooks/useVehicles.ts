@@ -10,7 +10,12 @@ export interface Vehicle {
   insurance_policy_number: string | null;
   insurance_valid_until: string | null;
   additional_info: string | null;
-  status: 'available' | 'rented' | 'maintenance';
+  status: 'available' | 'rented' | 'maintenance' | 'archived';
+  name: string | null;
+  type: 'kamper' | 'przyczepa' | null;
+  brand: string | null;
+  year: number | null;
+  location: string | null;
   created_at?: string;
   updated_at?: string;
 }

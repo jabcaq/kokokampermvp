@@ -317,42 +317,57 @@ export type Database = {
       vehicles: {
         Row: {
           additional_info: string | null
+          brand: string | null
           created_at: string | null
           id: string
           insurance_policy_number: string | null
           insurance_valid_until: string | null
+          location: string | null
           model: string
+          name: string | null
           next_inspection_date: string | null
           registration_number: string
           status: string | null
+          type: string | null
           updated_at: string | null
           vin: string
+          year: number | null
         }
         Insert: {
           additional_info?: string | null
+          brand?: string | null
           created_at?: string | null
           id?: string
           insurance_policy_number?: string | null
           insurance_valid_until?: string | null
+          location?: string | null
           model: string
+          name?: string | null
           next_inspection_date?: string | null
           registration_number: string
           status?: string | null
+          type?: string | null
           updated_at?: string | null
           vin: string
+          year?: number | null
         }
         Update: {
           additional_info?: string | null
+          brand?: string | null
           created_at?: string | null
           id?: string
           insurance_policy_number?: string | null
           insurance_valid_until?: string | null
+          location?: string | null
           model?: string
+          name?: string | null
           next_inspection_date?: string | null
           registration_number?: string
           status?: string | null
+          type?: string | null
           updated_at?: string | null
           vin?: string
+          year?: number | null
         }
         Relationships: []
       }
