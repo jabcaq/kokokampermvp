@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, X, Edit, Eye, ArrowLeft, Trash2, CheckCircle, XCircle } from "lucide-react";
+import { Upload, X, Edit, Eye, ArrowLeft, Trash2, CheckCircle, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAddVehicleReturn, useUpdateVehicleReturn, useVehicleReturns, useDeleteVehicleReturn } from "@/hooks/useVehicleReturns";
 import { useCreateNotification } from "@/hooks/useNotifications";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -35,6 +36,8 @@ const VehicleReturn = () => {
   const existingReturn = existingReturns?.[0];
 
   const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     employeeName: "",
@@ -211,6 +214,21 @@ const VehicleReturn = () => {
     }
   };
 
+  const openImageDialog = (index: number) => {
+    setSelectedImageIndex(index);
+    setIsImageDialogOpen(true);
+  };
+
+  const navigateImage = (direction: 'prev' | 'next') => {
+    if (selectedImageIndex === null) return;
+    
+    const newIndex = direction === 'prev' 
+      ? (selectedImageIndex - 1 + existingPhotos.length) % existingPhotos.length
+      : (selectedImageIndex + 1) % existingPhotos.length;
+    
+    setSelectedImageIndex(newIndex);
+  };
+
   if (!contractId || !contractNumber) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -358,19 +376,17 @@ const VehicleReturn = () => {
                     <Label>Zdjęcia ({existingPhotos.length})</Label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                       {existingPhotos.map((url, index) => (
-                        <a 
+                        <div
                           key={index}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="relative aspect-square group"
+                          onClick={() => openImageDialog(index)}
+                          className="relative aspect-square group cursor-pointer"
                         >
                           <img
                             src={url}
                             alt={`Zdjęcie ${index + 1}`}
                             className="w-full h-full object-cover rounded-lg hover:opacity-90 transition-opacity"
                           />
-                        </a>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -551,6 +567,41 @@ const VehicleReturn = () => {
             )}
           </CardContent>
         </Card>
+
+        <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+          <DialogContent className="max-w-4xl w-full p-0">
+            {selectedImageIndex !== null && (
+              <div className="relative">
+                <img
+                  src={existingPhotos[selectedImageIndex]}
+                  alt={`Zdjęcie ${selectedImageIndex + 1}`}
+                  className="w-full h-auto max-h-[80vh] object-contain"
+                />
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-background/80 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigateImage('prev')}
+                    disabled={existingPhotos.length <= 1}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <span className="text-sm font-medium">
+                    {selectedImageIndex + 1} / {existingPhotos.length}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigateImage('next')}
+                    disabled={existingPhotos.length <= 1}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
