@@ -281,6 +281,66 @@ export type Database = {
           },
         ]
       }
+      documents: {
+        Row: {
+          client_id: string | null
+          contract_id: string | null
+          created_at: string
+          data: string | null
+          folder: string | null
+          id: string
+          link: string | null
+          nazwa_pliku: string
+          path: string | null
+          rodzaj: string
+          rok: number | null
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          data?: string | null
+          folder?: string | null
+          id?: string
+          link?: string | null
+          nazwa_pliku: string
+          path?: string | null
+          rodzaj: string
+          rok?: number | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          data?: string | null
+          folder?: string | null
+          id?: string
+          link?: string | null
+          nazwa_pliku?: string
+          path?: string | null
+          rodzaj?: string
+          rok?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inquiries: {
         Row: {
           budget_from: number | null

@@ -21,6 +21,7 @@ import VehicleReturn from "./pages/VehicleReturn";
 import Inquiries from "./pages/Inquiries";
 import Protocols from "./pages/Protocols";
 import AccountingUpload from "./pages/AccountingUpload";
+import Documents from "./pages/Documents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="/drivers" element={<Drivers />} />
               <Route path="/inquiries" element={<Inquiries />} />
               <Route path="/protocols" element={<Protocols />} />
+              <Route path="/documents" element={<Documents />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
