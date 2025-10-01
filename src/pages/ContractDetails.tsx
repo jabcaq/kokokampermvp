@@ -146,7 +146,7 @@ const ContractDetails = () => {
   const contract = id ? contractsData[id] : null;
 
   const handleEdit = () => {
-    setEditedContract({ ...contract });
+    setEditedContract(JSON.parse(JSON.stringify(contract)));
     setIsEditing(true);
   };
 
@@ -164,6 +164,22 @@ const ContractDetails = () => {
     setIsEditing(false);
     setEditedContract(null);
   };
+
+  const updateField = (path: string, value: any) => {
+    const keys = path.split('.');
+    const newContract = { ...editedContract };
+    let current: any = newContract;
+    
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (!current[keys[i]]) current[keys[i]] = {};
+      current = current[keys[i]];
+    }
+    
+    current[keys[keys.length - 1]] = value;
+    setEditedContract(newContract);
+  };
+
+  const displayContract = isEditing ? editedContract : contract;
 
   if (!contract) {
     return (
@@ -191,9 +207,9 @@ const ContractDetails = () => {
             Powrót do listy umów
           </Button>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-4xl font-bold text-foreground">Umowa {contract.umowa_numer}</h1>
-            <Badge variant="outline" className={statusConfig[contract.status as keyof typeof statusConfig].className}>
-              {statusConfig[contract.status as keyof typeof statusConfig].label}
+            <h1 className="text-4xl font-bold text-foreground">Umowa {displayContract.umowa_numer}</h1>
+            <Badge variant="outline" className={statusConfig[displayContract.status as keyof typeof statusConfig].className}>
+              {statusConfig[displayContract.status as keyof typeof statusConfig].label}
             </Badge>
           </div>
           <p className="text-muted-foreground mt-2">Szczegóły umowy najmu</p>
@@ -229,18 +245,44 @@ const ContractDetails = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Nazwa firmy</p>
-              <p className="font-medium text-foreground">{contract.nazwa_firmy}</p>
+            <div className="space-y-2">
+              <Label>Nazwa firmy</Label>
+              {isEditing ? (
+                <Input 
+                  value={displayContract.nazwa_firmy} 
+                  onChange={(e) => updateField('nazwa_firmy', e.target.value)}
+                />
+              ) : (
+                <p className="font-medium text-foreground">{displayContract.nazwa_firmy}</p>
+              )}
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Email</p>
-              <p className="font-medium text-foreground">{contract.email}</p>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              {isEditing ? (
+                <Input 
+                  type="email"
+                  value={displayContract.email} 
+                  onChange={(e) => updateField('email', e.target.value)}
+                />
+              ) : (
+                <p className="font-medium text-foreground">{displayContract.email}</p>
+              )}
             </div>
-            {contract.telefony && contract.telefony.map((tel: string, idx: number) => (
-              <div key={idx}>
-                <p className="text-sm text-muted-foreground">Telefon {idx + 1}</p>
-                <p className="font-medium text-foreground">{tel}</p>
+            {displayContract.telefony && displayContract.telefony.map((tel: string, idx: number) => (
+              <div key={idx} className="space-y-2">
+                <Label>Telefon {idx + 1}</Label>
+                {isEditing ? (
+                  <Input 
+                    value={tel} 
+                    onChange={(e) => {
+                      const newTelefony = [...displayContract.telefony];
+                      newTelefony[idx] = e.target.value;
+                      updateField('telefony', newTelefony);
+                    }}
+                  />
+                ) : (
+                  <p className="font-medium text-foreground">{tel}</p>
+                )}
               </div>
             ))}
           </div>
@@ -255,25 +297,61 @@ const ContractDetails = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Nazwa</p>
-                <p className="font-medium text-foreground">{contract.wynajmujacy.nazwa}</p>
+              <div className="space-y-2">
+                <Label>Nazwa</Label>
+                {isEditing ? (
+                  <Input 
+                    value={displayContract.wynajmujacy.nazwa} 
+                    onChange={(e) => updateField('wynajmujacy.nazwa', e.target.value)}
+                  />
+                ) : (
+                  <p className="font-medium text-foreground">{displayContract.wynajmujacy.nazwa}</p>
+                )}
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Adres</p>
-                <p className="font-medium text-foreground">{contract.wynajmujacy.adres}</p>
+              <div className="space-y-2">
+                <Label>Adres</Label>
+                {isEditing ? (
+                  <Input 
+                    value={displayContract.wynajmujacy.adres} 
+                    onChange={(e) => updateField('wynajmujacy.adres', e.target.value)}
+                  />
+                ) : (
+                  <p className="font-medium text-foreground">{displayContract.wynajmujacy.adres}</p>
+                )}
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Telefon</p>
-                <p className="font-medium text-foreground">{contract.wynajmujacy.tel}</p>
+              <div className="space-y-2">
+                <Label>Telefon</Label>
+                {isEditing ? (
+                  <Input 
+                    value={displayContract.wynajmujacy.tel} 
+                    onChange={(e) => updateField('wynajmujacy.tel', e.target.value)}
+                  />
+                ) : (
+                  <p className="font-medium text-foreground">{displayContract.wynajmujacy.tel}</p>
+                )}
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">WWW</p>
-                <p className="font-medium text-foreground">{contract.wynajmujacy.www}</p>
+              <div className="space-y-2">
+                <Label>WWW</Label>
+                {isEditing ? (
+                  <Input 
+                    value={displayContract.wynajmujacy.www} 
+                    onChange={(e) => updateField('wynajmujacy.www', e.target.value)}
+                  />
+                ) : (
+                  <p className="font-medium text-foreground">{displayContract.wynajmujacy.www}</p>
+                )}
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium text-foreground">{contract.wynajmujacy.email}</p>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                {isEditing ? (
+                  <Input 
+                    type="email"
+                    value={displayContract.wynajmujacy.email} 
+                    onChange={(e) => updateField('wynajmujacy.email', e.target.value)}
+                  />
+                ) : (
+                  <p className="font-medium text-foreground">{displayContract.wynajmujacy.email}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -291,31 +369,61 @@ const ContractDetails = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Data rozpoczęcia</p>
-                <p className="font-medium text-foreground">{contract.okres_najmu.od}</p>
+              <div className="space-y-2">
+                <Label>Data rozpoczęcia</Label>
+                {isEditing ? (
+                  <Input 
+                    type="datetime-local"
+                    value={displayContract.okres_najmu.od?.replace(' ', 'T')} 
+                    onChange={(e) => updateField('okres_najmu.od', e.target.value.replace('T', ' '))}
+                  />
+                ) : (
+                  <p className="font-medium text-foreground">{displayContract.okres_najmu.od}</p>
+                )}
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Data zakończenia</p>
-                <p className="font-medium text-foreground">{contract.okres_najmu.do}</p>
+              <div className="space-y-2">
+                <Label>Data zakończenia</Label>
+                {isEditing ? (
+                  <Input 
+                    type="datetime-local"
+                    value={displayContract.okres_najmu.do?.replace(' ', 'T')} 
+                    onChange={(e) => updateField('okres_najmu.do', e.target.value.replace('T', ' '))}
+                  />
+                ) : (
+                  <p className="font-medium text-foreground">{displayContract.okres_najmu.do}</p>
+                )}
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Miejsce</p>
-                <p className="font-medium text-foreground">{contract.okres_najmu.miejsce}</p>
+              <div className="space-y-2">
+                <Label>Miejsce</Label>
+                {isEditing ? (
+                  <Input 
+                    value={displayContract.okres_najmu.miejsce} 
+                    onChange={(e) => updateField('okres_najmu.miejsce', e.target.value)}
+                  />
+                ) : (
+                  <p className="font-medium text-foreground">{displayContract.okres_najmu.miejsce}</p>
+                )}
               </div>
-              {contract.okres_najmu.zwrot_do && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Zwrot do</p>
-                  <p className="font-medium text-foreground">{contract.okres_najmu.zwrot_do}</p>
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label>Zwrot do</Label>
+                {isEditing ? (
+                  <Input 
+                    value={displayContract.okres_najmu.zwrot_do || ''} 
+                    onChange={(e) => updateField('okres_najmu.zwrot_do', e.target.value)}
+                  />
+                ) : displayContract.okres_najmu.zwrot_do ? (
+                  <p className="font-medium text-foreground">{displayContract.okres_najmu.zwrot_do}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nie podano</p>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
       )}
 
       {/* Najemca (Główny kierowca) */}
-      {contract.najemca && (
+      {displayContract.najemca && (
         <Card className="shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -325,48 +433,98 @@ const ContractDetails = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Imię i nazwisko</p>
-                <p className="font-medium text-foreground">{contract.najemca.imie_nazwisko}</p>
+              <div className="space-y-2">
+                <Label>Imię i nazwisko</Label>
+                {isEditing ? (
+                  <Input 
+                    value={displayContract.najemca.imie_nazwisko} 
+                    onChange={(e) => updateField('najemca.imie_nazwisko', e.target.value)}
+                  />
+                ) : (
+                  <p className="font-medium text-foreground">{displayContract.najemca.imie_nazwisko}</p>
+                )}
               </div>
-              {contract.najemca.email && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium text-foreground">{contract.najemca.email}</p>
+              {(displayContract.najemca.email || isEditing) && (
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  {isEditing ? (
+                    <Input 
+                      type="email"
+                      value={displayContract.najemca.email || ''} 
+                      onChange={(e) => updateField('najemca.email', e.target.value)}
+                    />
+                  ) : (
+                    <p className="font-medium text-foreground">{displayContract.najemca.email}</p>
+                  )}
                 </div>
               )}
-              {contract.najemca.tel && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Telefon</p>
-                  <p className="font-medium text-foreground">{contract.najemca.tel}</p>
+              {(displayContract.najemca.tel || isEditing) && (
+                <div className="space-y-2">
+                  <Label>Telefon</Label>
+                  {isEditing ? (
+                    <Input 
+                      value={displayContract.najemca.tel || ''} 
+                      onChange={(e) => updateField('najemca.tel', e.target.value)}
+                    />
+                  ) : (
+                    <p className="font-medium text-foreground">{displayContract.najemca.tel}</p>
+                  )}
                 </div>
               )}
-              {contract.najemca.adres_zamieszkania && (
-                <div className="md:col-span-2">
-                  <p className="text-sm text-muted-foreground">Adres zamieszkania</p>
-                  <p className="font-medium text-foreground">{contract.najemca.adres_zamieszkania}</p>
+              {(displayContract.najemca.adres_zamieszkania || isEditing) && (
+                <div className="md:col-span-2 space-y-2">
+                  <Label>Adres zamieszkania</Label>
+                  {isEditing ? (
+                    <Input 
+                      value={displayContract.najemca.adres_zamieszkania || ''} 
+                      onChange={(e) => updateField('najemca.adres_zamieszkania', e.target.value)}
+                    />
+                  ) : (
+                    <p className="font-medium text-foreground">{displayContract.najemca.adres_zamieszkania}</p>
+                  )}
                 </div>
               )}
             </div>
             
-            {contract.najemca.dokument_towzaszosc && (
+            {displayContract.najemca.dokument_towzaszosc && (
               <>
                 <Separator />
                 <div>
                   <h4 className="font-semibold text-foreground mb-3">Dokument tożsamości</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Rodzaj</p>
-                      <p className="font-medium text-foreground">{contract.najemca.dokument_towzaszosc.rodzaj}</p>
+                    <div className="space-y-2">
+                      <Label>Rodzaj</Label>
+                      {isEditing ? (
+                        <Input 
+                          value={displayContract.najemca.dokument_towzaszosc.rodzaj || ''} 
+                          onChange={(e) => updateField('najemca.dokument_towzaszosc.rodzaj', e.target.value)}
+                        />
+                      ) : (
+                        <p className="font-medium text-foreground">{displayContract.najemca.dokument_towzaszosc.rodzaj}</p>
+                      )}
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Numer</p>
-                      <p className="font-medium text-foreground">{contract.najemca.dokument_towzaszosc.numer}</p>
+                    <div className="space-y-2">
+                      <Label>Numer</Label>
+                      {isEditing ? (
+                        <Input 
+                          value={displayContract.najemca.dokument_towzaszosc.numer || ''} 
+                          onChange={(e) => updateField('najemca.dokument_towzaszosc.numer', e.target.value)}
+                        />
+                      ) : (
+                        <p className="font-medium text-foreground">{displayContract.najemca.dokument_towzaszosc.numer}</p>
+                      )}
                     </div>
-                    {contract.najemca.dokument_towzaszosc.organ_wydający && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Organ wydający</p>
-                        <p className="font-medium text-foreground">{contract.najemca.dokument_towzaszosc.organ_wydający}</p>
+                    {(displayContract.najemca.dokument_towzaszosc.organ_wydający || isEditing) && (
+                      <div className="space-y-2">
+                        <Label>Organ wydający</Label>
+                        {isEditing ? (
+                          <Input 
+                            value={displayContract.najemca.dokument_towzaszosc.organ_wydający || ''} 
+                            onChange={(e) => updateField('najemca.dokument_towzaszosc.organ_wydający', e.target.value)}
+                          />
+                        ) : (
+                          <p className="font-medium text-foreground">{displayContract.najemca.dokument_towzaszosc.organ_wydający}</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -374,22 +532,37 @@ const ContractDetails = () => {
               </>
             )}
             
-            {(contract.najemca.prawo_jazdy_numer || contract.najemca.prawo_jazdy_data) && (
+            {(displayContract.najemca.prawo_jazdy_numer || displayContract.najemca.prawo_jazdy_data || isEditing) && (
               <>
                 <Separator />
                 <div>
                   <h4 className="font-semibold text-foreground mb-3">Prawo jazdy</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {contract.najemca.prawo_jazdy_numer && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Numer prawa jazdy</p>
-                        <p className="font-medium text-foreground">{contract.najemca.prawo_jazdy_numer}</p>
+                    {(displayContract.najemca.prawo_jazdy_numer || isEditing) && (
+                      <div className="space-y-2">
+                        <Label>Numer prawa jazdy</Label>
+                        {isEditing ? (
+                          <Input 
+                            value={displayContract.najemca.prawo_jazdy_numer || ''} 
+                            onChange={(e) => updateField('najemca.prawo_jazdy_numer', e.target.value)}
+                          />
+                        ) : (
+                          <p className="font-medium text-foreground">{displayContract.najemca.prawo_jazdy_numer}</p>
+                        )}
                       </div>
                     )}
-                    {contract.najemca.prawo_jazdy_data && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Data wydania</p>
-                        <p className="font-medium text-foreground">{contract.najemca.prawo_jazdy_data}</p>
+                    {(displayContract.najemca.prawo_jazdy_data || isEditing) && (
+                      <div className="space-y-2">
+                        <Label>Data wydania</Label>
+                        {isEditing ? (
+                          <Input 
+                            type="date"
+                            value={displayContract.najemca.prawo_jazdy_data || ''} 
+                            onChange={(e) => updateField('najemca.prawo_jazdy_data', e.target.value)}
+                          />
+                        ) : (
+                          <p className="font-medium text-foreground">{displayContract.najemca.prawo_jazdy_data}</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -397,20 +570,34 @@ const ContractDetails = () => {
               </>
             )}
             
-            {(contract.najemca.pesel || contract.najemca.nip) && (
+            {(displayContract.najemca.pesel || displayContract.najemca.nip || isEditing) && (
               <>
                 <Separator />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {contract.najemca.pesel && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">PESEL</p>
-                      <p className="font-medium text-foreground">{contract.najemca.pesel}</p>
+                  {(displayContract.najemca.pesel || isEditing) && (
+                    <div className="space-y-2">
+                      <Label>PESEL</Label>
+                      {isEditing ? (
+                        <Input 
+                          value={displayContract.najemca.pesel || ''} 
+                          onChange={(e) => updateField('najemca.pesel', e.target.value)}
+                        />
+                      ) : (
+                        <p className="font-medium text-foreground">{displayContract.najemca.pesel}</p>
+                      )}
                     </div>
                   )}
-                  {contract.najemca.nip && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">NIP</p>
-                      <p className="font-medium text-foreground">{contract.najemca.nip}</p>
+                  {(displayContract.najemca.nip || isEditing) && (
+                    <div className="space-y-2">
+                      <Label>NIP</Label>
+                      {isEditing ? (
+                        <Input 
+                          value={displayContract.najemca.nip || ''} 
+                          onChange={(e) => updateField('najemca.nip', e.target.value)}
+                        />
+                      ) : (
+                        <p className="font-medium text-foreground">{displayContract.najemca.nip}</p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -476,7 +663,7 @@ const ContractDetails = () => {
       )}
 
       {/* Przedmiot najmu */}
-      {contract.przedmiot_najmu && (
+      {displayContract.przedmiot_najmu && (
         <Card className="shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -486,48 +673,92 @@ const ContractDetails = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {contract.przedmiot_najmu.model && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Model</p>
-                  <p className="font-medium text-foreground">{contract.przedmiot_najmu.model}</p>
+              {(displayContract.przedmiot_najmu.model || isEditing) && (
+                <div className="space-y-2">
+                  <Label>Model</Label>
+                  {isEditing ? (
+                    <Input 
+                      value={displayContract.przedmiot_najmu.model || ''} 
+                      onChange={(e) => updateField('przedmiot_najmu.model', e.target.value)}
+                    />
+                  ) : (
+                    <p className="font-medium text-foreground">{displayContract.przedmiot_najmu.model}</p>
+                  )}
                 </div>
               )}
-              {contract.przedmiot_najmu.vin && (
-                <div>
-                  <p className="text-sm text-muted-foreground">VIN</p>
-                  <p className="font-medium text-foreground">{contract.przedmiot_najmu.vin}</p>
+              {(displayContract.przedmiot_najmu.vin || isEditing) && (
+                <div className="space-y-2">
+                  <Label>VIN</Label>
+                  {isEditing ? (
+                    <Input 
+                      value={displayContract.przedmiot_najmu.vin || ''} 
+                      onChange={(e) => updateField('przedmiot_najmu.vin', e.target.value)}
+                    />
+                  ) : (
+                    <p className="font-medium text-foreground">{displayContract.przedmiot_najmu.vin}</p>
+                  )}
                 </div>
               )}
-              {contract.przedmiot_najmu.nr_rej && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Numer rejestracyjny</p>
-                  <p className="font-medium text-foreground">{contract.przedmiot_najmu.nr_rej}</p>
+              {(displayContract.przedmiot_najmu.nr_rej || isEditing) && (
+                <div className="space-y-2">
+                  <Label>Numer rejestracyjny</Label>
+                  {isEditing ? (
+                    <Input 
+                      value={displayContract.przedmiot_najmu.nr_rej || ''} 
+                      onChange={(e) => updateField('przedmiot_najmu.nr_rej', e.target.value)}
+                    />
+                  ) : (
+                    <p className="font-medium text-foreground">{displayContract.przedmiot_najmu.nr_rej}</p>
+                  )}
                 </div>
               )}
-              {contract.przedmiot_najmu.nastepne_badanie && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Następne badanie techniczne</p>
-                  <p className="font-medium text-foreground">{contract.przedmiot_najmu.nastepne_badanie}</p>
+              {(displayContract.przedmiot_najmu.nastepne_badanie || isEditing) && (
+                <div className="space-y-2">
+                  <Label>Następne badanie techniczne</Label>
+                  {isEditing ? (
+                    <Input 
+                      type="date"
+                      value={displayContract.przedmiot_najmu.nastepne_badanie || ''} 
+                      onChange={(e) => updateField('przedmiot_najmu.nastepne_badanie', e.target.value)}
+                    />
+                  ) : (
+                    <p className="font-medium text-foreground">{displayContract.przedmiot_najmu.nastepne_badanie}</p>
+                  )}
                 </div>
               )}
             </div>
             
-            {contract.przedmiot_najmu.polisa && (
+            {displayContract.przedmiot_najmu.polisa && (
               <>
                 <Separator />
                 <div>
                   <h4 className="font-semibold text-foreground mb-3">Polisa</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {contract.przedmiot_najmu.polisa.numer && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Numer polisy</p>
-                        <p className="font-medium text-foreground">{contract.przedmiot_najmu.polisa.numer}</p>
+                    {(displayContract.przedmiot_najmu.polisa.numer || isEditing) && (
+                      <div className="space-y-2">
+                        <Label>Numer polisy</Label>
+                        {isEditing ? (
+                          <Input 
+                            value={displayContract.przedmiot_najmu.polisa.numer || ''} 
+                            onChange={(e) => updateField('przedmiot_najmu.polisa.numer', e.target.value)}
+                          />
+                        ) : (
+                          <p className="font-medium text-foreground">{displayContract.przedmiot_najmu.polisa.numer}</p>
+                        )}
                       </div>
                     )}
-                    {contract.przedmiot_najmu.polisa.wazna_do && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Ważna do</p>
-                        <p className="font-medium text-foreground">{contract.przedmiot_najmu.polisa.wazna_do}</p>
+                    {(displayContract.przedmiot_najmu.polisa.wazna_do || isEditing) && (
+                      <div className="space-y-2">
+                        <Label>Ważna do</Label>
+                        {isEditing ? (
+                          <Input 
+                            type="date"
+                            value={displayContract.przedmiot_najmu.polisa.wazna_do || ''} 
+                            onChange={(e) => updateField('przedmiot_najmu.polisa.wazna_do', e.target.value)}
+                          />
+                        ) : (
+                          <p className="font-medium text-foreground">{displayContract.przedmiot_najmu.polisa.wazna_do}</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -535,12 +766,19 @@ const ContractDetails = () => {
               </>
             )}
             
-            {contract.przedmiot_najmu.dodatkowe_informacje && (
+            {(displayContract.przedmiot_najmu.dodatkowe_informacje || isEditing) && (
               <>
                 <Separator />
-                <div>
-                  <p className="text-sm text-muted-foreground">Dodatkowe informacje</p>
-                  <p className="font-medium text-foreground">{contract.przedmiot_najmu.dodatkowe_informacje}</p>
+                <div className="space-y-2">
+                  <Label>Dodatkowe informacje</Label>
+                  {isEditing ? (
+                    <Textarea 
+                      value={displayContract.przedmiot_najmu.dodatkowe_informacje || ''} 
+                      onChange={(e) => updateField('przedmiot_najmu.dodatkowe_informacje', e.target.value)}
+                    />
+                  ) : (
+                    <p className="font-medium text-foreground">{displayContract.przedmiot_najmu.dodatkowe_informacje}</p>
+                  )}
                 </div>
               </>
             )}
@@ -549,7 +787,7 @@ const ContractDetails = () => {
       )}
 
       {/* Opłaty */}
-      {contract.oplaty && (
+      {displayContract.oplaty && (
         <Card className="shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -558,54 +796,102 @@ const ContractDetails = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {contract.oplaty.rezerwacyjna && (
+            {displayContract.oplaty.rezerwacyjna && (
               <div>
                 <h4 className="font-semibold text-foreground mb-3">Opłata rezerwacyjna</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {contract.oplaty.rezerwacyjna.data && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Data</p>
-                      <p className="font-medium text-foreground">{contract.oplaty.rezerwacyjna.data}</p>
+                  {(displayContract.oplaty.rezerwacyjna.data || isEditing) && (
+                    <div className="space-y-2">
+                      <Label>Data</Label>
+                      {isEditing ? (
+                        <Input 
+                          type="date"
+                          value={displayContract.oplaty.rezerwacyjna.data || ''} 
+                          onChange={(e) => updateField('oplaty.rezerwacyjna.data', e.target.value)}
+                        />
+                      ) : (
+                        <p className="font-medium text-foreground">{displayContract.oplaty.rezerwacyjna.data}</p>
+                      )}
                     </div>
                   )}
-                  {contract.oplaty.rezerwacyjna.wysokosc && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Wysokość</p>
-                      <p className="font-medium text-primary text-lg">{contract.oplaty.rezerwacyjna.wysokosc}</p>
+                  {(displayContract.oplaty.rezerwacyjna.wysokosc || isEditing) && (
+                    <div className="space-y-2">
+                      <Label>Wysokość</Label>
+                      {isEditing ? (
+                        <Input 
+                          value={displayContract.oplaty.rezerwacyjna.wysokosc || ''} 
+                          onChange={(e) => updateField('oplaty.rezerwacyjna.wysokosc', e.target.value)}
+                          placeholder="5000.00 zł"
+                        />
+                      ) : (
+                        <p className="font-medium text-primary text-lg">{displayContract.oplaty.rezerwacyjna.wysokosc}</p>
+                      )}
                     </div>
                   )}
-                  {contract.oplaty.rezerwacyjna.rachunek && (
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-muted-foreground">Rachunek</p>
-                      <p className="font-medium text-foreground font-mono text-sm">{contract.oplaty.rezerwacyjna.rachunek}</p>
+                  {(displayContract.oplaty.rezerwacyjna.rachunek || isEditing) && (
+                    <div className="md:col-span-2 space-y-2">
+                      <Label>Rachunek</Label>
+                      {isEditing ? (
+                        <Input 
+                          value={displayContract.oplaty.rezerwacyjna.rachunek || ''} 
+                          onChange={(e) => updateField('oplaty.rezerwacyjna.rachunek', e.target.value)}
+                          placeholder="mBank: 34 1140 2004..."
+                        />
+                      ) : (
+                        <p className="font-medium text-foreground font-mono text-sm">{displayContract.oplaty.rezerwacyjna.rachunek}</p>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
             )}
 
-            {contract.oplaty.zasadnicza && (
+            {displayContract.oplaty.zasadnicza && (
               <>
                 <Separator />
                 <div>
                   <h4 className="font-semibold text-foreground mb-3">Opłata zasadnicza</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {contract.oplaty.zasadnicza.data && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Data</p>
-                        <p className="font-medium text-foreground">{contract.oplaty.zasadnicza.data}</p>
+                    {(displayContract.oplaty.zasadnicza.data || isEditing) && (
+                      <div className="space-y-2">
+                        <Label>Data</Label>
+                        {isEditing ? (
+                          <Input 
+                            type="date"
+                            value={displayContract.oplaty.zasadnicza.data || ''} 
+                            onChange={(e) => updateField('oplaty.zasadnicza.data', e.target.value)}
+                          />
+                        ) : (
+                          <p className="font-medium text-foreground">{displayContract.oplaty.zasadnicza.data}</p>
+                        )}
                       </div>
                     )}
-                    {contract.oplaty.zasadnicza.wysokosc && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Wysokość</p>
-                        <p className="font-medium text-primary text-lg">{contract.oplaty.zasadnicza.wysokosc}</p>
+                    {(displayContract.oplaty.zasadnicza.wysokosc || isEditing) && (
+                      <div className="space-y-2">
+                        <Label>Wysokość</Label>
+                        {isEditing ? (
+                          <Input 
+                            value={displayContract.oplaty.zasadnicza.wysokosc || ''} 
+                            onChange={(e) => updateField('oplaty.zasadnicza.wysokosc', e.target.value)}
+                            placeholder="n/d"
+                          />
+                        ) : (
+                          <p className="font-medium text-primary text-lg">{displayContract.oplaty.zasadnicza.wysokosc}</p>
+                        )}
                       </div>
                     )}
-                    {contract.oplaty.zasadnicza.rachunek && (
-                      <div className="md:col-span-2">
-                        <p className="text-sm text-muted-foreground">Rachunek</p>
-                        <p className="font-medium text-foreground font-mono text-sm">{contract.oplaty.zasadnicza.rachunek}</p>
+                    {(displayContract.oplaty.zasadnicza.rachunek || isEditing) && (
+                      <div className="md:col-span-2 space-y-2">
+                        <Label>Rachunek</Label>
+                        {isEditing ? (
+                          <Input 
+                            value={displayContract.oplaty.zasadnicza.rachunek || ''} 
+                            onChange={(e) => updateField('oplaty.zasadnicza.rachunek', e.target.value)}
+                            placeholder="mBank: 34 1140 2004..."
+                          />
+                        ) : (
+                          <p className="font-medium text-foreground font-mono text-sm">{displayContract.oplaty.zasadnicza.rachunek}</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -613,28 +899,52 @@ const ContractDetails = () => {
               </>
             )}
 
-            {contract.oplaty.kaucja && (
+            {displayContract.oplaty.kaucja && (
               <>
                 <Separator />
                 <div>
                   <h4 className="font-semibold text-foreground mb-3">Kaucja</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {contract.oplaty.kaucja.data && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Data</p>
-                        <p className="font-medium text-foreground">{contract.oplaty.kaucja.data}</p>
+                    {(displayContract.oplaty.kaucja.data || isEditing) && (
+                      <div className="space-y-2">
+                        <Label>Data</Label>
+                        {isEditing ? (
+                          <Input 
+                            type="date"
+                            value={displayContract.oplaty.kaucja.data || ''} 
+                            onChange={(e) => updateField('oplaty.kaucja.data', e.target.value)}
+                          />
+                        ) : (
+                          <p className="font-medium text-foreground">{displayContract.oplaty.kaucja.data}</p>
+                        )}
                       </div>
                     )}
-                    {contract.oplaty.kaucja.wysokosc && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Wysokość</p>
-                        <p className="font-medium text-primary text-lg">{contract.oplaty.kaucja.wysokosc}</p>
+                    {(displayContract.oplaty.kaucja.wysokosc || isEditing) && (
+                      <div className="space-y-2">
+                        <Label>Wysokość</Label>
+                        {isEditing ? (
+                          <Input 
+                            value={displayContract.oplaty.kaucja.wysokosc || ''} 
+                            onChange={(e) => updateField('oplaty.kaucja.wysokosc', e.target.value)}
+                            placeholder="5000.00 zł"
+                          />
+                        ) : (
+                          <p className="font-medium text-primary text-lg">{displayContract.oplaty.kaucja.wysokosc}</p>
+                        )}
                       </div>
                     )}
-                    {contract.oplaty.kaucja.rachunek && (
-                      <div className="md:col-span-2">
-                        <p className="text-sm text-muted-foreground">Rachunek</p>
-                        <p className="font-medium text-foreground font-mono text-sm">{contract.oplaty.kaucja.rachunek}</p>
+                    {(displayContract.oplaty.kaucja.rachunek || isEditing) && (
+                      <div className="md:col-span-2 space-y-2">
+                        <Label>Rachunek</Label>
+                        {isEditing ? (
+                          <Input 
+                            value={displayContract.oplaty.kaucja.rachunek || ''} 
+                            onChange={(e) => updateField('oplaty.kaucja.rachunek', e.target.value)}
+                            placeholder="mBank: 08 1140 2004..."
+                          />
+                        ) : (
+                          <p className="font-medium text-foreground font-mono text-sm">{displayContract.oplaty.kaucja.rachunek}</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -646,7 +956,7 @@ const ContractDetails = () => {
       )}
 
       {/* Uwagi */}
-      {contract.uwagi && (
+      {(displayContract.uwagi || isEditing) && (
         <Card className="shadow-md border-primary/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -654,8 +964,19 @@ const ContractDetails = () => {
               Uwagi
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-foreground">{contract.uwagi}</p>
+          <CardContent className="space-y-2">
+            {isEditing ? (
+              <>
+                <Label>Dodatkowe uwagi</Label>
+                <Textarea 
+                  value={displayContract.uwagi || ''} 
+                  onChange={(e) => updateField('uwagi', e.target.value)}
+                  className="min-h-[120px]"
+                />
+              </>
+            ) : (
+              <p className="text-foreground">{displayContract.uwagi}</p>
+            )}
           </CardContent>
         </Card>
       )}
