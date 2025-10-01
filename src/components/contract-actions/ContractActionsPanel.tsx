@@ -103,7 +103,7 @@ export const ContractActionsPanel = ({
   };
 
   const handleCopyDriverForm = () => {
-    const driverFormLink = `${window.location.origin}/driver-form/${contractId}`;
+    const driverFormLink = `${window.location.origin}/driver-form/${encodeURIComponent(contractNumber)}`;
     navigator.clipboard.writeText(driverFormLink);
     toast({
       title: "Link skopiowany",
