@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, X, Edit, Eye } from "lucide-react";
+import { Upload, X, Edit, Eye, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAddVehicleReturn, useUpdateVehicleReturn, useVehicleReturns } from "@/hooks/useVehicleReturns";
 import { useCreateNotification } from "@/hooks/useNotifications";
@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const VehicleReturn = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const addReturnMutation = useAddVehicleReturn();
   const updateReturnMutation = useUpdateVehicleReturn();
@@ -136,6 +137,8 @@ const VehicleReturn = () => {
           id: existingReturn.id,
           ...returnData,
         });
+        // Disable edit mode after successful update
+        setIsEditMode(false);
       } else {
         // Create new record
         await addReturnMutation.mutateAsync(returnData);
@@ -207,6 +210,14 @@ const VehicleReturn = () => {
   return (
     <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-4xl mx-auto">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Powrót
+        </Button>
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
