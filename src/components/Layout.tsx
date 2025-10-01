@@ -27,12 +27,9 @@ export const Layout = () => {
   const NavContent = () => (
     <>
       <div className="p-6 border-b border-sidebar-border">
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            RentCamper CRM
-          </h1>
-          <NotificationBell />
-        </div>
+        <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+          RentCamper CRM
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">Zarządzanie wynajmem</p>
       </div>
       <nav className="flex-1 p-4 space-y-2">
@@ -92,6 +89,11 @@ export const Layout = () => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+          <div className="container mx-auto px-6 lg:px-8 max-w-7xl py-4 flex justify-end">
+            <NotificationBell />
+          </div>
+        </div>
         <div className="container mx-auto p-6 lg:p-8 max-w-7xl">
           <Outlet />
         </div>
