@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,6 +73,7 @@ const mockVehicles: Vehicle[] = [
 ];
 
 const Fleet = () => {
+  const navigate = useNavigate();
   const [vehicles, setVehicles] = useState<Vehicle[]>(mockVehicles);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | VehicleType>("all");
@@ -389,7 +391,11 @@ const Fleet = () => {
                   <span className="font-medium text-foreground">{vehicle.location}</span>
                 </div>
               </div>
-              <Button variant="outline" className="w-full mt-4">
+              <Button 
+                variant="outline" 
+                className="w-full mt-4"
+                onClick={() => navigate(`/fleet/${vehicle.id}`)}
+              >
                 Szczegóły pojazdu
               </Button>
             </CardContent>

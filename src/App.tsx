@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import Contracts from "./pages/Contracts";
 import Fleet from "./pages/Fleet";
+import VehicleDetails from "./pages/VehicleDetails";
 import Drivers from "./pages/Drivers";
 import DriverSubmission from "./pages/DriverSubmission";
 import NotFound from "./pages/NotFound";
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/clients" element={<Clients />} />
             <Route path="/contracts" element={<Contracts />} />
             <Route path="/fleet" element={<Fleet />} />
+            <Route path="/fleet/:id" element={<VehicleDetails />} />
             <Route path="/drivers" element={<Drivers />} />
             <Route path="*" element={<NotFound />} />
           </Route>
