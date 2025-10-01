@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, X, Edit, Eye, ArrowLeft } from "lucide-react";
+import { Upload, X, Edit, Eye, ArrowLeft, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAddVehicleReturn, useUpdateVehicleReturn, useVehicleReturns } from "@/hooks/useVehicleReturns";
+import { useAddVehicleReturn, useUpdateVehicleReturn, useVehicleReturns, useDeleteVehicleReturn } from "@/hooks/useVehicleReturns";
 import { useCreateNotification } from "@/hooks/useNotifications";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,6 +20,7 @@ const VehicleReturn = () => {
   const { toast } = useToast();
   const addReturnMutation = useAddVehicleReturn();
   const updateReturnMutation = useUpdateVehicleReturn();
+  const deleteReturnMutation = useDeleteVehicleReturn();
   const createNotificationMutation = useCreateNotification();
   
   
@@ -194,6 +196,21 @@ const VehicleReturn = () => {
     });
   };
 
+  const handleDelete = async () => {
+    if (!existingReturn) return;
+    
+    try {
+      await deleteReturnMutation.mutateAsync(existingReturn.id);
+      toast({
+        title: "Sukces",
+        description: "Protokół zwrotu został usunięty.",
+      });
+      navigate(-1);
+    } catch (error) {
+      console.error('Delete error:', error);
+    }
+  };
+
   if (!contractId || !contractNumber) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -228,24 +245,45 @@ const VehicleReturn = () => {
                 </CardDescription>
               </div>
               {existingReturn && (
-                <Button
-                  variant={isEditMode ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setIsEditMode(!isEditMode)}
-                  className="ml-4"
-                >
-                  {isEditMode ? (
-                    <>
-                      <Eye className="h-4 w-4 mr-2" />
-                      Podgląd
-                    </>
-                  ) : (
-                    <>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edytuj
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2 ml-4">
+                  <Button
+                    variant={isEditMode ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setIsEditMode(!isEditMode)}
+                  >
+                    {isEditMode ? (
+                      <>
+                        <Eye className="h-4 w-4 mr-2" />
+                        Podgląd
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edytuj
+                      </>
+                    )}
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Usuń
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Czy na pewno chcesz usunąć?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Ta akcja nie może być cofnięta. Protokół zwrotu zostanie trwale usunięty.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>Usuń</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               )}
             </div>
           </CardHeader>
@@ -261,92 +299,170 @@ const VehicleReturn = () => {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="employeeName">Osoba wypełniająca formularz *</Label>
-                <Input
-                  id="employeeName"
-                  required
-                  value={formData.employeeName}
-                  onChange={(e) => setFormData({ ...formData, employeeName: e.target.value })}
-                  placeholder="Imię i nazwisko pracownika"
-                  disabled={existingReturn && !isEditMode}
-                />
-              </div>
+            {existingReturn && !isEditMode ? (
+              <div className="space-y-6">
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-1">Osoba wypełniająca formularz</p>
+                  <p className="text-lg font-semibold">{formData.employeeName}</p>
+                </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="canRefundDeposit"
-                    checked={formData.canRefundDeposit}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, canRefundDeposit: checked as boolean })
-                    }
-                    disabled={existingReturn && !isEditMode}
-                  />
-                  <Label htmlFor="canRefundDeposit" className="cursor-pointer">
-                    Czy można zwrócić kaucję - konto
-                  </Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-muted rounded-lg flex items-center gap-3">
+                    {formData.canRefundDeposit ? (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-500" />
+                    )}
+                    <div>
+                      <p className="text-sm text-muted-foreground">Zwrot kaucji - konto</p>
+                      <p className="font-medium">{formData.canRefundDeposit ? "Tak" : "Nie"}</p>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-muted rounded-lg flex items-center gap-3">
+                    {formData.depositRefundedCash ? (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-500" />
+                    )}
+                    <div>
+                      <p className="text-sm text-muted-foreground">Kaucja zwrócona gotówką</p>
+                      <p className="font-medium">{formData.depositRefundedCash ? "Tak" : "Nie"}</p>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-muted rounded-lg flex items-center gap-3">
+                    {formData.vehicleIssue ? (
+                      <XCircle className="h-5 w-5 text-red-500" />
+                    ) : (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    )}
+                    <div>
+                      <p className="text-sm text-muted-foreground">Problem z kamperem</p>
+                      <p className="font-medium">{formData.vehicleIssue ? "Tak" : "Nie"}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="depositRefundedCash"
-                    checked={formData.depositRefundedCash}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, depositRefundedCash: checked as boolean })
-                    }
-                    disabled={existingReturn && !isEditMode}
-                  />
-                  <Label htmlFor="depositRefundedCash" className="cursor-pointer">
-                    Czy kaucja zwrócona gotówką?
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="vehicleIssue"
-                    checked={formData.vehicleIssue}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, vehicleIssue: checked as boolean })
-                    }
-                    disabled={existingReturn && !isEditMode}
-                  />
-                  <Label htmlFor="vehicleIssue" className="cursor-pointer">
-                    Problem z kamperem
-                  </Label>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-1">Ilość paliwa</p>
+                    <p className="text-lg font-semibold">{formData.fuelLevel}%</p>
+                  </div>
+                  <div className="p-4 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-1">Ilość KM na liczniku</p>
+                    <p className="text-lg font-semibold">{formData.mileage}</p>
+                  </div>
+                </div>
+
+                {existingPhotos.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Zdjęcia ({existingPhotos.length})</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {existingPhotos.map((url, index) => (
+                        <a 
+                          key={index}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative aspect-square group"
+                        >
+                          <img
+                            src={url}
+                            alt={`Zdjęcie ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg hover:opacity-90 transition-opacity"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {formData.returnNotes && (
+                  <div className="p-4 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-2">Notatka ze zwrotu</p>
+                    <p className="text-sm whitespace-pre-wrap">{formData.returnNotes}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="fuelLevel">Ilość paliwa *</Label>
+                  <Label htmlFor="employeeName">Osoba wypełniająca formularz *</Label>
                   <Input
-                    id="fuelLevel"
-                    type="number"
-                    min="0"
-                    max="100"
+                    id="employeeName"
                     required
-                    value={formData.fuelLevel}
-                    onChange={(e) => setFormData({ ...formData, fuelLevel: e.target.value })}
-                    disabled={existingReturn && !isEditMode}
+                    value={formData.employeeName}
+                    onChange={(e) => setFormData({ ...formData, employeeName: e.target.value })}
+                    placeholder="Imię i nazwisko pracownika"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="mileage">Ilość KM na liczniku *</Label>
-                  <Input
-                    id="mileage"
-                    type="number"
-                    required
-                    value={formData.mileage}
-                    onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
-                    disabled={existingReturn && !isEditMode}
-                  />
-                </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="photos">Zdjęcia *</Label>
-                <div className="border-2 border-dashed rounded-lg p-6">
-                  {(!existingReturn || isEditMode) && (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="canRefundDeposit"
+                      checked={formData.canRefundDeposit}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, canRefundDeposit: checked as boolean })
+                      }
+                    />
+                    <Label htmlFor="canRefundDeposit" className="cursor-pointer">
+                      Czy można zwrócić kaucję - konto
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="depositRefundedCash"
+                      checked={formData.depositRefundedCash}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, depositRefundedCash: checked as boolean })
+                      }
+                    />
+                    <Label htmlFor="depositRefundedCash" className="cursor-pointer">
+                      Czy kaucja zwrócona gotówką?
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="vehicleIssue"
+                      checked={formData.vehicleIssue}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, vehicleIssue: checked as boolean })
+                      }
+                    />
+                    <Label htmlFor="vehicleIssue" className="cursor-pointer">
+                      Problem z kamperem
+                    </Label>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fuelLevel">Ilość paliwa *</Label>
+                    <Input
+                      id="fuelLevel"
+                      type="number"
+                      min="0"
+                      max="100"
+                      required
+                      value={formData.fuelLevel}
+                      onChange={(e) => setFormData({ ...formData, fuelLevel: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="mileage">Ilość KM na liczniku *</Label>
+                    <Input
+                      id="mileage"
+                      type="number"
+                      required
+                      value={formData.mileage}
+                      onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="photos">Zdjęcia *</Label>
+                  <div className="border-2 border-dashed rounded-lg p-6">
                     <div className="text-center mb-4">
                       <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                       <input
@@ -361,18 +477,15 @@ const VehicleReturn = () => {
                         <span className="text-primary hover:underline">Przeciągnij zdjęcia lub kliknij aby wybrać</span>
                       </label>
                     </div>
-                  )}
-                  
-                  <div className="grid grid-cols-4 gap-2">
-                    {/* Existing photos */}
-                    {existingPhotos.map((url, index) => (
-                      <div key={`existing-${index}`} className="relative group aspect-square">
-                        <img
-                          src={url}
-                          alt={`Istniejące ${index + 1}`}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                        {isEditMode && (
+                    
+                    <div className="grid grid-cols-4 gap-2">
+                      {existingPhotos.map((url, index) => (
+                        <div key={`existing-${index}`} className="relative group aspect-square">
+                          <img
+                            src={url}
+                            alt={`Istniejące ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg"
+                          />
                           <Button
                             type="button"
                             variant="destructive"
@@ -382,49 +495,45 @@ const VehicleReturn = () => {
                           >
                             <X className="h-3 w-3" />
                           </Button>
-                        )}
-                      </div>
-                    ))}
-                    
-                    {/* New photos */}
-                    {formData.photos && formData.photos.map((file, index) => (
-                      <div key={`new-${index}`} className="relative group aspect-square">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={`Nowe ${index + 1}`}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => {
-                            const newPhotos = formData.photos?.filter((_, i) => i !== index) || null;
-                            setFormData({ ...formData, photos: newPhotos?.length ? newPhotos : null });
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
+                        </div>
+                      ))}
+                      
+                      {formData.photos && formData.photos.map((file, index) => (
+                        <div key={`new-${index}`} className="relative group aspect-square">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Nowe ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => {
+                              const newPhotos = formData.photos?.filter((_, i) => i !== index) || null;
+                              setFormData({ ...formData, photos: newPhotos?.length ? newPhotos : null });
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="returnNotes">Notatka ze zwrotu</Label>
-                <Textarea
-                  id="returnNotes"
-                  value={formData.returnNotes}
-                  onChange={(e) => setFormData({ ...formData, returnNotes: e.target.value })}
-                  rows={4}
-                  placeholder="Dodatkowe uwagi dotyczące zwrotu pojazdu..."
-                  disabled={existingReturn && !isEditMode}
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="returnNotes">Notatka ze zwrotu</Label>
+                  <Textarea
+                    id="returnNotes"
+                    value={formData.returnNotes}
+                    onChange={(e) => setFormData({ ...formData, returnNotes: e.target.value })}
+                    rows={4}
+                    placeholder="Dodatkowe uwagi dotyczące zwrotu pojazdu..."
+                  />
+                </div>
 
-              {(!existingReturn || isEditMode) && (
                 <div className="flex gap-2">
                   <Button 
                     type="button" 
@@ -438,8 +547,8 @@ const VehicleReturn = () => {
                     {(addReturnMutation.isPending || updateReturnMutation.isPending) ? 'Zapisywanie...' : (existingReturn ? 'Zaktualizuj' : 'Wyślij')}
                   </Button>
                 </div>
-              )}
-            </form>
+              </form>
+            )}
           </CardContent>
         </Card>
       </div>

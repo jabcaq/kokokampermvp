@@ -101,3 +101,30 @@ export const useUpdateVehicleReturn = () => {
     },
   });
 };
+
+export const useDeleteVehicleReturn = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("vehicle_returns")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicle_returns"] });
+      queryClient.invalidateQueries({ queryKey: ["protocols"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Błąd",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};

@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, X, FileText, Edit, Eye, ArrowLeft } from "lucide-react";
+import { Upload, X, FileText, Edit, Eye, ArrowLeft, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAddVehicleHandover, useUpdateVehicleHandover, useVehicleHandovers } from "@/hooks/useVehicleHandovers";
+import { useAddVehicleHandover, useUpdateVehicleHandover, useVehicleHandovers, useDeleteVehicleHandover } from "@/hooks/useVehicleHandovers";
 import { useCreateNotification } from "@/hooks/useNotifications";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,6 +18,7 @@ const VehicleHandover = () => {
   const { toast } = useToast();
   const addHandoverMutation = useAddVehicleHandover();
   const updateHandoverMutation = useUpdateVehicleHandover();
+  const deleteHandoverMutation = useDeleteVehicleHandover();
   const createNotificationMutation = useCreateNotification();
   
   
@@ -181,6 +183,21 @@ const VehicleHandover = () => {
     });
   };
 
+  const handleDelete = async () => {
+    if (!existingHandover) return;
+    
+    try {
+      await deleteHandoverMutation.mutateAsync(existingHandover.id);
+      toast({
+        title: "Sukces",
+        description: "Protokół wydania został usunięty.",
+      });
+      navigate(-1);
+    } catch (error) {
+      console.error('Delete error:', error);
+    }
+  };
+
   if (!contractId || !contractNumber) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -215,24 +232,45 @@ const VehicleHandover = () => {
                 </CardDescription>
               </div>
               {existingHandover && (
-                <Button
-                  variant={isEditMode ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setIsEditMode(!isEditMode)}
-                  className="ml-4"
-                >
-                  {isEditMode ? (
-                    <>
-                      <Eye className="h-4 w-4 mr-2" />
-                      Podgląd
-                    </>
-                  ) : (
-                    <>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edytuj
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2 ml-4">
+                  <Button
+                    variant={isEditMode ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setIsEditMode(!isEditMode)}
+                  >
+                    {isEditMode ? (
+                      <>
+                        <Eye className="h-4 w-4 mr-2" />
+                        Podgląd
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edytuj
+                      </>
+                    )}
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Usuń
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Czy na pewno chcesz usunąć?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Ta akcja nie może być cofnięta. Protokół wydania zostanie trwale usunięty.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>Usuń</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               )}
             </div>
           </CardHeader>
@@ -248,38 +286,92 @@ const VehicleHandover = () => {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="mileage">Ilość KM na liczniku</Label>
-                  <Input
-                    id="mileage"
-                    type="number"
-                    required
-                    value={formData.mileage}
-                    onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
-                    disabled={existingHandover && !isEditMode}
-                  />
+            {existingHandover && !isEditMode ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-1">Ilość KM na liczniku</p>
+                    <p className="text-lg font-semibold">{formData.mileage}</p>
+                  </div>
+                  <div className="p-4 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-1">Ilość paliwa</p>
+                    <p className="text-lg font-semibold">{formData.fuelLevel}%</p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fuelLevel">Ilość paliwa</Label>
-                  <Input
-                    id="fuelLevel"
-                    type="number"
-                    min="0"
-                    max="100"
-                    required
-                    value={formData.fuelLevel}
-                    onChange={(e) => setFormData({ ...formData, fuelLevel: e.target.value })}
-                    disabled={existingHandover && !isEditMode}
-                  />
-                </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="handoverProtocol">Protokół z wydania</Label>
-                <div className="border-2 border-dashed rounded-lg p-6">
-                  {(!existingHandover || isEditMode) && (
+                {existingFiles.protocols.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Protokół z wydania</Label>
+                    <div className="grid gap-2">
+                      {existingFiles.protocols.map((url, index) => (
+                        <a 
+                          key={index}
+                          href={url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="flex items-center gap-2 p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                        >
+                          <FileText className="h-5 w-5 text-primary" />
+                          <span className="font-medium">Protokół {index + 1}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {existingFiles.photos.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Zdjęcia ({existingFiles.photos.length})</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {existingFiles.photos.map((url, index) => (
+                        <a 
+                          key={index}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative aspect-square group"
+                        >
+                          <img
+                            src={url}
+                            alt={`Zdjęcie ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg hover:opacity-90 transition-opacity"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="mileage">Ilość KM na liczniku</Label>
+                    <Input
+                      id="mileage"
+                      type="number"
+                      required
+                      value={formData.mileage}
+                      onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fuelLevel">Ilość paliwa</Label>
+                    <Input
+                      id="fuelLevel"
+                      type="number"
+                      min="0"
+                      max="100"
+                      required
+                      value={formData.fuelLevel}
+                      onChange={(e) => setFormData({ ...formData, fuelLevel: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="handoverProtocol">Protokół z wydania</Label>
+                  <div className="border-2 border-dashed rounded-lg p-6">
                     <div className="text-center mb-4">
                       <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                       <input
@@ -293,19 +385,16 @@ const VehicleHandover = () => {
                         <span className="text-primary hover:underline">Przeciągnij pliki lub kliknij aby wybrać</span>
                       </label>
                     </div>
-                  )}
-                  
-                  {/* Existing protocol files */}
-                  {existingFiles.protocols.length > 0 && (
-                    <div className="mb-4 space-y-2">
-                      <p className="text-sm font-medium">Istniejące pliki:</p>
-                      {existingFiles.protocols.map((url, index) => (
-                        <div key={`existing-${index}`} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
-                          <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline truncate">
-                            <FileText className="h-4 w-4 flex-shrink-0" />
-                            <span className="truncate">Protokół {index + 1}</span>
-                          </a>
-                          {isEditMode && (
+                    
+                    {existingFiles.protocols.length > 0 && (
+                      <div className="mb-4 space-y-2">
+                        <p className="text-sm font-medium">Istniejące pliki:</p>
+                        {existingFiles.protocols.map((url, index) => (
+                          <div key={`existing-${index}`} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                            <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline truncate">
+                              <FileText className="h-4 w-4 flex-shrink-0" />
+                              <span className="truncate">Protokół {index + 1}</span>
+                            </a>
                             <Button
                               type="button"
                               variant="ghost"
@@ -314,41 +403,38 @@ const VehicleHandover = () => {
                             >
                               <X className="h-4 w-4" />
                             </Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* New protocol files */}
-                  {formData.handoverProtocol && formData.handoverProtocol.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Nowe pliki:</p>
-                      {formData.handoverProtocol.map((file, index) => (
-                        <div key={`new-${index}`} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
-                          <span className="truncate">{file.name}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              const newFiles = formData.handoverProtocol?.filter((_, i) => i !== index) || null;
-                              setFormData({ ...formData, handoverProtocol: newFiles?.length ? newFiles : null });
-                            }}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {formData.handoverProtocol && formData.handoverProtocol.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Nowe pliki:</p>
+                        {formData.handoverProtocol.map((file, index) => (
+                          <div key={`new-${index}`} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                            <span className="truncate">{file.name}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const newFiles = formData.handoverProtocol?.filter((_, i) => i !== index) || null;
+                                setFormData({ ...formData, handoverProtocol: newFiles?.length ? newFiles : null });
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="photos">Zdjęcia</Label>
-                <div className="border-2 border-dashed rounded-lg p-6">
-                  {(!existingHandover || isEditMode) && (
+                <div className="space-y-2">
+                  <Label htmlFor="photos">Zdjęcia</Label>
+                  <div className="border-2 border-dashed rounded-lg p-6">
                     <div className="text-center mb-4">
                       <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                       <input
@@ -363,58 +449,52 @@ const VehicleHandover = () => {
                         <span className="text-primary hover:underline">Przeciągnij zdjęcia lub kliknij aby wybrać</span>
                       </label>
                     </div>
-                  )}
-                  
-                  <div className="grid grid-cols-4 gap-2">
-                    {/* Existing photos */}
-                    {existingFiles.photos.map((url, index) => (
+                    
+                    <div className="grid grid-cols-4 gap-2">
+                      {existingFiles.photos.map((url, index) => (
                         <div key={`existing-${index}`} className="relative group aspect-square">
                           <img
                             src={url}
                             alt={`Istniejące ${index + 1}`}
                             className="w-full h-full object-cover rounded-lg"
                           />
-                          {isEditMode && (
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => removeExistingFile('photos', url)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          )}
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => removeExistingFile('photos', url)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
                         </div>
-                    ))}
-                    
-                    {/* New photos */}
-                    {formData.photos && formData.photos.map((file, index) => (
-                      <div key={`new-${index}`} className="relative group aspect-square">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={`Nowe ${index + 1}`}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => {
-                            const newPhotos = formData.photos?.filter((_, i) => i !== index) || null;
-                            setFormData({ ...formData, photos: newPhotos?.length ? newPhotos : null });
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
+                      ))}
+                      
+                      {formData.photos && formData.photos.map((file, index) => (
+                        <div key={`new-${index}`} className="relative group aspect-square">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Nowe ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => {
+                              const newPhotos = formData.photos?.filter((_, i) => i !== index) || null;
+                              setFormData({ ...formData, photos: newPhotos?.length ? newPhotos : null });
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {(!existingHandover || isEditMode) && (
                 <div className="flex gap-2">
                   <Button 
                     type="button" 
@@ -428,8 +508,8 @@ const VehicleHandover = () => {
                     {(addHandoverMutation.isPending || updateHandoverMutation.isPending) ? 'Zapisywanie...' : (existingHandover ? 'Zaktualizuj' : 'Wyślij')}
                   </Button>
                 </div>
-              )}
-            </form>
+              </form>
+            )}
           </CardContent>
         </Card>
       </div>

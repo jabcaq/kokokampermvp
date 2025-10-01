@@ -96,3 +96,30 @@ export const useUpdateVehicleHandover = () => {
     },
   });
 };
+
+export const useDeleteVehicleHandover = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("vehicle_handovers")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicle_handovers"] });
+      queryClient.invalidateQueries({ queryKey: ["protocols"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Błąd",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
