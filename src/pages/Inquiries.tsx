@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Send, Inbox, Trash2, Reply, Clock } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { RichTextEditor } from "@/components/RichTextEditor";
 
 interface Inquiry {
   id: number;
@@ -180,11 +180,10 @@ const Inquiries = () => {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Twoja odpowiedź</label>
-                  <Textarea
-                    value={replyMessage}
-                    onChange={(e) => setReplyMessage(e.target.value)}
+                  <RichTextEditor
+                    content={replyMessage}
+                    onChange={setReplyMessage}
                     placeholder="Napisz odpowiedź..."
-                    className="min-h-[300px]"
                   />
                 </div>
 
