@@ -1,45 +1,45 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, FileText, Car, TrendingUp } from "lucide-react";
-
-const stats = [
-  {
-    title: "Aktywni klienci",
-    value: "127",
-    change: "+12%",
-    icon: Users,
-    color: "primary",
-  },
-  {
-    title: "Aktywne umowy",
-    value: "45",
-    change: "+8%",
-    icon: FileText,
-    color: "secondary",
-  },
-  {
-    title: "Flota pojazdów",
-    value: "23",
-    change: "+2",
-    icon: Car,
-    color: "accent",
-  },
-  {
-    title: "Przychód miesiąc",
-    value: "87,500 zł",
-    change: "+23%",
-    icon: TrendingUp,
-    color: "primary",
-  },
-];
-
-const recentContracts = [
-  { id: 1, client: "Jan Kowalski", vehicle: "Kamper XL-450", startDate: "2024-03-15", status: "active" },
-  { id: 2, client: "Anna Nowak", vehicle: "Przyczepa Camp-200", startDate: "2024-03-14", status: "active" },
-  { id: 3, client: "Piotr Wiśniewski", vehicle: "Kamper Comfort-300", startDate: "2024-03-13", status: "pending" },
-  { id: 4, client: "Maria Wójcik", vehicle: "Kamper Family-500", startDate: "2024-03-12", status: "active" },
-];
+import { useClients } from "@/hooks/useClients";
+import { useContracts } from "@/hooks/useContracts";
+import { useVehicles } from "@/hooks/useVehicles";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { pl } from "date-fns/locale";
 
 const Dashboard = () => {
+  const { data: clients, isLoading: clientsLoading } = useClients();
+  const { data: contracts, isLoading: contractsLoading } = useContracts();
+  const { data: vehicles, isLoading: vehiclesLoading } = useVehicles();
+
+  const isLoading = clientsLoading || contractsLoading || vehiclesLoading;
+
+  const activeContracts = contracts?.filter(c => c.status === 'active') || [];
+  const totalRevenue = activeContracts.reduce((sum, c) => sum + (Number(c.value) || 0), 0);
+  const recentContracts = contracts?.slice(0, 4) || [];
+
+  const stats = [
+    {
+      title: "Aktywni klienci",
+      value: clients?.length.toString() || "0",
+      icon: Users,
+    },
+    {
+      title: "Aktywne umowy",
+      value: activeContracts.length.toString(),
+      icon: FileText,
+    },
+    {
+      title: "Flota pojazdów",
+      value: vehicles?.length.toString() || "0",
+      icon: Car,
+    },
+    {
+      title: "Przychód miesiąc",
+      value: `${totalRevenue.toLocaleString('pl-PL')} zł`,
+      icon: TrendingUp,
+    },
+  ];
   return (
     <div className="space-y-8 animate-fade-in">
       <div>
@@ -65,10 +65,11 @@ const Dashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{stat.value}</div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  <span className="text-primary font-medium">{stat.change}</span> vs. poprzedni miesiąc
-                </p>
+                {isLoading ? (
+                  <Skeleton className="h-9 w-20" />
+                ) : (
+                  <div className="text-3xl font-bold">{stat.value}</div>
+                )}
               </CardContent>
             </Card>
           );
@@ -82,33 +83,51 @@ const Dashboard = () => {
           <CardDescription>Przegląd najnowszych rezerwacji</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {recentContracts.map((contract) => (
-              <div
-                key={contract.id}
-                className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex-1">
-                  <p className="font-semibold text-foreground">{contract.client}</p>
-                  <p className="text-sm text-muted-foreground">{contract.vehicle}</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-sm font-medium">{contract.startDate}</p>
-                    <span
-                      className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                        contract.status === "active"
-                          ? "bg-primary/10 text-primary"
-                          : "bg-secondary/10 text-secondary"
-                      }`}
-                    >
-                      {contract.status === "active" ? "Aktywna" : "Oczekująca"}
-                    </span>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-20 w-full" />
+              ))}
+            </div>
+          ) : recentContracts.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Brak umów</p>
+          ) : (
+            <div className="space-y-4">
+              {recentContracts.map((contract) => (
+                <div
+                  key={contract.id}
+                  className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground">
+                      {contract.client?.name || contract.tenant_name || 'Brak nazwy'}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{contract.vehicle_model}</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-sm font-medium">
+                        {format(new Date(contract.start_date), 'dd MMM yyyy', { locale: pl })}
+                      </p>
+                      <span
+                        className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                          contract.status === "active"
+                            ? "bg-primary/10 text-primary"
+                            : contract.status === "pending"
+                            ? "bg-secondary/10 text-secondary"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {contract.status === "active" ? "Aktywna" : 
+                         contract.status === "pending" ? "Oczekująca" :
+                         contract.status === "completed" ? "Zakończona" : "Anulowana"}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
