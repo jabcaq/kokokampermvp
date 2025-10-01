@@ -14,10 +14,6 @@ export interface Document {
   rok: number | null;
   created_at: string;
   updated_at: string;
-  contract?: {
-    contract_number: string;
-    tenant_name: string;
-  };
   client?: {
     name: string;
   };
@@ -31,7 +27,6 @@ export const useDocuments = () => {
         .from('documents')
         .select(`
           *,
-          contract:contracts(contract_number, tenant_name),
           client:clients(name)
         `)
         .order('created_at', { ascending: false });
@@ -46,7 +41,7 @@ export const useAddDocument = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (document: Omit<Document, 'id' | 'created_at' | 'updated_at' | 'contract' | 'client'>) => {
+    mutationFn: async (document: Omit<Document, 'id' | 'created_at' | 'updated_at' | 'client'>) => {
       const { data, error } = await supabase
         .from('documents')
         .insert([document])

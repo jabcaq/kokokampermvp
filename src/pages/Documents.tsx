@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { useDocuments, useAddDocument, useDeleteDocument } from "@/hooks/useDocuments";
 import { useClients } from "@/hooks/useClients";
-import { useContracts } from "@/hooks/useContracts";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -31,7 +30,6 @@ const Documents = () => {
   
   const { data: documents = [], isLoading } = useDocuments();
   const { data: clients = [] } = useClients();
-  const { data: contracts = [] } = useContracts();
   const addDocumentMutation = useAddDocument();
   const deleteDocumentMutation = useDeleteDocument();
 
@@ -40,7 +38,7 @@ const Documents = () => {
       doc.rodzaj.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.nazwa_pliku.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.client?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.contract?.contract_number.toLowerCase().includes(searchQuery.toLowerCase())
+      (doc.contract_id && doc.contract_id.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const sortedDocuments = [...filteredDocuments].sort((a, b) => {
@@ -168,19 +166,8 @@ const Documents = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="contract_id">Umowa</Label>
-                  <Select name="contract_id">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Wybierz umowę" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {contracts.map((contract) => (
-                        <SelectItem key={contract.id} value={contract.id}>
-                          {contract.contract_number}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="contract_id">Umowa (numer)</Label>
+                  <Input id="contract_id" name="contract_id" placeholder="Numer umowy" />
                 </div>
               </div>
 
@@ -282,7 +269,7 @@ const Documents = () => {
                 <TableRow key={doc.id}>
                   <TableCell className="font-medium">{doc.rodzaj}</TableCell>
                   <TableCell className="text-muted-foreground">
-                    {doc.contract?.contract_number || "—"}
+                    {doc.contract_id || "—"}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {doc.folder || "—"}
