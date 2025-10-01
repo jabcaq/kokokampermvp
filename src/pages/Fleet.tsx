@@ -7,8 +7,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Truck, Caravan, Plus, Search, Calendar, MapPin } from "lucide-react";
+import { Truck, Caravan, Plus, Search, Calendar, MapPin, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type VehicleType = "kamper" | "przyczepa";
 type VehicleStatus = "dostepny" | "wynajety" | "serwis";
@@ -79,6 +89,7 @@ const Fleet = () => {
   const [filterType, setFilterType] = useState<"all" | VehicleType>("all");
   const [filterStatus, setFilterStatus] = useState<"all" | VehicleStatus>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [deleteVehicleId, setDeleteVehicleId] = useState<string | null>(null);
   const [newVehicle, setNewVehicle] = useState({
     name: "",
     type: "kamper" as VehicleType,
@@ -110,6 +121,12 @@ const Fleet = () => {
       registrationNumber: "",
       location: "",
     });
+  };
+
+  const handleDeleteVehicle = (id: string) => {
+    setVehicles(vehicles.filter(v => v.id !== id));
+    toast.success("Pojazd usunięty z floty!");
+    setDeleteVehicleId(null);
   };
 
   const getStatusBadge = (status: VehicleStatus) => {
@@ -398,6 +415,18 @@ const Fleet = () => {
               >
                 Szczegóły pojazdu
               </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full mt-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteVehicleId(vehicle.id);
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Usuń pojazd
+              </Button>
             </CardContent>
           </Card>
         ))}
@@ -412,6 +441,27 @@ const Fleet = () => {
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={!!deleteVehicleId} onOpenChange={() => setDeleteVehicleId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Czy na pewno chcesz usunąć ten pojazd?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ta operacja jest nieodwracalna. Wszystkie dane pojazdu zostaną trwale usunięte.
+              Upewnij się, że pojazd nie ma aktywnych wynajmów.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteVehicleId && handleDeleteVehicle(deleteVehicleId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Usuń
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

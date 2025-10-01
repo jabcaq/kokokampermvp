@@ -3,20 +3,32 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Mail, Phone, Loader2 } from "lucide-react";
+import { Plus, Search, Mail, Phone, Loader2, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useClients, useAddClient } from "@/hooks/useClients";
+import { useClients, useAddClient, useDeleteClient } from "@/hooks/useClients";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Clients = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
   const { toast } = useToast();
   
   const { data: clients = [], isLoading } = useClients();
   const addClientMutation = useAddClient();
+  const deleteClientMutation = useDeleteClient();
 
   const filteredClients = clients.filter(
     (client) =>
@@ -46,6 +58,23 @@ const Clients = () => {
       toast({
         title: "Błąd",
         description: "Nie udało się dodać klienta.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteClient = async (id: string) => {
+    try {
+      await deleteClientMutation.mutateAsync(id);
+      toast({
+        title: "Sukces",
+        description: "Klient został usunięty.",
+      });
+      setDeleteClientId(null);
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się usunąć klienta. Sprawdź czy nie ma przypisanych umów.",
         variant: "destructive",
       });
     }
@@ -140,7 +169,7 @@ const Clients = () => {
                 )}
                 <Button 
                   variant="outline" 
-                  className="w-full mt-4"
+                  className="w-full mt-2"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/clients/${client.id}`);
@@ -148,11 +177,44 @@ const Clients = () => {
                 >
                   Zobacz szczegóły
                 </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="w-full mt-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteClientId(client.id);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Usuń klienta
+                </Button>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!deleteClientId} onOpenChange={() => setDeleteClientId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Czy na pewno chcesz usunąć tego klienta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ta operacja jest nieodwracalna. Wszystkie dane klienta zostaną trwale usunięte.
+              Upewnij się, że klient nie ma aktywnych umów.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteClientId && handleDeleteClient(deleteClientId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Usuń
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

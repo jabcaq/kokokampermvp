@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Calendar, Edit, Eye, Loader2 } from "lucide-react";
+import { Plus, Search, Calendar, Edit, Eye, Loader2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -10,8 +10,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useContracts } from "@/hooks/useContracts";
+import { useContracts, useDeleteContract } from "@/hooks/useContracts";
 import { format } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const statusConfig = {
   active: { label: "Aktywna", className: "bg-primary/10 text-primary border-primary/20" },
@@ -24,9 +34,11 @@ const Contracts = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [additionalDrivers, setAdditionalDrivers] = useState<number[]>([]);
+  const [deleteContractId, setDeleteContractId] = useState<string | null>(null);
   const { toast } = useToast();
   
   const { data: contractsData = [], isLoading } = useContracts();
+  const deleteContractMutation = useDeleteContract();
   
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -51,6 +63,23 @@ const Contracts = () => {
 
   const removeAdditionalDriver = (index: number) => {
     setAdditionalDrivers(additionalDrivers.filter((_, i) => i !== index));
+  };
+
+  const handleDeleteContract = async (id: string) => {
+    try {
+      await deleteContractMutation.mutateAsync(id);
+      toast({
+        title: "Sukces",
+        description: "Umowa została usunięta.",
+      });
+      setDeleteContractId(null);
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się usunąć umowy.",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredContracts = contractsData.filter(
@@ -521,11 +550,21 @@ const Contracts = () => {
                         {contract.value ? `${contract.value.toFixed(2)} zł` : 'Brak danych'}
                       </p>
                     </div>
-                    <Link to={`/contracts/${contract.id}`}>
-                      <Button variant="outline" size="icon" className="shrink-0">
-                        <Eye className="h-4 w-4" />
+                    <div className="flex gap-2">
+                      <Link to={`/contracts/${contract.id}`}>
+                        <Button variant="outline" size="icon" className="shrink-0">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="shrink-0"
+                        onClick={() => setDeleteContractId(contract.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
-                    </Link>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -533,6 +572,26 @@ const Contracts = () => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteContractId} onOpenChange={() => setDeleteContractId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Czy na pewno chcesz usunąć tę umowę?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ta operacja jest nieodwracalna. Wszystkie dane umowy zostaną trwale usunięte.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteContractId && handleDeleteContract(deleteContractId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Usuń
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
