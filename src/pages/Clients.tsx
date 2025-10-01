@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Mail, Phone, Loader2, Trash2 } from "lucide-react";
+import { Plus, Search, Loader2, Trash2, ArrowUpDown, Eye } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useClients, useAddClient, useDeleteClient } from "@/hooks/useClients";
@@ -24,6 +24,8 @@ const Clients = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<"name" | "email" | "contracts_count">("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const { toast } = useToast();
   
   const { data: clients = [], isLoading } = useClients();
@@ -35,6 +37,26 @@ const Clients = () => {
       client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const sortedClients = [...filteredClients].sort((a, b) => {
+    const aValue = a[sortField] ?? "";
+    const bValue = b[sortField] ?? "";
+    
+    if (sortDirection === "asc") {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
+  });
+
+  const handleSort = (field: "name" | "email" | "contracts_count") => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
 
   const handleAddClient = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -134,64 +156,89 @@ const Clients = () => {
         <div className="flex justify-center items-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : filteredClients.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-12">
-            <p className="text-muted-foreground">Nie znaleziono klientów</p>
-          </CardContent>
-        </Card>
+      ) : sortedClients.length === 0 ? (
+        <div className="text-center py-12 border rounded-lg bg-card">
+          <p className="text-muted-foreground">Nie znaleziono klientów</p>
+        </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredClients.map((client) => (
-            <Card
-              key={client.id}
-              className="transition-all hover:shadow-lg hover:-translate-y-1 duration-300 cursor-pointer"
-              onClick={() => navigate(`/clients/${client.id}`)}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{client.name}</span>
-                  <span className="text-sm font-normal bg-primary/10 text-primary px-3 py-1 rounded-full">
-                    {client.contracts_count} umów
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Mail className="h-4 w-4" />
-                  <span className="truncate">{client.email}</span>
-                </div>
-                {client.phone && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Phone className="h-4 w-4" />
-                    <span>{client.phone}</span>
+        <div className="border rounded-lg bg-card shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => handleSort("name")}
+                >
+                  <div className="flex items-center gap-2">
+                    Imię i nazwisko
+                    <ArrowUpDown className="h-4 w-4" />
                   </div>
-                )}
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-2"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/clients/${client.id}`);
-                  }}
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => handleSort("email")}
                 >
-                  Zobacz szczegóły
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="w-full mt-2"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDeleteClientId(client.id);
-                  }}
+                  <div className="flex items-center gap-2">
+                    Email
+                    <ArrowUpDown className="h-4 w-4" />
+                  </div>
+                </TableHead>
+                <TableHead>Telefon</TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 transition-colors text-center"
+                  onClick={() => handleSort("contracts_count")}
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Usuń klienta
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="flex items-center justify-center gap-2">
+                    Liczba umów
+                    <ArrowUpDown className="h-4 w-4" />
+                  </div>
+                </TableHead>
+                <TableHead className="text-right">Akcje</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedClients.map((client) => (
+                <TableRow 
+                  key={client.id} 
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => navigate(`/clients/${client.id}`)}
+                >
+                  <TableCell className="font-medium">{client.name}</TableCell>
+                  <TableCell className="text-muted-foreground">{client.email}</TableCell>
+                  <TableCell className="text-muted-foreground">{client.phone || "—"}</TableCell>
+                  <TableCell className="text-center">
+                    <span className="inline-flex items-center justify-center bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                      {client.contracts_count}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/clients/${client.id}`);
+                        }}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteClientId(client.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 
