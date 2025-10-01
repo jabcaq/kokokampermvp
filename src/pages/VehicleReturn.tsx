@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Edit, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAddVehicleReturn, useUpdateVehicleReturn, useVehicleReturns } from "@/hooks/useVehicleReturns";
 import { useCreateNotification } from "@/hooks/useNotifications";
@@ -30,6 +30,8 @@ const VehicleReturn = () => {
 
   const { data: existingReturns } = useVehicleReturns(contractId || undefined);
   const existingReturn = existingReturns?.[0];
+
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const [formData, setFormData] = useState({
     employeeName: "",
@@ -207,10 +209,34 @@ const VehicleReturn = () => {
       <div className="max-w-4xl mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle>Formularz zwrotu kampera</CardTitle>
-            <CardDescription>
-              Proszę wypełnić poniższy formularz, aby potwierdzić stan kampera przy zwrocie. Upewnij się, że wszystkie sekcje zostały dokładnie sprawdzone, a wszelkie uszkodzenia lub brakujące elementy odnotowane. Na podstawie tych informacji podejmiemy decyzję o zwrocie kaucji. Dziękujemy za współpracę!
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Formularz zwrotu kampera</CardTitle>
+                <CardDescription>
+                  Proszę wypełnić poniższy formularz, aby potwierdzić stan kampera przy zwrocie. Upewnij się, że wszystkie sekcje zostały dokładnie sprawdzone, a wszelkie uszkodzenia lub brakujące elementy odnotowane. Na podstawie tych informacji podejmiemy decyzję o zwrocie kaucji. Dziękujemy za współpracę!
+                </CardDescription>
+              </div>
+              {existingReturn && (
+                <Button
+                  variant={isEditMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  className="ml-4"
+                >
+                  {isEditMode ? (
+                    <>
+                      <Eye className="h-4 w-4 mr-2" />
+                      Podgląd
+                    </>
+                  ) : (
+                    <>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edytuj
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {/* Contract info */}
@@ -233,6 +259,7 @@ const VehicleReturn = () => {
                   value={formData.employeeName}
                   onChange={(e) => setFormData({ ...formData, employeeName: e.target.value })}
                   placeholder="Imię i nazwisko pracownika"
+                  disabled={existingReturn && !isEditMode}
                 />
               </div>
 
@@ -244,6 +271,7 @@ const VehicleReturn = () => {
                     onCheckedChange={(checked) =>
                       setFormData({ ...formData, canRefundDeposit: checked as boolean })
                     }
+                    disabled={existingReturn && !isEditMode}
                   />
                   <Label htmlFor="canRefundDeposit" className="cursor-pointer">
                     Czy można zwrócić kaucję - konto
@@ -256,6 +284,7 @@ const VehicleReturn = () => {
                     onCheckedChange={(checked) =>
                       setFormData({ ...formData, depositRefundedCash: checked as boolean })
                     }
+                    disabled={existingReturn && !isEditMode}
                   />
                   <Label htmlFor="depositRefundedCash" className="cursor-pointer">
                     Czy kaucja zwrócona gotówką?
@@ -268,6 +297,7 @@ const VehicleReturn = () => {
                     onCheckedChange={(checked) =>
                       setFormData({ ...formData, vehicleIssue: checked as boolean })
                     }
+                    disabled={existingReturn && !isEditMode}
                   />
                   <Label htmlFor="vehicleIssue" className="cursor-pointer">
                     Problem z kamperem
@@ -286,6 +316,7 @@ const VehicleReturn = () => {
                     required
                     value={formData.fuelLevel}
                     onChange={(e) => setFormData({ ...formData, fuelLevel: e.target.value })}
+                    disabled={existingReturn && !isEditMode}
                   />
                 </div>
                 <div className="space-y-2">
@@ -296,6 +327,7 @@ const VehicleReturn = () => {
                     required
                     value={formData.mileage}
                     onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
+                    disabled={existingReturn && !isEditMode}
                   />
                 </div>
               </div>
@@ -303,20 +335,22 @@ const VehicleReturn = () => {
               <div className="space-y-2">
                 <Label htmlFor="photos">Zdjęcia *</Label>
                 <div className="border-2 border-dashed rounded-lg p-6">
-                  <div className="text-center mb-4">
-                    <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                    <input
-                      id="photos"
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFileChange}
-                    />
-                    <label htmlFor="photos" className="cursor-pointer">
-                      <span className="text-primary hover:underline">Przeciągnij zdjęcia lub kliknij aby wybrać</span>
-                    </label>
-                  </div>
+                  {(!existingReturn || isEditMode) && (
+                    <div className="text-center mb-4">
+                      <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                      <input
+                        id="photos"
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFileChange}
+                      />
+                      <label htmlFor="photos" className="cursor-pointer">
+                        <span className="text-primary hover:underline">Przeciągnij zdjęcia lub kliknij aby wybrać</span>
+                      </label>
+                    </div>
+                  )}
                   
                   <div className="grid grid-cols-4 gap-2">
                     {/* Existing photos */}
@@ -327,15 +361,17 @@ const VehicleReturn = () => {
                           alt={`Istniejące ${index + 1}`}
                           className="w-full h-full object-cover rounded-lg"
                         />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => removeExistingPhoto(url)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
+                        {isEditMode && (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => removeExistingPhoto(url)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                     ))}
                     
@@ -373,22 +409,25 @@ const VehicleReturn = () => {
                   onChange={(e) => setFormData({ ...formData, returnNotes: e.target.value })}
                   rows={4}
                   placeholder="Dodatkowe uwagi dotyczące zwrotu pojazdu..."
+                  disabled={existingReturn && !isEditMode}
                 />
               </div>
 
-              <div className="flex gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={handleClearForm}
-                  className="gap-2"
-                >
-                  Clear form
-                </Button>
-                <Button type="submit" disabled={addReturnMutation.isPending || updateReturnMutation.isPending}>
-                  {(addReturnMutation.isPending || updateReturnMutation.isPending) ? 'Zapisywanie...' : (existingReturn ? 'Zaktualizuj' : 'Wyślij')}
-                </Button>
-              </div>
+              {(!existingReturn || isEditMode) && (
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleClearForm}
+                    className="gap-2"
+                  >
+                    Clear form
+                  </Button>
+                  <Button type="submit" disabled={addReturnMutation.isPending || updateReturnMutation.isPending}>
+                    {(addReturnMutation.isPending || updateReturnMutation.isPending) ? 'Zapisywanie...' : (existingReturn ? 'Zaktualizuj' : 'Wyślij')}
+                  </Button>
+                </div>
+              )}
             </form>
           </CardContent>
         </Card>

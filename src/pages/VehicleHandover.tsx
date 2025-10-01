@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, X, FileText } from "lucide-react";
+import { Upload, X, FileText, Edit, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAddVehicleHandover, useUpdateVehicleHandover, useVehicleHandovers } from "@/hooks/useVehicleHandovers";
 import { useCreateNotification } from "@/hooks/useNotifications";
@@ -28,6 +28,8 @@ const VehicleHandover = () => {
 
   const { data: existingHandovers } = useVehicleHandovers(contractId || undefined);
   const existingHandover = existingHandovers?.[0];
+
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const [formData, setFormData] = useState({
     mileage: "",
@@ -194,10 +196,34 @@ const VehicleHandover = () => {
       <div className="max-w-4xl mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle>Formularz wydania</CardTitle>
-            <CardDescription>
-              Ten formularz służy do rejestracji procesu wydania kampera. Prosimy o dodanie protokołu zdawczego oraz zdjęć dokumentujących wydanie pojazdu. Upewnij się, że wszystkie załączniki są kompletne i czytelne.
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Formularz wydania</CardTitle>
+                <CardDescription>
+                  Ten formularz służy do rejestracji procesu wydania kampera. Prosimy o dodanie protokołu zdawczego oraz zdjęć dokumentujących wydanie pojazdu. Upewnij się, że wszystkie załączniki są kompletne i czytelne.
+                </CardDescription>
+              </div>
+              {existingHandover && (
+                <Button
+                  variant={isEditMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  className="ml-4"
+                >
+                  {isEditMode ? (
+                    <>
+                      <Eye className="h-4 w-4 mr-2" />
+                      Podgląd
+                    </>
+                  ) : (
+                    <>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edytuj
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {/* Contract info */}
@@ -221,6 +247,7 @@ const VehicleHandover = () => {
                     required
                     value={formData.mileage}
                     onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
+                    disabled={existingHandover && !isEditMode}
                   />
                 </div>
                 <div className="space-y-2">
@@ -233,6 +260,7 @@ const VehicleHandover = () => {
                     required
                     value={formData.fuelLevel}
                     onChange={(e) => setFormData({ ...formData, fuelLevel: e.target.value })}
+                    disabled={existingHandover && !isEditMode}
                   />
                 </div>
               </div>
@@ -240,19 +268,21 @@ const VehicleHandover = () => {
               <div className="space-y-2">
                 <Label htmlFor="handoverProtocol">Protokół z wydania</Label>
                 <div className="border-2 border-dashed rounded-lg p-6">
-                  <div className="text-center mb-4">
-                    <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                    <input
-                      id="handoverProtocol"
-                      type="file"
-                      multiple
-                      className="hidden"
-                      onChange={handleFileChange('handoverProtocol')}
-                    />
-                    <label htmlFor="handoverProtocol" className="cursor-pointer">
-                      <span className="text-primary hover:underline">Przeciągnij pliki lub kliknij aby wybrać</span>
-                    </label>
-                  </div>
+                  {(!existingHandover || isEditMode) && (
+                    <div className="text-center mb-4">
+                      <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                      <input
+                        id="handoverProtocol"
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={handleFileChange('handoverProtocol')}
+                      />
+                      <label htmlFor="handoverProtocol" className="cursor-pointer">
+                        <span className="text-primary hover:underline">Przeciągnij pliki lub kliknij aby wybrać</span>
+                      </label>
+                    </div>
+                  )}
                   
                   {/* Existing protocol files */}
                   {existingFiles.protocols.length > 0 && (
@@ -264,14 +294,16 @@ const VehicleHandover = () => {
                             <FileText className="h-4 w-4 flex-shrink-0" />
                             <span className="truncate">Protokół {index + 1}</span>
                           </a>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeExistingFile('protocols', url)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                          {isEditMode && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeExistingFile('protocols', url)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -305,40 +337,44 @@ const VehicleHandover = () => {
               <div className="space-y-2">
                 <Label htmlFor="photos">Zdjęcia</Label>
                 <div className="border-2 border-dashed rounded-lg p-6">
-                  <div className="text-center mb-4">
-                    <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                    <input
-                      id="photos"
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFileChange('photos')}
-                    />
-                    <label htmlFor="photos" className="cursor-pointer">
-                      <span className="text-primary hover:underline">Przeciągnij zdjęcia lub kliknij aby wybrać</span>
-                    </label>
-                  </div>
+                  {(!existingHandover || isEditMode) && (
+                    <div className="text-center mb-4">
+                      <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                      <input
+                        id="photos"
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFileChange('photos')}
+                      />
+                      <label htmlFor="photos" className="cursor-pointer">
+                        <span className="text-primary hover:underline">Przeciągnij zdjęcia lub kliknij aby wybrać</span>
+                      </label>
+                    </div>
+                  )}
                   
                   <div className="grid grid-cols-4 gap-2">
                     {/* Existing photos */}
                     {existingFiles.photos.map((url, index) => (
-                      <div key={`existing-${index}`} className="relative group aspect-square">
-                        <img
-                          src={url}
-                          alt={`Istniejące ${index + 1}`}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => removeExistingFile('photos', url)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
+                        <div key={`existing-${index}`} className="relative group aspect-square">
+                          <img
+                            src={url}
+                            alt={`Istniejące ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                          {isEditMode && (
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => removeExistingFile('photos', url)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
                     ))}
                     
                     {/* New photos */}
@@ -367,19 +403,21 @@ const VehicleHandover = () => {
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={handleClearForm}
-                  className="gap-2"
-                >
-                  Clear form
-                </Button>
-                <Button type="submit" disabled={addHandoverMutation.isPending || updateHandoverMutation.isPending}>
-                  {(addHandoverMutation.isPending || updateHandoverMutation.isPending) ? 'Zapisywanie...' : (existingHandover ? 'Zaktualizuj' : 'Wyślij')}
-                </Button>
-              </div>
+              {(!existingHandover || isEditMode) && (
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleClearForm}
+                    className="gap-2"
+                  >
+                    Clear form
+                  </Button>
+                  <Button type="submit" disabled={addHandoverMutation.isPending || updateHandoverMutation.isPending}>
+                    {(addHandoverMutation.isPending || updateHandoverMutation.isPending) ? 'Zapisywanie...' : (existingHandover ? 'Zaktualizuj' : 'Wyślij')}
+                  </Button>
+                </div>
+              )}
             </form>
           </CardContent>
         </Card>
