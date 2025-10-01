@@ -12,7 +12,7 @@ export interface Vehicle {
   additional_info: string | null;
   status: 'available' | 'rented' | 'maintenance' | 'archived';
   name: string | null;
-  type: 'kamper' | 'przyczepa' | null;
+  type: 'Kamper' | 'Przyczepa' | null;
   brand: string | null;
   year: number | null;
   location: string | null;

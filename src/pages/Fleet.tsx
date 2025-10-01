@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useVehicles, useAddVehicle, useUpdateVehicle, useDeleteVehicle } from "@/hooks/useVehicles";
 
-type VehicleType = "kamper" | "przyczepa";
+type VehicleType = "Kamper" | "Przyczepa";
 type VehicleStatus = "dostepny" | "wynajety" | "serwis";
 
 const Fleet = () => {
@@ -39,7 +39,7 @@ const Fleet = () => {
   const [archiveVehicleId, setArchiveVehicleId] = useState<string | null>(null);
   const [newVehicle, setNewVehicle] = useState({
     name: "",
-    type: "kamper" as VehicleType,
+    type: "Kamper" as VehicleType,
     brand: "",
     model: "",
     year: new Date().getFullYear(),
@@ -72,7 +72,7 @@ const Fleet = () => {
       });
       setNewVehicle({
         name: "",
-        type: "kamper",
+        type: "Kamper",
         brand: "",
         model: "",
         year: new Date().getFullYear(),
@@ -153,8 +153,8 @@ const Fleet = () => {
 
   const stats = {
     total: activeVehicles.length,
-    kampers: activeVehicles.filter((v) => v.type === "kamper").length,
-    trailers: activeVehicles.filter((v) => v.type === "przyczepa").length,
+    kampers: activeVehicles.filter((v) => v.type === "Kamper").length,
+    trailers: activeVehicles.filter((v) => v.type === "Przyczepa").length,
     available: activeVehicles.filter((v) => v.status === "available").length,
   };
 
@@ -211,8 +211,8 @@ const Fleet = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="kamper">Kamper</SelectItem>
-                      <SelectItem value="przyczepa">Przyczepa</SelectItem>
+                      <SelectItem value="Kamper">Kamper</SelectItem>
+                      <SelectItem value="Przyczepa">Przyczepa</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -361,8 +361,8 @@ const Fleet = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Wszystkie typy</SelectItem>
-                <SelectItem value="kamper">Kampery</SelectItem>
-                <SelectItem value="przyczepa">Przyczepy</SelectItem>
+                <SelectItem value="Kamper">Kampery</SelectItem>
+                <SelectItem value="Przyczepa">Przyczepy</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
@@ -387,7 +387,7 @@ const Fleet = () => {
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 rounded-lg bg-gradient-primary flex items-center justify-center">
-                    {vehicle.type === "kamper" ? (
+                    {vehicle.type === "Kamper" ? (
                       <Truck className="h-6 w-6 text-primary-foreground" />
                     ) : (
                       <Caravan className="h-6 w-6 text-primary-foreground" />
