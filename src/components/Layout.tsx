@@ -9,7 +9,6 @@ const navItems = [
   { path: "/clients", label: "Klienci", icon: Users },
   { path: "/contracts", label: "Umowy", icon: FileText },
   { path: "/fleet", label: "Flota", icon: Truck },
-  { path: "/drivers", label: "Kierowcy", icon: UserPlus },
   { path: "/inquiries", label: "Zapytania", icon: Mail },
 ];
 
