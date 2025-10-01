@@ -74,6 +74,7 @@ const statusConfig = {
 const Contracts = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [additionalDrivers, setAdditionalDrivers] = useState<number[]>([]);
   const { toast } = useToast();
   
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -87,7 +88,18 @@ const Contracts = () => {
     });
     
     setIsDialogOpen(false);
+    setAdditionalDrivers([]);
     e.currentTarget.reset();
+  };
+
+  const addAdditionalDriver = () => {
+    if (additionalDrivers.length < 2) {
+      setAdditionalDrivers([...additionalDrivers, additionalDrivers.length]);
+    }
+  };
+
+  const removeAdditionalDriver = (index: number) => {
+    setAdditionalDrivers(additionalDrivers.filter((_, i) => i !== index));
   };
 
   const filteredContracts = contracts.filter(
@@ -196,53 +208,61 @@ const Contracts = () => {
                 </div>
               </div>
 
-              {/* Najemca */}
+              {/* Najemca (Główny kierowca) */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Najemca</h3>
+                <h3 className="text-lg font-semibold text-foreground">Najemca (Główny kierowca)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="najemca_nazwa">Nazwa</Label>
-                    <Input id="najemca_nazwa" name="najemca_nazwa" placeholder="Adam Fedio" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_nip">NIP</Label>
-                    <Input id="najemca_nip" name="najemca_nip" placeholder="70110803631/00856/04/2808" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_adres">Adres</Label>
-                    <Input id="najemca_adres" name="najemca_adres" placeholder="Władysława Reymona 29, Latchorzew, 05-082" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_imie_nazwisko">Imię i nazwisko</Label>
+                    <Label htmlFor="najemca_imie_nazwisko">Imię i nazwisko *</Label>
                     <Input id="najemca_imie_nazwisko" name="najemca_imie_nazwisko" placeholder="Adam Fedio" required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="najemca_adres_zamieszkania">Adres zamieszkania</Label>
-                    <Input id="najemca_adres_zamieszkania" name="najemca_adres_zamieszkania" placeholder="Władysława Reymona 29, Latchorzew, 05-082" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_dokument_rodzaj">Rodzaj dokumentu</Label>
-                    <Input id="najemca_dokument_rodzaj" name="najemca_dokument_rodzaj" placeholder="Dowód osobisty" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_dokument_numer">Numer dokumentu</Label>
-                    <Input id="najemca_dokument_numer" name="najemca_dokument_numer" placeholder="DBZ976078" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_dokument_organ">Organ wydający</Label>
-                    <Input id="najemca_dokument_organ" name="najemca_dokument_organ" placeholder="Wójt gminy Stare Babice" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_pesel_prawo_jazdy">PESEL / Prawo jazdy</Label>
-                    <Input id="najemca_pesel_prawo_jazdy" name="najemca_pesel_prawo_jazdy" placeholder="70110803631/00856/04/2808" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_email">Email</Label>
+                    <Label htmlFor="najemca_email">Email *</Label>
                     <Input id="najemca_email" name="najemca_email" type="email" placeholder="adam.fedio@gmail.com" required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="najemca_tel">Telefon</Label>
+                    <Label htmlFor="najemca_tel">Telefon *</Label>
                     <Input id="najemca_tel" name="najemca_tel" placeholder="508140790" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_prawo_jazdy_numer">Numer prawa jazdy *</Label>
+                    <Input id="najemca_prawo_jazdy_numer" name="najemca_prawo_jazdy_numer" placeholder="00856/04/2808" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_prawo_jazdy_data">Data wydania prawa jazdy *</Label>
+                    <Input id="najemca_prawo_jazdy_data" name="najemca_prawo_jazdy_data" type="date" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_dokument_rodzaj">Rodzaj dokumentu tożsamości *</Label>
+                    <Select name="najemca_dokument_rodzaj" defaultValue="dowod">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Wybierz dokument" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dowod">Dowód osobisty</SelectItem>
+                        <SelectItem value="paszport">Paszport</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_dokument_numer">Numer dokumentu *</Label>
+                    <Input id="najemca_dokument_numer" name="najemca_dokument_numer" placeholder="DBZ976078" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_dokument_organ">Organ wydający *</Label>
+                    <Input id="najemca_dokument_organ" name="najemca_dokument_organ" placeholder="Wójt gminy Stare Babice" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_pesel">PESEL</Label>
+                    <Input id="najemca_pesel" name="najemca_pesel" placeholder="70110803631" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_nip">NIP</Label>
+                    <Input id="najemca_nip" name="najemca_nip" placeholder="70110803631" />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="najemca_adres_zamieszkania">Adres zamieszkania *</Label>
+                    <Input id="najemca_adres_zamieszkania" name="najemca_adres_zamieszkania" placeholder="Władysława Reymona 29, Latchorzew, 05-082" required />
                   </div>
                 </div>
               </div>
@@ -282,31 +302,119 @@ const Contracts = () => {
                 </div>
               </div>
 
-              {/* Osoby upoważnione */}
+              {/* Dodatkowi kierowcy (Osoby upoważnione) */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Osoby upoważnione</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="osoba_upow_imie_nazwisko">Imię i nazwisko</Label>
-                    <Input id="osoba_upow_imie_nazwisko" name="osoba_upow_imie_nazwisko" placeholder="Monika Fedio" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="osoba_upow_dokument_rodzaj">Rodzaj dokumentu</Label>
-                    <Input id="osoba_upow_dokument_rodzaj" name="osoba_upow_dokument_rodzaj" placeholder="Dowód osobisty" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="osoba_upow_dokument_numer">Numer dokumentu</Label>
-                    <Input id="osoba_upow_dokument_numer" name="osoba_upow_dokument_numer" placeholder="DEW863370" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="osoba_upow_dokument_organ">Organ wydający</Label>
-                    <Input id="osoba_upow_dokument_organ" name="osoba_upow_dokument_organ" placeholder="Wójt gminy Stare Babice" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="osoba_upow_prawo_jazdy">Prawo jazdy</Label>
-                    <Input id="osoba_upow_prawo_jazdy" name="osoba_upow_prawo_jazdy" placeholder="04743/06/1432 Kat...." />
-                  </div>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-foreground">Dodatkowi kierowcy (maks. 2)</h3>
+                  {additionalDrivers.length < 2 && (
+                    <Button type="button" variant="outline" size="sm" onClick={addAdditionalDriver}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Dodaj kierowcę
+                    </Button>
+                  )}
                 </div>
+                
+                {additionalDrivers.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Brak dodatkowych kierowców</p>
+                )}
+
+                {additionalDrivers.map((driverIndex, arrayIndex) => (
+                  <Card key={driverIndex} className="border-2">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">Dodatkowy kierowca #{arrayIndex + 1}</CardTitle>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => removeAdditionalDriver(arrayIndex)}
+                        >
+                          Usuń
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_imie_nazwisko`}>Imię i nazwisko *</Label>
+                          <Input 
+                            id={`add_driver_${driverIndex}_imie_nazwisko`} 
+                            name={`add_driver_${driverIndex}_imie_nazwisko`} 
+                            placeholder="Monika Fedio" 
+                            required 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_email`}>Email *</Label>
+                          <Input 
+                            id={`add_driver_${driverIndex}_email`} 
+                            name={`add_driver_${driverIndex}_email`} 
+                            type="email"
+                            placeholder="monika.fedio@gmail.com" 
+                            required 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_tel`}>Telefon *</Label>
+                          <Input 
+                            id={`add_driver_${driverIndex}_tel`} 
+                            name={`add_driver_${driverIndex}_tel`} 
+                            placeholder="+48 500 123 456" 
+                            required 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_prawo_jazdy_numer`}>Numer prawa jazdy *</Label>
+                          <Input 
+                            id={`add_driver_${driverIndex}_prawo_jazdy_numer`} 
+                            name={`add_driver_${driverIndex}_prawo_jazdy_numer`} 
+                            placeholder="04743/06/1432" 
+                            required 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_prawo_jazdy_data`}>Data wydania prawa jazdy *</Label>
+                          <Input 
+                            id={`add_driver_${driverIndex}_prawo_jazdy_data`} 
+                            name={`add_driver_${driverIndex}_prawo_jazdy_data`} 
+                            type="date"
+                            required 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_dokument_rodzaj`}>Rodzaj dokumentu *</Label>
+                          <Select name={`add_driver_${driverIndex}_dokument_rodzaj`} defaultValue="dowod">
+                            <SelectTrigger>
+                              <SelectValue placeholder="Wybierz dokument" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="dowod">Dowód osobisty</SelectItem>
+                              <SelectItem value="paszport">Paszport</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_dokument_numer`}>Numer dokumentu *</Label>
+                          <Input 
+                            id={`add_driver_${driverIndex}_dokument_numer`} 
+                            name={`add_driver_${driverIndex}_dokument_numer`} 
+                            placeholder="DEW863370" 
+                            required 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_dokument_organ`}>Organ wydający *</Label>
+                          <Input 
+                            id={`add_driver_${driverIndex}_dokument_organ`} 
+                            name={`add_driver_${driverIndex}_dokument_organ`} 
+                            placeholder="Wójt gminy Stare Babice" 
+                            required 
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
 
               {/* Opłaty */}
