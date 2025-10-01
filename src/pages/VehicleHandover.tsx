@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAddVehicleHandover } from "@/hooks/useVehicleHandovers";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 const VehicleHandover = () => {
   const [searchParams] = useSearchParams();
@@ -28,6 +29,28 @@ const VehicleHandover = () => {
     photos: null as File[] | null,
   });
 
+  const uploadFiles = async (files: File[], folder: string): Promise<string[]> => {
+    const uploadPromises = files.map(async (file) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `${folder}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('vehicle-documents')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('vehicle-documents')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    });
+
+    return Promise.all(uploadPromises);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -41,12 +64,21 @@ const VehicleHandover = () => {
     }
     
     try {
+      // Upload files to storage
+      const protocolUrls = formData.handoverProtocol 
+        ? await uploadFiles(formData.handoverProtocol, 'handover-protocols')
+        : [];
+      
+      const photoUrls = formData.photos 
+        ? await uploadFiles(formData.photos, 'handover-photos')
+        : [];
+
       await addHandoverMutation.mutateAsync({
         contract_id: contractId,
         mileage: parseInt(formData.mileage),
         fuel_level: parseInt(formData.fuelLevel),
-        handover_protocol_files: [],
-        photos: [],
+        handover_protocol_files: protocolUrls,
+        photos: photoUrls,
       });
 
       // Reset form
@@ -57,7 +89,12 @@ const VehicleHandover = () => {
         photos: null,
       });
     } catch (error) {
-      // Error is handled by the mutation
+      console.error('Submission error:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie udało się przesłać danych.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -152,35 +189,72 @@ const VehicleHandover = () => {
                     onChange={handleFileChange('handoverProtocol')}
                   />
                   <label htmlFor="handoverProtocol" className="cursor-pointer">
-                    <span className="text-primary hover:underline">Drop files here or browse</span>
+                    <span className="text-primary hover:underline">Przeciągnij pliki lub kliknij aby wybrać</span>
                   </label>
-                  {formData.handoverProtocol && (
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {formData.handoverProtocol.length} plików wybranych
-                    </p>
+                  {formData.handoverProtocol && formData.handoverProtocol.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {formData.handoverProtocol.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                          <span className="truncate">{file.name}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const newFiles = formData.handoverProtocol?.filter((_, i) => i !== index) || null;
+                              setFormData({ ...formData, handoverProtocol: newFiles?.length ? newFiles : null });
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="photos">Zdjęcia</Label>
-                <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                  <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                  <input
-                    id="photos"
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileChange('photos')}
-                  />
-                  <label htmlFor="photos" className="cursor-pointer">
-                    <span className="text-primary hover:underline">Drop files here or browse</span>
-                  </label>
-                  {formData.photos && (
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {formData.photos.length} zdjęć wybranych
-                    </p>
+                <div className="border-2 border-dashed rounded-lg p-6">
+                  <div className="text-center mb-4">
+                    <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                    <input
+                      id="photos"
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileChange('photos')}
+                    />
+                    <label htmlFor="photos" className="cursor-pointer">
+                      <span className="text-primary hover:underline">Przeciągnij zdjęcia lub kliknij aby wybrać</span>
+                    </label>
+                  </div>
+                  {formData.photos && formData.photos.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {formData.photos.map((file, index) => (
+                        <div key={index} className="relative group aspect-square">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => {
+                              const newPhotos = formData.photos?.filter((_, i) => i !== index) || null;
+                              setFormData({ ...formData, photos: newPhotos?.length ? newPhotos : null });
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
