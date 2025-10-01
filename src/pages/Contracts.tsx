@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 interface Contract {
@@ -117,80 +118,270 @@ const Contracts = () => {
                 Wypełnij formularz, aby utworzyć nową umowę najmu
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="contractNumber">Numer umowy</Label>
-                  <Input 
-                    id="contractNumber" 
-                    name="contractNumber"
-                    placeholder="UM/2024/001" 
-                    required 
-                  />
+            <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+              {/* Podstawowe informacje */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Podstawowe informacje</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nazwa_firmy">Nazwa firmy</Label>
+                    <Input id="nazwa_firmy" name="nazwa_firmy" placeholder="KOKO KAMPER" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" name="email" type="email" placeholder="kontakt@kokokamper.pl" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="telefon1">Telefon 1</Label>
+                    <Input id="telefon1" name="telefon1" placeholder="+48 607 108 993" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="telefon2">Telefon 2</Label>
+                    <Input id="telefon2" name="telefon2" placeholder="+48 660 694 257" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="umowa_numer">Numer umowy</Label>
+                    <Input id="umowa_numer" name="umowa_numer" placeholder="60/2024" required />
+                  </div>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="clientName">Nazwa klienta</Label>
-                  <Input 
-                    id="clientName" 
-                    name="clientName"
-                    placeholder="Jan Kowalski" 
-                    required 
-                  />
+              </div>
+
+              {/* Wynajmujący */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Wynajmujący</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="wynajmujacy_nazwa">Nazwa</Label>
+                    <Input id="wynajmujacy_nazwa" name="wynajmujacy_nazwa" placeholder="Koko Group Sp. z o.o." required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="wynajmujacy_adres">Adres</Label>
+                    <Input id="wynajmujacy_adres" name="wynajmujacy_adres" placeholder="ul. Lazurowa 85a/53, 01-479 Warszawa" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="wynajmujacy_tel">Telefon</Label>
+                    <Input id="wynajmujacy_tel" name="wynajmujacy_tel" placeholder="+48 660 694 257" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="wynajmujacy_www">WWW</Label>
+                    <Input id="wynajmujacy_www" name="wynajmujacy_www" placeholder="www.kokokamper.pl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="wynajmujacy_email">Email</Label>
+                    <Input id="wynajmujacy_email" name="wynajmujacy_email" type="email" placeholder="kontakt@kokokamper.pl" required />
+                  </div>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="vehicle">Pojazd</Label>
-                  <Input 
-                    id="vehicle" 
-                    name="vehicle"
-                    placeholder="Kamper XL-450" 
-                    required 
-                  />
+              </div>
+
+              {/* Okres najmu */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Okres najmu</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="okres_od">Data rozpoczęcia</Label>
+                    <Input id="okres_od" name="okres_od" type="datetime-local" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="okres_do">Data zakończenia</Label>
+                    <Input id="okres_do" name="okres_do" type="datetime-local" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="okres_miejsce">Miejsce</Label>
+                    <Input id="okres_miejsce" name="okres_miejsce" placeholder="oddział Warszawa" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="okres_zwrot_do">Zwrot do</Label>
+                    <Input id="okres_zwrot_do" name="okres_zwrot_do" />
+                  </div>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="value">Wartość</Label>
-                  <Input 
-                    id="value" 
-                    name="value"
-                    placeholder="4,500 zł" 
-                    required 
-                  />
+              </div>
+
+              {/* Najemca */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Najemca</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_nazwa">Nazwa</Label>
+                    <Input id="najemca_nazwa" name="najemca_nazwa" placeholder="Adam Fedio" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_nip">NIP</Label>
+                    <Input id="najemca_nip" name="najemca_nip" placeholder="70110803631/00856/04/2808" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_adres">Adres</Label>
+                    <Input id="najemca_adres" name="najemca_adres" placeholder="Władysława Reymona 29, Latchorzew, 05-082" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_imie_nazwisko">Imię i nazwisko</Label>
+                    <Input id="najemca_imie_nazwisko" name="najemca_imie_nazwisko" placeholder="Adam Fedio" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_adres_zamieszkania">Adres zamieszkania</Label>
+                    <Input id="najemca_adres_zamieszkania" name="najemca_adres_zamieszkania" placeholder="Władysława Reymona 29, Latchorzew, 05-082" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_dokument_rodzaj">Rodzaj dokumentu</Label>
+                    <Input id="najemca_dokument_rodzaj" name="najemca_dokument_rodzaj" placeholder="Dowód osobisty" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_dokument_numer">Numer dokumentu</Label>
+                    <Input id="najemca_dokument_numer" name="najemca_dokument_numer" placeholder="DBZ976078" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_dokument_organ">Organ wydający</Label>
+                    <Input id="najemca_dokument_organ" name="najemca_dokument_organ" placeholder="Wójt gminy Stare Babice" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_pesel_prawo_jazdy">PESEL / Prawo jazdy</Label>
+                    <Input id="najemca_pesel_prawo_jazdy" name="najemca_pesel_prawo_jazdy" placeholder="70110803631/00856/04/2808" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_email">Email</Label>
+                    <Input id="najemca_email" name="najemca_email" type="email" placeholder="adam.fedio@gmail.com" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="najemca_tel">Telefon</Label>
+                    <Input id="najemca_tel" name="najemca_tel" placeholder="508140790" required />
+                  </div>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="startDate">Data rozpoczęcia</Label>
-                  <Input 
-                    id="startDate" 
-                    name="startDate"
-                    type="date" 
-                    required 
-                  />
+              </div>
+
+              {/* Przedmiot najmu */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Przedmiot najmu</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="przedmiot_model">Model</Label>
+                    <Input id="przedmiot_model" name="przedmiot_model" placeholder="RANDGER R600" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="przedmiot_vin">VIN</Label>
+                    <Input id="przedmiot_vin" name="przedmiot_vin" placeholder="ZFA25000002S85417" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="przedmiot_nr_rej">Nr rejestracyjny</Label>
+                    <Input id="przedmiot_nr_rej" name="przedmiot_nr_rej" placeholder="WZ726ES" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="przedmiot_nastepne_badanie">Następne badanie</Label>
+                    <Input id="przedmiot_nastepne_badanie" name="przedmiot_nastepne_badanie" type="date" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="przedmiot_polisa_numer">Numer polisy</Label>
+                    <Input id="przedmiot_polisa_numer" name="przedmiot_polisa_numer" placeholder="1068435310/9933" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="przedmiot_polisa_wazna_do">Polisa ważna do</Label>
+                    <Input id="przedmiot_polisa_wazna_do" name="przedmiot_polisa_wazna_do" type="date" required />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="przedmiot_dodatkowe_info">Dodatkowe informacje</Label>
+                    <Textarea id="przedmiot_dodatkowe_info" name="przedmiot_dodatkowe_info" placeholder="pełne wyposażenie, brak zwierząt, bez sprzątania" />
+                  </div>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="endDate">Data zakończenia</Label>
-                  <Input 
-                    id="endDate" 
-                    name="endDate"
-                    type="date" 
-                    required 
-                  />
+              </div>
+
+              {/* Osoby upoważnione */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Osoby upoważnione</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="osoba_upow_imie_nazwisko">Imię i nazwisko</Label>
+                    <Input id="osoba_upow_imie_nazwisko" name="osoba_upow_imie_nazwisko" placeholder="Monika Fedio" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="osoba_upow_dokument_rodzaj">Rodzaj dokumentu</Label>
+                    <Input id="osoba_upow_dokument_rodzaj" name="osoba_upow_dokument_rodzaj" placeholder="Dowód osobisty" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="osoba_upow_dokument_numer">Numer dokumentu</Label>
+                    <Input id="osoba_upow_dokument_numer" name="osoba_upow_dokument_numer" placeholder="DEW863370" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="osoba_upow_dokument_organ">Organ wydający</Label>
+                    <Input id="osoba_upow_dokument_organ" name="osoba_upow_dokument_organ" placeholder="Wójt gminy Stare Babice" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="osoba_upow_prawo_jazdy">Prawo jazdy</Label>
+                    <Input id="osoba_upow_prawo_jazdy" name="osoba_upow_prawo_jazdy" placeholder="04743/06/1432 Kat...." />
+                  </div>
                 </div>
+              </div>
+
+              {/* Opłaty */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Opłaty</h3>
                 
+                {/* Opłata rezerwacyjna */}
                 <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select name="status" defaultValue="pending">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Wybierz status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Oczekująca</SelectItem>
-                      <SelectItem value="active">Aktywna</SelectItem>
-                      <SelectItem value="completed">Zakończona</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <h4 className="text-sm font-medium text-muted-foreground">Opłata rezerwacyjna</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="oplata_rez_data">Data</Label>
+                      <Input id="oplata_rez_data" name="oplata_rez_data" type="date" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="oplata_rez_wysokosc">Wysokość</Label>
+                      <Input id="oplata_rez_wysokosc" name="oplata_rez_wysokosc" placeholder="5000.00 zł" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="oplata_rez_rachunek">Rachunek</Label>
+                      <Input id="oplata_rez_rachunek" name="oplata_rez_rachunek" placeholder="mBank: 34 1140 2004..." />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Opłata zasadnicza */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-muted-foreground">Opłata zasadnicza</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="oplata_zas_data">Data</Label>
+                      <Input id="oplata_zas_data" name="oplata_zas_data" type="date" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="oplata_zas_wysokosc">Wysokość</Label>
+                      <Input id="oplata_zas_wysokosc" name="oplata_zas_wysokosc" placeholder="n/d" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="oplata_zas_rachunek">Rachunek</Label>
+                      <Input id="oplata_zas_rachunek" name="oplata_zas_rachunek" placeholder="mBank: 34 1140 2004..." />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Kaucja */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-muted-foreground">Kaucja</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="oplata_kaucja_data">Data</Label>
+                      <Input id="oplata_kaucja_data" name="oplata_kaucja_data" type="date" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="oplata_kaucja_wysokosc">Wysokość</Label>
+                      <Input id="oplata_kaucja_wysokosc" name="oplata_kaucja_wysokosc" placeholder="5000.00 zł" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="oplata_kaucja_rachunek">Rachunek</Label>
+                      <Input id="oplata_kaucja_rachunek" name="oplata_kaucja_rachunek" placeholder="mBank: 08 1140 2004..." />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Uwagi */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Uwagi</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="uwagi">Dodatkowe uwagi</Label>
+                  <Textarea 
+                    id="uwagi" 
+                    name="uwagi" 
+                    placeholder="Opłaty należy dokonywać na rachunek bankowy..."
+                    className="min-h-[120px]"
+                  />
                 </div>
               </div>
               
