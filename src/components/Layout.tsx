@@ -1,0 +1,89 @@
+import { Link, useLocation } from "react-router-dom";
+import { Home, Users, FileText, UserPlus, Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useState } from "react";
+
+const navItems = [
+  { path: "/", label: "Dashboard", icon: Home },
+  { path: "/clients", label: "Klienci", icon: Users },
+  { path: "/contracts", label: "Umowy", icon: FileText },
+  { path: "/drivers", label: "Kierowcy", icon: UserPlus },
+];
+
+export const Layout = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const NavContent = () => (
+    <>
+      <div className="p-6 border-b border-sidebar-border">
+        <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+          RentCamper CRM
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">Zarządzanie wynajmem</p>
+      </div>
+      <nav className="flex-1 p-4 space-y-2">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path;
+          return (
+            <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}>
+              <Button
+                variant={isActive ? "default" : "ghost"}
+                className={`w-full justify-start gap-3 transition-all ${
+                  isActive ? "shadow-md" : ""
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                <span>{item.label}</span>
+              </Button>
+            </Link>
+          );
+        })}
+      </nav>
+      <div className="p-4 border-t border-sidebar-border">
+        <div className="bg-gradient-subtle rounded-lg p-4">
+          <p className="text-sm font-medium mb-1">Potrzebujesz pomocy?</p>
+          <p className="text-xs text-muted-foreground">
+            Skontaktuj się z wsparciem technicznym
+          </p>
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex min-h-screen bg-background">
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-sidebar border-r border-sidebar-border">
+        <NavContent />
+      </aside>
+
+      {/* Mobile Sidebar */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden fixed top-4 left-4 z-50"
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="p-0 w-64 bg-sidebar">
+          <div className="flex flex-col h-full">
+            <NavContent />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto">
+        <div className="container mx-auto p-6 lg:p-8 max-w-7xl">
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+};
