@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, FileText, User, Car, CreditCard, AlertCircle, Edit2, Save, X } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, User, Car, CreditCard, AlertCircle, Edit2, Save, X, Link2, ClipboardCopy } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -954,6 +954,70 @@ const ContractDetails = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Formularze wydania i zwrotu */}
+      <Card className="shadow-md border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Link2 className="h-5 w-5" />
+            Formularze wydania i zwrotu
+          </CardTitle>
+          <CardDescription>
+            Linki do formularzy dla pracowników
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Formularz wydania kampera</Label>
+              <div className="flex gap-2">
+                <Input 
+                  readOnly 
+                  value={`${window.location.origin}/handover-form/${id}`}
+                  className="font-mono text-sm"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/handover-form/${id}`);
+                    toast({
+                      title: "Link skopiowany",
+                      description: "Link do formularza wydania został skopiowany do schowka.",
+                    });
+                  }}
+                >
+                  <ClipboardCopy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Formularz zwrotu kampera</Label>
+              <div className="flex gap-2">
+                <Input 
+                  readOnly 
+                  value={`${window.location.origin}/return-form/${id}`}
+                  className="font-mono text-sm"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/return-form/${id}`);
+                    toast({
+                      title: "Link skopiowany",
+                      description: "Link do formularza zwrotu został skopiowany do schowka.",
+                    });
+                  }}
+                >
+                  <ClipboardCopy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Uwagi */}
       {(displayContract.uwagi || isEditing) && (

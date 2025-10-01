@@ -13,6 +13,8 @@ import Fleet from "./pages/Fleet";
 import VehicleDetails from "./pages/VehicleDetails";
 import Drivers from "./pages/Drivers";
 import DriverSubmission from "./pages/DriverSubmission";
+import VehicleHandover from "./pages/VehicleHandover";
+import VehicleReturn from "./pages/VehicleReturn";
 import Inquiries from "./pages/Inquiries";
 import NotFound from "./pages/NotFound";
 
@@ -26,6 +28,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/driver-form/:contractId" element={<DriverSubmission />} />
+          <Route path="/handover-form/:contractId" element={<VehicleHandover />} />
+          <Route path="/return-form/:contractId" element={<VehicleReturn />} />
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/clients" element={<Clients />} />
