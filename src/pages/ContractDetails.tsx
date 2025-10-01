@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useContract, useUpdateContract } from "@/hooks/useContracts";
+import { useVehicles } from "@/hooks/useVehicles";
 import { format } from "date-fns";
 
 const statusConfig = {
@@ -27,6 +28,7 @@ const ContractDetails = () => {
   const [editedData, setEditedData] = useState<any>({});
   
   const { data: contract, isLoading } = useContract(id);
+  const { data: vehicles } = useVehicles();
   const updateContractMutation = useUpdateContract();
 
   const handleEdit = () => {
@@ -37,6 +39,22 @@ const ContractDetails = () => {
   const handleCancel = () => {
     setIsEditing(false);
     setEditedData({});
+  };
+
+  const handleVehicleSelect = (vehicleId: string) => {
+    const selectedVehicle = vehicles?.find(v => v.id === vehicleId);
+    if (selectedVehicle) {
+      const updates = {
+        vehicle_model: selectedVehicle.model,
+        registration_number: selectedVehicle.registration_number,
+        vehicle_vin: selectedVehicle.vin,
+        vehicle_next_inspection: selectedVehicle.next_inspection_date,
+        vehicle_insurance_number: selectedVehicle.insurance_policy_number,
+        vehicle_insurance_valid_until: selectedVehicle.insurance_valid_until,
+        vehicle_additional_info: selectedVehicle.additional_info,
+      };
+      setEditedData({ ...editedData, ...updates });
+    }
   };
 
   const handleSave = async () => {
@@ -431,6 +449,23 @@ const ContractDetails = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {isEditing && (
+            <div className="space-y-2 p-4 bg-muted/50 rounded-lg mb-4">
+              <Label>Wybierz pojazd z bazy</Label>
+              <Select onValueChange={handleVehicleSelect}>
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Wybierz pojazd aby automatycznie wypełnić dane" />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  {vehicles?.filter(v => v.status !== 'archived').map((vehicle) => (
+                    <SelectItem key={vehicle.id} value={vehicle.id}>
+                      {vehicle.model} - {vehicle.registration_number}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Model</Label>
