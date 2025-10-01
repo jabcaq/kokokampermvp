@@ -5,6 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, Calendar, Edit, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 interface Contract {
   id: number;
@@ -68,6 +72,22 @@ const statusConfig = {
 
 const Contracts = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+  
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    // Here you would normally save to backend
+    toast({
+      title: "Umowa utworzona",
+      description: "Nowa umowa została pomyślnie dodana do systemu.",
+    });
+    
+    setIsDialogOpen(false);
+    e.currentTarget.reset();
+  };
 
   const filteredContracts = contracts.filter(
     (contract) =>
@@ -83,10 +103,112 @@ const Contracts = () => {
           <h1 className="text-4xl font-bold text-foreground mb-2">Umowy</h1>
           <p className="text-muted-foreground">Zarządzaj umowami najmu</p>
         </div>
-        <Button className="gap-2 shadow-md">
-          <Plus className="h-4 w-4" />
-          Nowa umowa
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2 shadow-md">
+              <Plus className="h-4 w-4" />
+              Nowa umowa
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Nowa umowa</DialogTitle>
+              <DialogDescription>
+                Wypełnij formularz, aby utworzyć nową umowę najmu
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contractNumber">Numer umowy</Label>
+                  <Input 
+                    id="contractNumber" 
+                    name="contractNumber"
+                    placeholder="UM/2024/001" 
+                    required 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="clientName">Nazwa klienta</Label>
+                  <Input 
+                    id="clientName" 
+                    name="clientName"
+                    placeholder="Jan Kowalski" 
+                    required 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="vehicle">Pojazd</Label>
+                  <Input 
+                    id="vehicle" 
+                    name="vehicle"
+                    placeholder="Kamper XL-450" 
+                    required 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="value">Wartość</Label>
+                  <Input 
+                    id="value" 
+                    name="value"
+                    placeholder="4,500 zł" 
+                    required 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">Data rozpoczęcia</Label>
+                  <Input 
+                    id="startDate" 
+                    name="startDate"
+                    type="date" 
+                    required 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">Data zakończenia</Label>
+                  <Input 
+                    id="endDate" 
+                    name="endDate"
+                    type="date" 
+                    required 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select name="status" defaultValue="pending">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Wybierz status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Oczekująca</SelectItem>
+                      <SelectItem value="active">Aktywna</SelectItem>
+                      <SelectItem value="completed">Zakończona</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Anuluj
+                </Button>
+                <Button type="submit">
+                  Utwórz umowę
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="relative">
