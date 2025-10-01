@@ -657,16 +657,16 @@ const Contracts = () => {
                   <h4 className="text-sm font-medium text-muted-foreground">Opłata zasadnicza</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="oplata_zas_data">Data</Label>
-                      <Input id="oplata_zas_data" name="oplata_zas_data" type="date" />
+                      <Label htmlFor="oplata_zasad_data">Data</Label>
+                      <Input id="oplata_zasad_data" name="oplata_zasad_data" type="date" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="oplata_zas_wysokosc">Wysokość</Label>
-                      <Input id="oplata_zas_wysokosc" name="oplata_zas_wysokosc" placeholder="n/d" />
+                      <Label htmlFor="oplata_zasad_wysokosc">Wysokość</Label>
+                      <Input id="oplata_zasad_wysokosc" name="oplata_zasad_wysokosc" placeholder="n/d" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="oplata_zas_rachunek">Rachunek</Label>
-                      <Input id="oplata_zas_rachunek" name="oplata_zas_rachunek" placeholder="mBank: 34 1140 2004..." />
+                      <Label htmlFor="oplata_zasad_rachunek">Rachunek</Label>
+                      <Input id="oplata_zasad_rachunek" name="oplata_zasad_rachunek" placeholder="mBank: 34 1140 2004..." />
                     </div>
                   </div>
                 </div>
