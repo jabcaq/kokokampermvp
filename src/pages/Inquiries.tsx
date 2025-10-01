@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { useInquiries, useUpdateInquiryStatus } from "@/hooks/useInquiries";
+import { useCreateNotification } from "@/hooks/useNotifications";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -16,6 +17,7 @@ const Inquiries = () => {
   const [replyMessage, setReplyMessage] = useState("");
   const { toast } = useToast();
   const updateStatusMutation = useUpdateInquiryStatus();
+  const createNotificationMutation = useCreateNotification();
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
@@ -35,6 +37,14 @@ const Inquiries = () => {
       await updateStatusMutation.mutateAsync({
         id: selectedInquiry.id,
         status: 'completed',
+      });
+      
+      // Create notification for inquiry response
+      await createNotificationMutation.mutateAsync({
+        type: 'inquiry_response',
+        title: 'Udzielono odpowiedzi na zapytanie',
+        message: `Odpowiedziano na zapytanie od ${selectedInquiry.name}: ${selectedInquiry.subject || 'Bez tematu'}`,
+        link: `/inquiries`,
       });
       
       toast({

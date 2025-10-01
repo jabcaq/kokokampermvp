@@ -39,6 +39,17 @@ export const useAddInquiry = () => {
         .single();
       
       if (error) throw error;
+      
+      // Create notification for new inquiry
+      await supabase
+        .from('notifications')
+        .insert([{
+          type: 'inquiry_new',
+          title: 'Nowe zapytanie',
+          message: `Nowe zapytanie od ${inquiry.name}: ${inquiry.subject || 'Bez tematu'}`,
+          link: '/inquiries',
+        }]);
+      
       return data;
     },
     onSuccess: () => {

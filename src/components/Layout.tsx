@@ -2,7 +2,9 @@ import { Link, useLocation, Outlet } from "react-router-dom";
 import { Home, Users, FileText, UserPlus, Truck, Menu, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { NotificationBell } from "@/components/NotificationBell";
+import { useCheckExpiringDocuments } from "@/hooks/useNotifications";
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: Home },
@@ -15,13 +17,22 @@ const navItems = [
 export const Layout = () => {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const checkExpiringMutation = useCheckExpiringDocuments();
+
+  // Check for expiring documents on mount
+  useEffect(() => {
+    checkExpiringMutation.mutate();
+  }, []);
 
   const NavContent = () => (
     <>
       <div className="p-6 border-b border-sidebar-border">
-        <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-          RentCamper CRM
-        </h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            RentCamper CRM
+          </h1>
+          <NotificationBell />
+        </div>
         <p className="text-sm text-muted-foreground mt-1">Zarządzanie wynajmem</p>
       </div>
       <nav className="flex-1 p-4 space-y-2">

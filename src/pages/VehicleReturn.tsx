@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAddVehicleReturn, useUpdateVehicleReturn, useVehicleReturns } from "@/hooks/useVehicleReturns";
+import { useCreateNotification } from "@/hooks/useNotifications";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,6 +18,8 @@ const VehicleReturn = () => {
   const { toast } = useToast();
   const addReturnMutation = useAddVehicleReturn();
   const updateReturnMutation = useUpdateVehicleReturn();
+  const createNotificationMutation = useCreateNotification();
+  
   
   const contractId = searchParams.get('contractId');
   const contractNumber = searchParams.get('contractNumber');
@@ -134,6 +137,14 @@ const VehicleReturn = () => {
       } else {
         // Create new record
         await addReturnMutation.mutateAsync(returnData);
+        
+        // Create notification for new return
+        await createNotificationMutation.mutateAsync({
+          type: 'return_new',
+          title: 'Nowy formularz zwrotu pojazdu',
+          message: `Wypełniono formularz zwrotu dla umowy ${contractNumber} (${vehicleModel})`,
+          link: `/contracts/${contractId}`,
+        });
       }
 
       // Reset new photos only

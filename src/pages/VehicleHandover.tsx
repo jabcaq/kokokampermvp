@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Upload, X, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAddVehicleHandover, useUpdateVehicleHandover, useVehicleHandovers } from "@/hooks/useVehicleHandovers";
+import { useCreateNotification } from "@/hooks/useNotifications";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,6 +16,8 @@ const VehicleHandover = () => {
   const { toast } = useToast();
   const addHandoverMutation = useAddVehicleHandover();
   const updateHandoverMutation = useUpdateVehicleHandover();
+  const createNotificationMutation = useCreateNotification();
+  
   
   const contractId = searchParams.get('contractId');
   const contractNumber = searchParams.get('contractNumber');
@@ -122,6 +125,14 @@ const VehicleHandover = () => {
       } else {
         // Create new record
         await addHandoverMutation.mutateAsync(handoverData);
+        
+        // Create notification for new handover
+        await createNotificationMutation.mutateAsync({
+          type: 'handover_new',
+          title: 'Nowy formularz wydania pojazdu',
+          message: `Wypełniono formularz wydania dla umowy ${contractNumber} (${vehicleModel})`,
+          link: `/contracts/${contractId}`,
+        });
       }
 
       // Reset new files only

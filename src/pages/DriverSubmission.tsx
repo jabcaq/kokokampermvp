@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UserPlus, Send, CheckCircle2, FileText, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useContractByNumber, useUpdateContract } from "@/hooks/useContracts";
+import { useCreateNotification } from "@/hooks/useNotifications";
 
 const DriverSubmission = () => {
   const { contractId } = useParams<{ contractId: string }>();
@@ -15,6 +16,7 @@ const DriverSubmission = () => {
   const decodedId = contractId ? decodeURIComponent(contractId) : undefined;
   const { data: contract, isLoading, isError } = useContractByNumber(decodedId);
   const updateContract = useUpdateContract();
+  const createNotificationMutation = useCreateNotification();
   const [submitted, setSubmitted] = useState(false);
   const [additionalDrivers, setAdditionalDrivers] = useState<number[]>([]);
   const [formData, setFormData] = useState({
@@ -55,7 +57,15 @@ const DriverSubmission = () => {
         },
       });
 
+      // Create notification for new drivers
       const driversCount = 1 + additionalDrivers.length;
+      await createNotificationMutation.mutateAsync({
+        type: 'driver_new',
+        title: 'Nowy formularz dodatkowych kierowców',
+        message: `Dodano ${driversCount} ${driversCount === 1 ? 'kierowcę' : 'kierowców'} dla umowy ${contract.contract_number}`,
+        link: `/contracts/${contract.id}`,
+      });
+
       toast.success("Zgłoszenie wysłane pomyślnie!", {
         description: `Dziękujemy za przesłanie danych ${driversCount} ${driversCount === 1 ? 'kierowcy' : 'kierowców'}`,
       });
