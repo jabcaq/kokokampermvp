@@ -557,16 +557,11 @@ const Contracts = () => {
                     <p className="text-sm text-muted-foreground">Wartość</p>
                     <p className="text-xl font-bold text-primary">{contract.value}</p>
                   </div>
-                  <div className="flex gap-2">
-                    <Link to={`/contracts/${contract.id}`}>
-                      <Button variant="outline" size="icon" className="shrink-0">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                  <Link to={`/contracts/${contract.id}`}>
                     <Button variant="outline" size="icon" className="shrink-0">
-                      <Edit className="h-4 w-4" />
+                      <Eye className="h-4 w-4" />
                     </Button>
-                  </div>
+                  </Link>
                 </div>
               </div>
             ))}
