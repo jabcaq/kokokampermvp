@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Calendar, Edit, Eye, Loader2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,6 +33,7 @@ const statusConfig = {
 };
 
 const Contracts = () => {
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [additionalDrivers, setAdditionalDrivers] = useState<number[]>([]);
@@ -55,6 +56,15 @@ const Contracts = () => {
   const { data: clients = [] } = useClients();
   const deleteContractMutation = useDeleteContract();
   const addContractMutation = useAddContract();
+  
+  // Automatycznie otwórz dialog z wybranym klientem jeśli przekazano clientId
+  useEffect(() => {
+    const state = location.state as { clientId?: string } | null;
+    if (state?.clientId) {
+      setSelectedClientId(state.clientId);
+      setIsDialogOpen(true);
+    }
+  }, [location]);
   
   const handleVehicleSelect = (vehicleId: string) => {
     setSelectedVehicleId(vehicleId);
@@ -149,6 +159,25 @@ const Contracts = () => {
       (contract.client?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       contract.vehicle_model.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  const handleDialogChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      // Resetuj formularz gdy dialog się zamyka
+      setSelectedClientId("");
+      setSelectedVehicleId("");
+      setAdditionalDrivers([]);
+      setVehicleData({
+        model: "",
+        vin: "",
+        registration_number: "",
+        next_inspection_date: "",
+        insurance_policy_number: "",
+        insurance_valid_until: "",
+        additional_info: ""
+      });
+    }
+  };
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -157,7 +186,7 @@ const Contracts = () => {
           <h1 className="text-4xl font-bold text-foreground mb-2">Umowy</h1>
           <p className="text-muted-foreground">Zarządzaj umowami najmu</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
           <DialogTrigger asChild>
             <Button className="gap-2 shadow-md">
               <Plus className="h-4 w-4" />

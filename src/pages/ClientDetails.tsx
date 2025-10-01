@@ -169,7 +169,7 @@ const ClientDetails = () => {
               <FileText className="h-5 w-5" />
               Historia umów
             </span>
-            <Button onClick={() => navigate("/contracts")}>
+            <Button onClick={() => navigate("/contracts", { state: { clientId: id } })}>
               Dodaj nową umowę
             </Button>
           </CardTitle>
