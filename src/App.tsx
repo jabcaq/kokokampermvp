@@ -7,6 +7,7 @@ import { Layout } from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import Contracts from "./pages/Contracts";
+import Fleet from "./pages/Fleet";
 import Drivers from "./pages/Drivers";
 import DriverSubmission from "./pages/DriverSubmission";
 import NotFound from "./pages/NotFound";
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/contracts" element={<Contracts />} />
+            <Route path="/fleet" element={<Fleet />} />
             <Route path="/drivers" element={<Drivers />} />
             <Route path="*" element={<NotFound />} />
           </Route>
