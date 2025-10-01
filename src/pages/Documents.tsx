@@ -39,8 +39,8 @@ const Documents = () => {
   const updateDocumentMutation = useUpdateDocument();
   const deleteDocumentMutation = useDeleteDocument();
 
-  // Get unique rodzaj values for filter
-  const uniqueRodzaje = Array.from(new Set(documents.map(doc => doc.rodzaj))).sort();
+  // Get unique rodzaj values for filter (filter out empty strings)
+  const uniqueRodzaje = Array.from(new Set(documents.map(doc => doc.rodzaj).filter(r => r && r.trim() !== ''))).sort();
 
   const filteredDocuments = documents.filter(
     (doc) => {
@@ -138,14 +138,17 @@ const Documents = () => {
     
     const formData = new FormData(e.currentTarget);
     
+    const contractId = formData.get("contract_id") as string;
+    const clientId = formData.get("client_id") as string;
+    
     try {
       await updateDocumentMutation.mutateAsync({
         id: editingDocument.id,
         updates: {
           rodzaj: formData.get("rodzaj") as string,
-          contract_id: formData.get("contract_id") as string || null,
+          contract_id: contractId === "none" ? null : contractId || null,
           umowa_id: formData.get("umowa_id") as string || null,
-          client_id: formData.get("client_id") as string || null,
+          client_id: clientId === "none" ? null : clientId || null,
           folder: formData.get("folder") as string || null,
           nazwa_pliku: formData.get("nazwa_pliku") as string,
           link: formData.get("link") as string || null,
@@ -460,12 +463,12 @@ const Documents = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-client_id">Klient</Label>
-                  <Select name="client_id" defaultValue={editingDocument.client_id || ""}>
+                  <Select name="client_id" defaultValue={editingDocument.client_id || "none"}>
                     <SelectTrigger>
                       <SelectValue placeholder="Wybierz klienta" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Brak</SelectItem>
+                      <SelectItem value="none">Brak</SelectItem>
                       {clients.map((client) => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.name}
@@ -476,12 +479,12 @@ const Documents = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-contract_id">Umowa (system)</Label>
-                  <Select name="contract_id" defaultValue={editingDocument.contract_id || ""}>
+                  <Select name="contract_id" defaultValue={editingDocument.contract_id || "none"}>
                     <SelectTrigger>
                       <SelectValue placeholder="Wybierz umowę" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Brak</SelectItem>
+                      <SelectItem value="none">Brak</SelectItem>
                       {contracts.map((contract) => (
                         <SelectItem key={contract.id} value={contract.id}>
                           {contract.contract_number}
