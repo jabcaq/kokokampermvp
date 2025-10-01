@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,18 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserPlus, Send, CheckCircle2, FileText, Plus } from "lucide-react";
 import { toast } from "sonner";
-
-// Mock data - w przyszłości z bazy danych
-const contractsData: Record<string, { clientName: string; vehicle: string; startDate: string }> = {
-  "UM/2024/001": { clientName: "Jan Kowalski", vehicle: "Kamper XYZ", startDate: "2024-03-15" },
-  "UM/2024/002": { clientName: "Anna Nowak", vehicle: "Przyczepa ABC", startDate: "2024-04-01" },
-  "UM/2024/003": { clientName: "Piotr Wiśniewski", vehicle: "Kamper 123", startDate: "2024-03-20" },
-};
+import { useContractByNumber, useUpdateContract } from "@/hooks/useContracts";
 
 const DriverSubmission = () => {
   const { contractId } = useParams<{ contractId: string }>();
   const navigate = useNavigate();
-  const [contract, setContract] = useState<typeof contractsData[string] | null>(null);
+  const decodedId = contractId ? decodeURIComponent(contractId) : undefined;
+  const { data: contract, isLoading, isError } = useContractByNumber(decodedId);
+  const updateContract = useUpdateContract();
   const [submitted, setSubmitted] = useState(false);
   const [additionalDrivers, setAdditionalDrivers] = useState<number[]>([]);
   const [formData, setFormData] = useState({
@@ -32,27 +28,42 @@ const DriverSubmission = () => {
     documentIssuedBy: "",
   });
 
-  useEffect(() => {
-    if (contractId) {
-      const decodedId = decodeURIComponent(contractId);
-      const contractInfo = contractsData[decodedId];
-      if (contractInfo) {
-        setContract(contractInfo);
-      } else {
-        toast.error("Nie znaleziono umowy");
-        navigate("/");
-      }
-    }
-  }, [contractId, navigate]);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Tutaj będzie wysyłanie danych do backendu
-    const driversCount = 1 + additionalDrivers.length;
-    toast.success("Zgłoszenie wysłane pomyślnie!", {
-      description: `Dziękujemy za przesłanie danych ${driversCount} ${driversCount === 1 ? 'kierowcy' : 'kierowców'}`,
-    });
-    setSubmitted(true);
+    
+    if (!contract?.id) return;
+
+    try {
+      // Przygotuj dane dodatkowych kierowców z formularza
+      const form = e.target as HTMLFormElement;
+      const additionalDriversData = additionalDrivers.map((driverIndex) => ({
+        imie_nazwisko: form[`add_driver_${driverIndex}_name`].value,
+        email: form[`add_driver_${driverIndex}_email`].value,
+        tel: form[`add_driver_${driverIndex}_phone`].value,
+        prawo_jazdy_numer: form[`add_driver_${driverIndex}_license`].value,
+        prawo_jazdy_data: form[`add_driver_${driverIndex}_license_date`].value,
+        dokument_rodzaj: form[`add_driver_${driverIndex}_doc_type`].value,
+        dokument_numer: form[`add_driver_${driverIndex}_doc_number`].value,
+        dokument_organ: form[`add_driver_${driverIndex}_doc_issued`].value,
+      }));
+
+      // Zaktualizuj umowę z danymi kierowców
+      await updateContract.mutateAsync({
+        id: contract.id,
+        updates: {
+          additional_drivers: additionalDriversData,
+        },
+      });
+
+      const driversCount = 1 + additionalDrivers.length;
+      toast.success("Zgłoszenie wysłane pomyślnie!", {
+        description: `Dziękujemy za przesłanie danych ${driversCount} ${driversCount === 1 ? 'kierowcy' : 'kierowców'}`,
+      });
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Error submitting driver data:', error);
+      toast.error("Wystąpił błąd podczas zapisywania danych");
+    }
   };
 
   const addAdditionalDriver = () => {
@@ -65,12 +76,27 @@ const DriverSubmission = () => {
     setAdditionalDrivers(additionalDrivers.filter((_, i) => i !== index));
   };
 
-  if (!contract) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <p className="text-center text-muted-foreground">Ładowanie...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isError || !contract) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <p className="text-center text-destructive">Nie znaleziono umowy o numerze: {decodedId}</p>
+            <Button onClick={() => navigate("/")} className="w-full mt-4">
+              Powrót do strony głównej
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -118,19 +144,19 @@ const DriverSubmission = () => {
             <div className="grid gap-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Numer umowy:</span>
-                <span className="font-medium text-foreground">{decodeURIComponent(contractId || "")}</span>
+                <span className="font-medium text-foreground">{contract.contract_number}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Klient:</span>
-                <span className="font-medium text-foreground">{contract.clientName}</span>
+                <span className="font-medium text-foreground">{contract.tenant_name || 'Nie podano'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Pojazd:</span>
-                <span className="font-medium text-foreground">{contract.vehicle}</span>
+                <span className="font-medium text-foreground">{contract.vehicle_model} ({contract.registration_number})</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Data rozpoczęcia:</span>
-                <span className="font-medium text-foreground">{contract.startDate}</span>
+                <span className="font-medium text-foreground">{contract.start_date}</span>
               </div>
             </div>
           </CardContent>

@@ -84,6 +84,27 @@ export const useContract = (id: string | undefined) => {
   });
 };
 
+export const useContractByNumber = (contractNumber: string | undefined) => {
+  return useQuery({
+    queryKey: ['contract', 'number', contractNumber],
+    queryFn: async () => {
+      if (!contractNumber) return null;
+      const { data, error } = await supabase
+        .from('contracts')
+        .select(`
+          *,
+          client:clients(*)
+        `)
+        .eq('contract_number', contractNumber)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!contractNumber,
+  });
+};
+
 export const useContractsByClient = (clientId: string | undefined) => {
   return useQuery({
     queryKey: ['contracts', 'client', clientId],
