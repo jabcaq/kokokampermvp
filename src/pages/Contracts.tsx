@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useContracts, useDeleteContract } from "@/hooks/useContracts";
+import { useVehicles } from "@/hooks/useVehicles";
 import { format } from "date-fns";
 import {
   AlertDialog,
@@ -35,11 +36,38 @@ const Contracts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [additionalDrivers, setAdditionalDrivers] = useState<number[]>([]);
   const [deleteContractId, setDeleteContractId] = useState<string | null>(null);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
+  const [vehicleData, setVehicleData] = useState({
+    model: "",
+    vin: "",
+    registration_number: "",
+    next_inspection_date: "",
+    insurance_policy_number: "",
+    insurance_valid_until: "",
+    additional_info: ""
+  });
   const { toast } = useToast();
   
   const { data: contractsData = [], isLoading } = useContracts();
+  const { data: vehicles = [] } = useVehicles();
   const deleteContractMutation = useDeleteContract();
   
+  const handleVehicleSelect = (vehicleId: string) => {
+    setSelectedVehicleId(vehicleId);
+    const selectedVehicle = vehicles.find(v => v.id === vehicleId);
+    if (selectedVehicle) {
+      setVehicleData({
+        model: selectedVehicle.model,
+        vin: selectedVehicle.vin,
+        registration_number: selectedVehicle.registration_number,
+        next_inspection_date: selectedVehicle.next_inspection_date || "",
+        insurance_policy_number: selectedVehicle.insurance_policy_number || "",
+        insurance_valid_until: selectedVehicle.insurance_valid_until || "",
+        additional_info: selectedVehicle.additional_info || ""
+      });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -52,6 +80,16 @@ const Contracts = () => {
     
     setIsDialogOpen(false);
     setAdditionalDrivers([]);
+    setSelectedVehicleId("");
+    setVehicleData({
+      model: "",
+      vin: "",
+      registration_number: "",
+      next_inspection_date: "",
+      insurance_policy_number: "",
+      insurance_valid_until: "",
+      additional_info: ""
+    });
     e.currentTarget.reset();
   };
 
@@ -250,34 +288,100 @@ const Contracts = () => {
               {/* Przedmiot najmu */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-foreground">Przedmiot najmu</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="przedmiot_model">Model</Label>
-                    <Input id="przedmiot_model" name="przedmiot_model" placeholder="RANDGER R600" required />
+                    <Label htmlFor="wybor_pojazdu">Wybierz pojazd z bazy</Label>
+                    <Select value={selectedVehicleId} onValueChange={handleVehicleSelect}>
+                      <SelectTrigger id="wybor_pojazdu">
+                        <SelectValue placeholder="Wybierz pojazd lub wprowadź dane ręcznie" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {vehicles.map((vehicle) => (
+                          <SelectItem key={vehicle.id} value={vehicle.id}>
+                            {vehicle.model} - {vehicle.registration_number}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="przedmiot_vin">VIN</Label>
-                    <Input id="przedmiot_vin" name="przedmiot_vin" placeholder="ZFA25000002S85417" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="przedmiot_nr_rej">Nr rejestracyjny</Label>
-                    <Input id="przedmiot_nr_rej" name="przedmiot_nr_rej" placeholder="WZ726ES" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="przedmiot_nastepne_badanie">Następne badanie</Label>
-                    <Input id="przedmiot_nastepne_badanie" name="przedmiot_nastepne_badanie" type="date" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="przedmiot_polisa_numer">Numer polisy</Label>
-                    <Input id="przedmiot_polisa_numer" name="przedmiot_polisa_numer" placeholder="1068435310/9933" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="przedmiot_polisa_wazna_do">Polisa ważna do</Label>
-                    <Input id="przedmiot_polisa_wazna_do" name="przedmiot_polisa_wazna_do" type="date" required />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="przedmiot_dodatkowe_info">Dodatkowe informacje</Label>
-                    <Textarea id="przedmiot_dodatkowe_info" name="przedmiot_dodatkowe_info" placeholder="pełne wyposażenie, brak zwierząt, bez sprzątania" />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="przedmiot_model">Model</Label>
+                      <Input 
+                        id="przedmiot_model" 
+                        name="przedmiot_model" 
+                        placeholder="RANDGER R600" 
+                        value={vehicleData.model}
+                        onChange={(e) => setVehicleData({...vehicleData, model: e.target.value})}
+                        required 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="przedmiot_vin">VIN</Label>
+                      <Input 
+                        id="przedmiot_vin" 
+                        name="przedmiot_vin" 
+                        placeholder="ZFA25000002S85417" 
+                        value={vehicleData.vin}
+                        onChange={(e) => setVehicleData({...vehicleData, vin: e.target.value})}
+                        required 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="przedmiot_nr_rej">Nr rejestracyjny</Label>
+                      <Input 
+                        id="przedmiot_nr_rej" 
+                        name="przedmiot_nr_rej" 
+                        placeholder="WZ726ES" 
+                        value={vehicleData.registration_number}
+                        onChange={(e) => setVehicleData({...vehicleData, registration_number: e.target.value})}
+                        required 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="przedmiot_nastepne_badanie">Następne badanie</Label>
+                      <Input 
+                        id="przedmiot_nastepne_badanie" 
+                        name="przedmiot_nastepne_badanie" 
+                        type="date" 
+                        value={vehicleData.next_inspection_date}
+                        onChange={(e) => setVehicleData({...vehicleData, next_inspection_date: e.target.value})}
+                        required 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="przedmiot_polisa_numer">Numer polisy</Label>
+                      <Input 
+                        id="przedmiot_polisa_numer" 
+                        name="przedmiot_polisa_numer" 
+                        placeholder="1068435310/9933" 
+                        value={vehicleData.insurance_policy_number}
+                        onChange={(e) => setVehicleData({...vehicleData, insurance_policy_number: e.target.value})}
+                        required 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="przedmiot_polisa_wazna_do">Polisa ważna do</Label>
+                      <Input 
+                        id="przedmiot_polisa_wazna_do" 
+                        name="przedmiot_polisa_wazna_do" 
+                        type="date" 
+                        value={vehicleData.insurance_valid_until}
+                        onChange={(e) => setVehicleData({...vehicleData, insurance_valid_until: e.target.value})}
+                        required 
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="przedmiot_dodatkowe_info">Dodatkowe informacje</Label>
+                      <Textarea 
+                        id="przedmiot_dodatkowe_info" 
+                        name="przedmiot_dodatkowe_info" 
+                        placeholder="pełne wyposażenie, brak zwierząt, bez sprzątania" 
+                        value={vehicleData.additional_info}
+                        onChange={(e) => setVehicleData({...vehicleData, additional_info: e.target.value})}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

@@ -224,6 +224,48 @@ export type Database = {
           },
         ]
       }
+      vehicles: {
+        Row: {
+          additional_info: string | null
+          created_at: string | null
+          id: string
+          insurance_policy_number: string | null
+          insurance_valid_until: string | null
+          model: string
+          next_inspection_date: string | null
+          registration_number: string
+          status: string | null
+          updated_at: string | null
+          vin: string
+        }
+        Insert: {
+          additional_info?: string | null
+          created_at?: string | null
+          id?: string
+          insurance_policy_number?: string | null
+          insurance_valid_until?: string | null
+          model: string
+          next_inspection_date?: string | null
+          registration_number: string
+          status?: string | null
+          updated_at?: string | null
+          vin: string
+        }
+        Update: {
+          additional_info?: string | null
+          created_at?: string | null
+          id?: string
+          insurance_policy_number?: string | null
+          insurance_valid_until?: string | null
+          model?: string
+          next_inspection_date?: string | null
+          registration_number?: string
+          status?: string | null
+          updated_at?: string | null
+          vin?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
