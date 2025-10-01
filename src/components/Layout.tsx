@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, Outlet } from "react-router-dom";
 import { Home, Users, FileText, UserPlus, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -11,7 +11,7 @@ const navItems = [
   { path: "/drivers", label: "Kierowcy", icon: UserPlus },
 ];
 
-export const Layout = ({ children }: { children: React.ReactNode }) => {
+export const Layout = () => {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -81,7 +81,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
         <div className="container mx-auto p-6 lg:p-8 max-w-7xl">
-          {children}
+          <Outlet />
         </div>
       </main>
     </div>

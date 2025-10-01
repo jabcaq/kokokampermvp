@@ -1,188 +1,97 @@
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Send } from "lucide-react";
+import { Link2, Copy, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { useState } from "react";
+
+// Mock data - w przyszłości z bazy danych
+const contracts = [
+  { id: "UM/2024/001", clientName: "Jan Kowalski", vehicle: "Kamper XYZ", driversCount: 1 },
+  { id: "UM/2024/002", clientName: "Anna Nowak", vehicle: "Przyczepa ABC", driversCount: 0 },
+  { id: "UM/2024/003", clientName: "Piotr Wiśniewski", vehicle: "Kamper 123", driversCount: 2 },
+];
 
 const Drivers = () => {
-  const [formData, setFormData] = useState({
-    contractNumber: "",
-    driverName: "",
-    driverEmail: "",
-    driverPhone: "",
-    licenseNumber: "",
-    licenseIssueDate: "",
-  });
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Formularz zgłoszenia kierowcy został wysłany!", {
-      description: `Dla umowy: ${formData.contractNumber}`,
+  const copyLink = (contractId: string) => {
+    const link = `${window.location.origin}/driver-form/${encodeURIComponent(contractId)}`;
+    navigator.clipboard.writeText(link);
+    setCopiedId(contractId);
+    toast.success("Link skopiowany do schowka!", {
+      description: "Możesz teraz wysłać go do kierowcy",
     });
-    setFormData({
-      contractNumber: "",
-      driverName: "",
-      driverEmail: "",
-      driverPhone: "",
-      licenseNumber: "",
-      licenseIssueDate: "",
-    });
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   return (
     <div className="space-y-8 animate-fade-in">
       <div>
         <h1 className="text-4xl font-bold text-foreground mb-2">Zgłoszenie kierowców</h1>
-        <p className="text-muted-foreground">Formularz rejestracji kierowców do umowy</p>
+        <p className="text-muted-foreground">Generuj linki do formularzy dla kierowców</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2 shadow-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5" />
-              Dane kierowcy
-            </CardTitle>
-            <CardDescription>
-              Wypełnij formularz, aby zgłosić kierowcę do wybranej umowy
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="contractNumber">Numer umowy *</Label>
-                <Select
-                  value={formData.contractNumber}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, contractNumber: value })
-                  }
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Wybierz umowę" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="UM/2024/001">UM/2024/001 - Jan Kowalski</SelectItem>
-                    <SelectItem value="UM/2024/002">UM/2024/002 - Anna Nowak</SelectItem>
-                    <SelectItem value="UM/2024/003">UM/2024/003 - Piotr Wiśniewski</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="driverName">Imię i nazwisko kierowcy *</Label>
-                  <Input
-                    id="driverName"
-                    value={formData.driverName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, driverName: e.target.value })
-                    }
-                    placeholder="Jan Kowalski"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="driverEmail">Email kierowcy *</Label>
-                  <Input
-                    id="driverEmail"
-                    type="email"
-                    value={formData.driverEmail}
-                    onChange={(e) =>
-                      setFormData({ ...formData, driverEmail: e.target.value })
-                    }
-                    placeholder="kierowca@email.com"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="driverPhone">Telefon kierowcy *</Label>
-                  <Input
-                    id="driverPhone"
-                    value={formData.driverPhone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, driverPhone: e.target.value })
-                    }
-                    placeholder="+48 500 123 456"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="licenseNumber">Numer prawa jazdy *</Label>
-                  <Input
-                    id="licenseNumber"
-                    value={formData.licenseNumber}
-                    onChange={(e) =>
-                      setFormData({ ...formData, licenseNumber: e.target.value })
-                    }
-                    placeholder="ABC123456"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="licenseIssueDate">Data wydania prawa jazdy *</Label>
-                <Input
-                  id="licenseIssueDate"
-                  type="date"
-                  value={formData.licenseIssueDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, licenseIssueDate: e.target.value })
-                  }
-                  required
-                />
-              </div>
-
-              <Button type="submit" className="w-full gap-2 shadow-md">
-                <Send className="h-4 w-4" />
-                Wyślij zgłoszenie
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-          <Card className="shadow-md">
+      <div className="grid gap-6">
+        {contracts.map((contract) => (
+          <Card key={contract.id} className="shadow-md">
             <CardHeader>
-              <CardTitle className="text-lg">Informacje</CardTitle>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-xl">{contract.id}</CardTitle>
+                  <CardDescription className="mt-1">
+                    Klient: {contract.clientName} • Pojazd: {contract.vehicle}
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  <span className="text-muted-foreground">
+                    {contract.driversCount}/3 kierowców
+                  </span>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <div>
-                <p className="font-medium text-foreground mb-1">Wymagane dokumenty:</p>
-                <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                  <li>Prawo jazdy kategorii B</li>
-                  <li>Dokument tożsamości</li>
-                  <li>Min. 2 lata doświadczenia</li>
-                </ul>
-              </div>
-              <div>
-                <p className="font-medium text-foreground mb-1">Ważne:</p>
-                <p className="text-muted-foreground">
-                  Każda umowa może mieć maksymalnie 3 zgłoszonych kierowców.
-                </p>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={() => copyLink(contract.id)}
+                  className="gap-2"
+                  variant={copiedId === contract.id ? "secondary" : "default"}
+                >
+                  {copiedId === contract.id ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4" />
+                      Skopiowano
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" />
+                      Kopiuj link do formularza
+                    </>
+                  )}
+                </Button>
+                <div className="flex-1 bg-muted/50 rounded-md px-3 py-2 text-sm text-muted-foreground truncate">
+                  <Link2 className="h-4 w-4 inline mr-2" />
+                  {window.location.origin}/driver-form/{encodeURIComponent(contract.id)}
+                </div>
               </div>
             </CardContent>
           </Card>
-
-          <Card className="shadow-md bg-gradient-subtle border-primary/20">
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">
-                Potrzebujesz dodać więcej kierowców lub masz pytania? Skontaktuj się z naszym
-                działem obsługi klienta.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        ))}
       </div>
+
+      <Card className="shadow-md bg-gradient-subtle border-primary/20">
+        <CardContent className="pt-6">
+          <div className="space-y-2">
+            <p className="font-medium text-foreground">Jak to działa?</p>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Skopiuj link dla wybranej umowy</li>
+              <li>Wyślij link do kierowcy (email, SMS, WhatsApp)</li>
+              <li>Kierowca wypełnia formularz ze swoimi danymi</li>
+              <li>Dane kierowcy automatycznie przypisują się do umowy</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
