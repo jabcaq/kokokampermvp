@@ -36,8 +36,22 @@ const DriverSubmission = () => {
     if (!contract?.id) return;
 
     try {
-      // Przygotuj dane dodatkowych kierowców z formularza
       const form = e.target as HTMLFormElement;
+      
+      // Przygotuj dane głównego kierowcy (najemcy)
+      const mainDriver = {
+        imie_nazwisko: formData.driverName,
+        email: formData.driverEmail,
+        tel: formData.driverPhone,
+        prawo_jazdy_numer: formData.licenseNumber,
+        prawo_jazdy_data: formData.licenseIssueDate,
+        dokument_rodzaj: formData.documentType,
+        dokument_numer: formData.documentNumber,
+        dokument_organ: formData.documentIssuedBy,
+        typ: 'najemca', // Oznacz jako główny kierowca
+      };
+
+      // Przygotuj dane dodatkowych kierowców z formularza
       const additionalDriversData = additionalDrivers.map((driverIndex) => ({
         imie_nazwisko: form[`add_driver_${driverIndex}_name`].value,
         email: form[`add_driver_${driverIndex}_email`].value,
@@ -47,18 +61,30 @@ const DriverSubmission = () => {
         dokument_rodzaj: form[`add_driver_${driverIndex}_doc_type`].value,
         dokument_numer: form[`add_driver_${driverIndex}_doc_number`].value,
         dokument_organ: form[`add_driver_${driverIndex}_doc_issued`].value,
+        typ: 'dodatkowy',
       }));
 
-      // Zaktualizuj umowę z danymi kierowców
+      // Połącz wszystkich kierowców w jedną tablicę
+      const allDrivers = [mainDriver, ...additionalDriversData];
+
+      // Zaktualizuj umowę z danymi wszystkich kierowców
       await updateContract.mutateAsync({
         id: contract.id,
         updates: {
-          additional_drivers: additionalDriversData,
+          additional_drivers: allDrivers,
+          tenant_name: formData.driverName,
+          tenant_email: formData.driverEmail,
+          tenant_phone: formData.driverPhone,
+          tenant_license_number: formData.licenseNumber,
+          tenant_license_date: formData.licenseIssueDate,
+          tenant_id_type: formData.documentType,
+          tenant_id_number: formData.documentNumber,
+          tenant_id_issuer: formData.documentIssuedBy,
         },
       });
 
       // Create notification for new drivers
-      const driversCount = 1 + additionalDrivers.length;
+      const driversCount = allDrivers.length;
       await createNotificationMutation.mutateAsync({
         type: 'driver_new',
         title: 'Nowy formularz dodatkowych kierowców',

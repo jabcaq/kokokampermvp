@@ -117,41 +117,47 @@ export const ContractActionsPanel = ({
         <CardTitle>Akcje umowy</CardTitle>
         <CardDescription>Nr umowy: {contractNumber}</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-wrap gap-2">
-        <Button 
-          onClick={handleGenerateContract}
-          disabled={addDocument.isPending}
-          size="sm"
-        >
-          <FileText className="h-3 w-3 mr-1.5" />
-          Generuj umowę
-        </Button>
-        <Button 
-          onClick={handleSendToClient}
-          variant="outline"
-          disabled={addDocument.isPending || !clientEmail}
-          size="sm"
-        >
-          <Send className="h-3 w-3 mr-1.5" />
-          Wyślij do klienta
-        </Button>
-        <Button 
-          onClick={handleCopyDriverForm}
-          variant="outline"
-          size="sm"
-        >
-          <UserPlus className="h-3 w-3 mr-1.5" />
-          Formularz kierowcy
-        </Button>
-        <Button 
-          onClick={handleSendVerification}
-          variant="secondary"
-          disabled={addDocument.isPending}
-          size="sm"
-        >
-          <CheckCircle className="h-3 w-3 mr-1.5" />
-          Wyślij do weryfikacji
-        </Button>
+      <CardContent className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Button 
+            onClick={handleGenerateContract}
+            disabled={addDocument.isPending}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <FileText className="h-3 w-3 mr-1.5" />
+            Generuj umowę
+          </Button>
+          <Button 
+            onClick={handleSendToClient}
+            variant="outline"
+            disabled={addDocument.isPending || !clientEmail}
+            size="sm"
+            className="border-gray-400 text-gray-700 hover:bg-gray-100"
+          >
+            <Send className="h-3 w-3 mr-1.5" />
+            Wyślij do klienta
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Button 
+            onClick={handleCopyDriverForm}
+            variant="outline"
+            size="sm"
+            className="border-purple-400 text-purple-700 hover:bg-purple-50"
+          >
+            <UserPlus className="h-3 w-3 mr-1.5" />
+            Formularz kierowcy
+          </Button>
+          <Button 
+            onClick={handleSendVerification}
+            size="sm"
+            className="bg-orange-500 hover:bg-orange-600 text-white"
+          >
+            <CheckCircle className="h-3 w-3 mr-1.5" />
+            Wyślij do weryfikacji
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
