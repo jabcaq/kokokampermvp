@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useContract, useUpdateContract } from "@/hooks/useContracts";
 import { useVehicles } from "@/hooks/useVehicles";
@@ -561,15 +562,15 @@ const ContractDetails = () => {
 
       {/* Przedmiot najmu */}
       <Card className="shadow-md">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
             <Car className="h-5 w-5" />
             Przedmiot najmu
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {isEditing && (
-            <div className="space-y-2 p-4 bg-muted/50 rounded-lg mb-4">
+            <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
               <Label>Wybierz pojazd z bazy</Label>
               <Select onValueChange={handleVehicleSelect}>
                 <SelectTrigger className="bg-background">
@@ -585,71 +586,88 @@ const ContractDetails = () => {
               </Select>
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Model</Label>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Model</Label>
               {isEditing ? (
                 <Input value={displayData?.vehicle_model || ''} onChange={(e) => updateField('vehicle_model', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.vehicle_model || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.vehicle_model || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Nr rejestracyjny</Label>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Nr rejestracyjny</Label>
               {isEditing ? (
                 <Input value={displayData?.registration_number || ''} onChange={(e) => updateField('registration_number', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.registration_number || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.registration_number || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>VIN</Label>
+          </div>
+          
+          <Separator />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">VIN</Label>
               {isEditing ? (
                 <Input value={displayData?.vehicle_vin || ''} onChange={(e) => updateField('vehicle_vin', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.vehicle_vin || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.vehicle_vin || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Następne badanie</Label>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Następne badanie</Label>
               {isEditing ? (
                 <Input type="date" value={displayData?.vehicle_next_inspection || ''} onChange={(e) => updateField('vehicle_next_inspection', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.vehicle_next_inspection || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.vehicle_next_inspection || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Numer polisy</Label>
+          </div>
+          
+          <Separator />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Numer polisy</Label>
               {isEditing ? (
                 <Input value={displayData?.vehicle_insurance_number || ''} onChange={(e) => updateField('vehicle_insurance_number', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.vehicle_insurance_number || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.vehicle_insurance_number || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Polisa ważna do</Label>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Polisa ważna do</Label>
               {isEditing ? (
                 <Input type="date" value={displayData?.vehicle_insurance_valid_until || ''} onChange={(e) => updateField('vehicle_insurance_valid_until', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.vehicle_insurance_valid_until || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.vehicle_insurance_valid_until || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Dodatkowe informacje</Label>
-              {isEditing ? (
-                <Textarea value={displayData?.vehicle_additional_info || ''} onChange={(e) => updateField('vehicle_additional_info', e.target.value)} />
-              ) : (
-                <p className="font-medium text-foreground">{displayData?.vehicle_additional_info || 'Nie podano'}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label>Wartość umowy</Label>
-              {isEditing ? (
-                <Input type="number" step="0.01" value={displayData?.value ?? ''} onChange={(e) => updateField('value', e.target.value)} />
-              ) : (
-                <p className="font-medium text-foreground">{displayData?.value ? `${displayData.value} PLN` : 'Nie podano'}</p>
-              )}
-            </div>
+          </div>
+          
+          <Separator />
+          
+          <div className="space-y-3">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">Dodatkowe informacje</Label>
+            {isEditing ? (
+              <Textarea value={displayData?.vehicle_additional_info || ''} onChange={(e) => updateField('vehicle_additional_info', e.target.value)} />
+            ) : (
+              <p className="text-base font-semibold text-foreground pt-1">{displayData?.vehicle_additional_info || 'Nie podano'}</p>
+            )}
+          </div>
+          
+          <Separator />
+          
+          <div className="space-y-3">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">Wartość umowy</Label>
+            {isEditing ? (
+              <Input type="number" step="0.01" value={displayData?.value ?? ''} onChange={(e) => updateField('value', e.target.value)} className="max-w-xs" />
+            ) : (
+              <p className="text-base font-semibold text-foreground pt-1">{displayData?.value ? `${displayData.value} PLN` : 'Nie podano'}</p>
+            )}
           </div>
         </CardContent>
       </Card>
