@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,22 @@ const DriverSubmission = () => {
     documentNumber: "",
     documentIssuedBy: "",
   });
+
+  // Pre-fill form with contract tenant data when contract loads
+  useEffect(() => {
+    if (contract) {
+      setFormData({
+        driverName: contract.tenant_name || "",
+        driverEmail: contract.tenant_email || "",
+        driverPhone: contract.tenant_phone || "",
+        licenseNumber: contract.tenant_license_number || "",
+        licenseIssueDate: contract.tenant_license_date || "",
+        documentType: contract.tenant_id_type || "dowod",
+        documentNumber: contract.tenant_id_number || "",
+        documentIssuedBy: contract.tenant_id_issuer || "",
+      });
+    }
+  }, [contract]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

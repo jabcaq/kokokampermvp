@@ -42,6 +42,7 @@ const Contracts = () => {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [generatedContractNumber, setGeneratedContractNumber] = useState<string>("");
+  const [totalAmount, setTotalAmount] = useState<string>("");
   const [vehicleData, setVehicleData] = useState({
     model: "",
     vin: "",
@@ -116,34 +117,30 @@ const Contracts = () => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
-    // Przygotuj dodatkowych kierowców
-    const driversData = additionalDrivers.map((idx) => ({
-      imie_nazwisko: formData.get(`add_driver_${idx}_imie_nazwisko`),
-      email: formData.get(`add_driver_${idx}_email`),
-      tel: formData.get(`add_driver_${idx}_tel`),
-      prawo_jazdy_numer: formData.get(`add_driver_${idx}_prawo_jazdy_numer`),
-      prawo_jazdy_data: formData.get(`add_driver_${idx}_prawo_jazdy_data`),
-      dokument_rodzaj: formData.get(`add_driver_${idx}_dokument_rodzaj`),
-      dokument_numer: formData.get(`add_driver_${idx}_dokument_numer`),
-      dokument_organ: formData.get(`add_driver_${idx}_dokument_organ`),
-    }));
+    // Get selected client to pre-fill tenant data
+    const selectedClient = clients.find(c => c.id === selectedClientId);
     
-    // Przygotuj dane płatności
+    // Calculate payment amounts
+    const total = parseFloat(totalAmount) || 0;
+    const reservationAmount = (total * 0.30).toFixed(2);
+    const mainAmount = (total * 0.70).toFixed(2);
+    
+    // Przygotuj dane płatności z automatycznymi kwotami
     const paymentsData = {
       rezerwacyjna: {
-        data: formData.get('oplata_rez_data'),
-        wysokosc: formData.get('oplata_rez_wysokosc'),
-        rachunek: formData.get('oplata_rez_rachunek'),
+        data: formData.get('oplata_rez_data') || "",
+        wysokosc: `${reservationAmount} zł`,
+        rachunek: formData.get('oplata_rez_rachunek') || "mBank: 34 1140 2004...",
       },
       zasadnicza: {
-        data: formData.get('oplata_zasad_data'),
-        wysokosc: formData.get('oplata_zasad_wysokosc'),
-        rachunek: formData.get('oplata_zasad_rachunek'),
+        data: formData.get('oplata_zasad_data') || "",
+        wysokosc: `${mainAmount} zł`,
+        rachunek: formData.get('oplata_zasad_rachunek') || "mBank: 34 1140 2004...",
       },
       kaucja: {
-        data: formData.get('oplata_kaucja_data'),
-        wysokosc: formData.get('oplata_kaucja_wysokosc'),
-        rachunek: formData.get('oplata_kaucja_rachunek'),
+        data: formData.get('oplata_kaucja_data') || "",
+        wysokosc: formData.get('oplata_kaucja_wysokosc') || "5000.00 zł",
+        rachunek: formData.get('oplata_kaucja_rachunek') || "mBank: 08 1140 2004...",
       },
     };
     
@@ -157,35 +154,35 @@ const Contracts = () => {
         start_date: formData.get('okres_od') as string,
         end_date: formData.get('okres_do') as string,
         status: 'pending',
-        value: null,
-        company_name: formData.get('nazwa_firmy') as string,
-        company_email: formData.get('email') as string,
-        company_phone1: formData.get('telefon1') as string,
-        company_phone2: formData.get('telefon2') as string,
-        lessor_name: formData.get('wynajmujacy_nazwa') as string,
-        lessor_address: formData.get('wynajmujacy_adres') as string,
-        lessor_phone: formData.get('wynajmujacy_tel') as string,
-        lessor_website: formData.get('wynajmujacy_www') as string,
-        lessor_email: formData.get('wynajmujacy_email') as string,
+        value: total,
+        company_name: "KOKO KAMPER",
+        company_email: "kontakt@kokokamper.pl",
+        company_phone1: "+48 607 108 993",
+        company_phone2: "+48 660 694 257",
+        lessor_name: "Koko Group Sp. z o.o.",
+        lessor_address: "ul. Lazurowa 85a/53, 01-479 Warszawa",
+        lessor_phone: "+48 660 694 257",
+        lessor_website: "www.kokokamper.pl",
+        lessor_email: "kontakt@kokokamper.pl",
         rental_location: formData.get('okres_miejsce') as string,
         return_by: formData.get('okres_zwrot_do') as string,
-        tenant_name: formData.get('najemca_imie_nazwisko') as string,
-        tenant_email: formData.get('najemca_email') as string,
-        tenant_phone: formData.get('najemca_tel') as string,
-        tenant_address: formData.get('najemca_adres_zamieszkania') as string,
-        tenant_id_type: formData.get('najemca_dokument_rodzaj') as string,
-        tenant_id_number: formData.get('najemca_dokument_numer') as string,
-        tenant_id_issuer: formData.get('najemca_dokument_organ') as string,
-        tenant_pesel: formData.get('najemca_pesel') as string,
-        tenant_nip: formData.get('najemca_nip') as string,
-        tenant_license_number: formData.get('najemca_prawo_jazdy_numer') as string,
-        tenant_license_date: formData.get('najemca_prawo_jazdy_data') as string,
+        tenant_name: selectedClient?.name || "",
+        tenant_email: selectedClient?.email || "",
+        tenant_phone: selectedClient?.phone || "",
+        tenant_address: "",
+        tenant_id_type: "",
+        tenant_id_number: "",
+        tenant_id_issuer: "",
+        tenant_pesel: "",
+        tenant_nip: "",
+        tenant_license_number: "",
+        tenant_license_date: "",
         vehicle_vin: vehicleData.vin,
         vehicle_next_inspection: vehicleData.next_inspection_date,
         vehicle_insurance_number: vehicleData.insurance_policy_number,
         vehicle_insurance_valid_until: vehicleData.insurance_valid_until,
         vehicle_additional_info: vehicleData.additional_info,
-        additional_drivers: driversData,
+        additional_drivers: [],
         payments: paymentsData,
         notes: formData.get('uwagi') as string,
       });
@@ -200,6 +197,7 @@ const Contracts = () => {
       setSelectedVehicleId("");
       setSelectedClientId("");
       setGeneratedContractNumber("");
+      setTotalAmount("");
       setVehicleData({
         model: "",
         vin: "",
@@ -262,6 +260,7 @@ const Contracts = () => {
       setSelectedVehicleId("");
       setAdditionalDrivers([]);
       setGeneratedContractNumber("");
+      setTotalAmount("");
       setVehicleData({
         model: "",
         vin: "",
@@ -317,29 +316,13 @@ const Contracts = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="nazwa_firmy">Nazwa firmy</Label>
-                    <Input id="nazwa_firmy" name="nazwa_firmy" defaultValue="KOKO KAMPER" placeholder="KOKO KAMPER" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" name="email" type="email" defaultValue="kontakt@kokokamper.pl" placeholder="kontakt@kokokamper.pl" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="telefon1">Telefon 1</Label>
-                    <Input id="telefon1" name="telefon1" defaultValue="+48 607 108 993" placeholder="+48 607 108 993" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="telefon2">Telefon 2</Label>
-                    <Input id="telefon2" name="telefon2" defaultValue="+48 660 694 257" placeholder="+48 660 694 257" />
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="umowa_numer">Numer umowy</Label>
                     <Input 
                       id="umowa_numer" 
                       name="umowa_numer" 
                       placeholder="Wybierz pojazd aby wygenerować numer" 
                       value={generatedContractNumber}
-                      onChange={(e) => setGeneratedContractNumber(e.target.value)}
+                      readOnly
                       required 
                       disabled={!generatedContractNumber}
                     />
@@ -352,33 +335,6 @@ const Contracts = () => {
                   <div className="space-y-2">
                     <Label htmlFor="umowa_text">Numer umowy (stary system)</Label>
                     <Input id="umowa_text" name="umowa_text" placeholder="np. 60/2024" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Wynajmujący */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Wynajmujący</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="wynajmujacy_nazwa">Nazwa</Label>
-                    <Input id="wynajmujacy_nazwa" name="wynajmujacy_nazwa" defaultValue="Koko Group Sp. z o.o." placeholder="Koko Group Sp. z o.o." required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="wynajmujacy_adres">Adres</Label>
-                    <Input id="wynajmujacy_adres" name="wynajmujacy_adres" defaultValue="ul. Lazurowa 85a/53, 01-479 Warszawa" placeholder="ul. Lazurowa 85a/53, 01-479 Warszawa" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="wynajmujacy_tel">Telefon</Label>
-                    <Input id="wynajmujacy_tel" name="wynajmujacy_tel" defaultValue="+48 660 694 257" placeholder="+48 660 694 257" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="wynajmujacy_www">WWW</Label>
-                    <Input id="wynajmujacy_www" name="wynajmujacy_www" defaultValue="www.kokokamper.pl" placeholder="www.kokokamper.pl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="wynajmujacy_email">Email</Label>
-                    <Input id="wynajmujacy_email" name="wynajmujacy_email" type="email" defaultValue="kontakt@kokokamper.pl" placeholder="kontakt@kokokamper.pl" required />
                   </div>
                 </div>
               </div>
@@ -402,65 +358,6 @@ const Contracts = () => {
                   <div className="space-y-2">
                     <Label htmlFor="okres_zwrot_do">Zwrot do</Label>
                     <Input id="okres_zwrot_do" name="okres_zwrot_do" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Najemca (Główny kierowca) */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Najemca (Główny kierowca)</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_imie_nazwisko">Imię i nazwisko *</Label>
-                    <Input id="najemca_imie_nazwisko" name="najemca_imie_nazwisko" placeholder="Adam Fedio" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_email">Email *</Label>
-                    <Input id="najemca_email" name="najemca_email" type="email" placeholder="adam.fedio@gmail.com" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_tel">Telefon *</Label>
-                    <Input id="najemca_tel" name="najemca_tel" placeholder="508140790" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_prawo_jazdy_numer">Numer prawa jazdy *</Label>
-                    <Input id="najemca_prawo_jazdy_numer" name="najemca_prawo_jazdy_numer" placeholder="00856/04/2808" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_prawo_jazdy_data">Data wydania prawa jazdy *</Label>
-                    <Input id="najemca_prawo_jazdy_data" name="najemca_prawo_jazdy_data" type="date" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_dokument_rodzaj">Rodzaj dokumentu tożsamości *</Label>
-                    <Select name="najemca_dokument_rodzaj" defaultValue="dowod">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Wybierz dokument" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="dowod">Dowód osobisty</SelectItem>
-                        <SelectItem value="paszport">Paszport</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_dokument_numer">Numer dokumentu *</Label>
-                    <Input id="najemca_dokument_numer" name="najemca_dokument_numer" placeholder="DBZ976078" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_dokument_organ">Organ wydający *</Label>
-                    <Input id="najemca_dokument_organ" name="najemca_dokument_organ" placeholder="Wójt gminy Stare Babice" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_pesel">PESEL</Label>
-                    <Input id="najemca_pesel" name="najemca_pesel" placeholder="70110803631" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="najemca_nip">NIP</Label>
-                    <Input id="najemca_nip" name="najemca_nip" placeholder="70110803631" />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="najemca_adres_zamieszkania">Adres zamieszkania *</Label>
-                    <Input id="najemca_adres_zamieszkania" name="najemca_adres_zamieszkania" placeholder="Władysława Reymona 29, Latchorzew, 05-082" required />
                   </div>
                 </div>
               </div>
@@ -685,60 +582,49 @@ const Contracts = () => {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-foreground">Opłaty</h3>
                 
-                {/* Opłata rezerwacyjna */}
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">Opłata rezerwacyjna</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="oplata_rez_data">Data</Label>
-                      <Input id="oplata_rez_data" name="oplata_rez_data" type="date" />
+                  <Label htmlFor="kwota_calkowita">Kwota całkowita *</Label>
+                  <Input 
+                    id="kwota_calkowita" 
+                    name="kwota_calkowita" 
+                    type="number"
+                    step="0.01"
+                    placeholder="10000.00"
+                    value={totalAmount}
+                    onChange={(e) => setTotalAmount(e.target.value)}
+                    required 
+                  />
+                  {totalAmount && (
+                    <div className="text-xs text-muted-foreground space-y-1 mt-2">
+                      <p>• Opłata rezerwacyjna (30%): {(parseFloat(totalAmount) * 0.30).toFixed(2)} zł</p>
+                      <p>• Opłata zasadnicza (70%): {(parseFloat(totalAmount) * 0.70).toFixed(2)} zł</p>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="oplata_rez_wysokosc">Wysokość</Label>
-                      <Input id="oplata_rez_wysokosc" name="oplata_rez_wysokosc" placeholder="5000.00 zł" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="oplata_rez_rachunek">Rachunek</Label>
-                      <Input id="oplata_rez_rachunek" name="oplata_rez_rachunek" placeholder="mBank: 34 1140 2004..." />
-                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="oplata_rez_data">Data opłaty rezerwacyjnej</Label>
+                    <Input id="oplata_rez_data" name="oplata_rez_data" type="date" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="oplata_zasad_data">Data opłaty zasadniczej</Label>
+                    <Input id="oplata_zasad_data" name="oplata_zasad_data" type="date" />
                   </div>
                 </div>
 
-                {/* Opłata zasadnicza */}
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">Opłata zasadnicza</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="oplata_zasad_data">Data</Label>
-                      <Input id="oplata_zasad_data" name="oplata_zasad_data" type="date" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="oplata_zasad_wysokosc">Wysokość</Label>
-                      <Input id="oplata_zasad_wysokosc" name="oplata_zasad_wysokosc" placeholder="n/d" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="oplata_zasad_rachunek">Rachunek</Label>
-                      <Input id="oplata_zasad_rachunek" name="oplata_zasad_rachunek" placeholder="mBank: 34 1140 2004..." />
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="oplata_kaucja_data">Data kaucji</Label>
+                    <Input id="oplata_kaucja_data" name="oplata_kaucja_data" type="date" />
                   </div>
-                </div>
-
-                {/* Kaucja */}
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">Kaucja</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="oplata_kaucja_data">Data</Label>
-                      <Input id="oplata_kaucja_data" name="oplata_kaucja_data" type="date" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="oplata_kaucja_wysokosc">Wysokość</Label>
-                      <Input id="oplata_kaucja_wysokosc" name="oplata_kaucja_wysokosc" placeholder="5000.00 zł" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="oplata_kaucja_rachunek">Rachunek</Label>
-                      <Input id="oplata_kaucja_rachunek" name="oplata_kaucja_rachunek" placeholder="mBank: 08 1140 2004..." />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="oplata_kaucja_wysokosc">Wysokość kaucji</Label>
+                    <Input id="oplata_kaucja_wysokosc" name="oplata_kaucja_wysokosc" placeholder="5000.00" defaultValue="5000.00" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="oplata_kaucja_rachunek">Rachunek kaucji</Label>
+                    <Input id="oplata_kaucja_rachunek" name="oplata_kaucja_rachunek" placeholder="mBank: 08 1140 2004..." defaultValue="mBank: 08 1140 2004..." />
                   </div>
                 </div>
               </div>
