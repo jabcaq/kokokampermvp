@@ -42,17 +42,36 @@ const Clients = () => {
       client.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Find duplicate emails
-  const duplicateEmails = useMemo(() => {
+  // Find duplicate emails and mark which ones can be deleted
+  const { duplicateEmails, firstOccurrences, deletableDuplicates } = useMemo(() => {
     const emailCount = new Map<string, number>();
+    const emailFirstId = new Map<string, string>();
+    const deletable = new Set<string>();
+    
     clients.forEach(client => {
-      emailCount.set(client.email, (emailCount.get(client.email) || 0) + 1);
+      const count = emailCount.get(client.email) || 0;
+      emailCount.set(client.email, count + 1);
+      
+      if (count === 0) {
+        // First occurrence - mark as the one to keep
+        emailFirstId.set(client.email, client.id);
+      } else {
+        // Subsequent occurrences - mark as deletable
+        deletable.add(client.id);
+      }
     });
-    return new Set(
+    
+    const duplicates = new Set(
       Array.from(emailCount.entries())
         .filter(([_, count]) => count > 1)
         .map(([email]) => email)
     );
+    
+    return {
+      duplicateEmails: duplicates,
+      firstOccurrences: emailFirstId,
+      deletableDuplicates: deletable
+    };
   }, [clients]);
 
   const sortedClients = [...filteredClients].sort((a, b) => {
@@ -66,9 +85,11 @@ const Clients = () => {
     }
   });
 
-  const duplicateClients = sortedClients.filter(client => duplicateEmails.has(client.email));
+  const duplicateClientsToDelete = sortedClients.filter(client => deletableDuplicates.has(client.id));
 
   const toggleClientSelection = (clientId: string) => {
+    if (!deletableDuplicates.has(clientId)) return;
+    
     const newSelection = new Set(selectedClients);
     if (newSelection.has(clientId)) {
       newSelection.delete(clientId);
@@ -79,10 +100,10 @@ const Clients = () => {
   };
 
   const toggleAllDuplicates = () => {
-    if (selectedClients.size === duplicateClients.length) {
+    if (selectedClients.size === duplicateClientsToDelete.length) {
       setSelectedClients(new Set());
     } else {
-      setSelectedClients(new Set(duplicateClients.map(c => c.id)));
+      setSelectedClients(new Set(duplicateClientsToDelete.map(c => c.id)));
     }
   };
 
@@ -221,7 +242,7 @@ const Clients = () => {
             className="pl-10"
           />
         </div>
-        {duplicateClients.length > 0 && (
+        {duplicateClientsToDelete.length > 0 && (
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -229,7 +250,7 @@ const Clients = () => {
               className="gap-2"
             >
               <AlertTriangle className="h-4 w-4" />
-              {selectedClients.size === duplicateClients.length ? "Odznacz" : "Zaznacz"} duplikaty ({duplicateClients.length})
+              {selectedClients.size === duplicateClientsToDelete.length ? "Odznacz" : "Zaznacz"} duplikaty do usunięcia ({duplicateClientsToDelete.length})
             </Button>
             {selectedClients.size > 0 && (
               <Button
@@ -293,6 +314,9 @@ const Clients = () => {
             <TableBody>
               {sortedClients.map((client) => {
                 const isDuplicate = duplicateEmails.has(client.email);
+                const isFirstOccurrence = firstOccurrences.get(client.email) === client.id;
+                const isDeletable = deletableDuplicates.has(client.id);
+                
                 return (
                   <TableRow 
                     key={client.id} 
@@ -302,7 +326,7 @@ const Clients = () => {
                       <Checkbox
                         checked={selectedClients.has(client.id)}
                         onCheckedChange={() => toggleClientSelection(client.id)}
-                        disabled={!isDuplicate}
+                        disabled={!isDeletable}
                       />
                     </TableCell>
                     <TableCell 
@@ -312,9 +336,9 @@ const Clients = () => {
                       <div className="flex items-center gap-2">
                         {client.name}
                         {isDuplicate && (
-                          <Badge variant="destructive" className="gap-1">
+                          <Badge variant={isFirstOccurrence ? "secondary" : "destructive"} className="gap-1">
                             <AlertTriangle className="h-3 w-3" />
-                            Duplikat
+                            {isFirstOccurrence ? "Duplikat (zostanie)" : "Duplikat"}
                           </Badge>
                         )}
                       </div>
