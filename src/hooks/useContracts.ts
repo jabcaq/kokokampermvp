@@ -42,6 +42,9 @@ export interface Contract {
   additional_drivers?: any[];
   payments?: any;
   notes?: string;
+  handover_link?: string;
+  return_link?: string;
+  driver_submission_link?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -129,14 +132,36 @@ export const useAddContract = () => {
   
   return useMutation({
     mutationFn: async (contract: Omit<Contract, 'id' | 'created_at' | 'updated_at'>) => {
-      const { data, error } = await supabase
+      // First, create the contract
+      const { data: newContract, error } = await supabase
         .from('contracts')
         .insert([contract])
         .select()
         .single();
       
       if (error) throw error;
-      return data;
+      
+      // Generate links for handover, return, and driver submission
+      const baseUrl = window.location.origin;
+      const handoverLink = `${baseUrl}/vehicle-handover/${newContract.id}`;
+      const returnLink = `${baseUrl}/vehicle-return/${newContract.id}`;
+      const driverSubmissionLink = `${baseUrl}/driver-submission/${newContract.id}`;
+      
+      // Update the contract with generated links
+      const { data: updatedContract, error: updateError } = await supabase
+        .from('contracts')
+        .update({
+          handover_link: handoverLink,
+          return_link: returnLink,
+          driver_submission_link: driverSubmissionLink,
+        })
+        .eq('id', newContract.id)
+        .select()
+        .single();
+      
+      if (updateError) throw updateError;
+      
+      return updatedContract;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
