@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Loader2, Trash2, ArrowUpDown, Eye } from "lucide-react";
+import { Plus, Search, Loader2, Trash2, ArrowUpDown, Eye, AlertTriangle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -26,6 +28,8 @@ const Clients = () => {
   const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
   const [sortField, setSortField] = useState<"name" | "email" | "contracts_count">("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const { toast } = useToast();
   
   const { data: clients = [], isLoading } = useClients();
@@ -38,6 +42,19 @@ const Clients = () => {
       client.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Find duplicate emails
+  const duplicateEmails = useMemo(() => {
+    const emailCount = new Map<string, number>();
+    clients.forEach(client => {
+      emailCount.set(client.email, (emailCount.get(client.email) || 0) + 1);
+    });
+    return new Set(
+      Array.from(emailCount.entries())
+        .filter(([_, count]) => count > 1)
+        .map(([email]) => email)
+    );
+  }, [clients]);
+
   const sortedClients = [...filteredClients].sort((a, b) => {
     const aValue = a[sortField] ?? "";
     const bValue = b[sortField] ?? "";
@@ -48,6 +65,26 @@ const Clients = () => {
       return aValue < bValue ? 1 : -1;
     }
   });
+
+  const duplicateClients = sortedClients.filter(client => duplicateEmails.has(client.email));
+
+  const toggleClientSelection = (clientId: string) => {
+    const newSelection = new Set(selectedClients);
+    if (newSelection.has(clientId)) {
+      newSelection.delete(clientId);
+    } else {
+      newSelection.add(clientId);
+    }
+    setSelectedClients(newSelection);
+  };
+
+  const toggleAllDuplicates = () => {
+    if (selectedClients.size === duplicateClients.length) {
+      setSelectedClients(new Set());
+    } else {
+      setSelectedClients(new Set(duplicateClients.map(c => c.id)));
+    }
+  };
 
   const handleSort = (field: "name" | "email" | "contracts_count") => {
     if (sortField === field) {
@@ -102,6 +139,38 @@ const Clients = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    const errors: string[] = [];
+    let successCount = 0;
+
+    for (const clientId of selectedClients) {
+      try {
+        await deleteClientMutation.mutateAsync(clientId);
+        successCount++;
+      } catch (error) {
+        errors.push(clientId);
+      }
+    }
+
+    if (successCount > 0) {
+      toast({
+        title: "Sukces",
+        description: `Usunięto ${successCount} klientów.`,
+      });
+    }
+
+    if (errors.length > 0) {
+      toast({
+        title: "Błąd",
+        description: `Nie udało się usunąć ${errors.length} klientów. Sprawdź czy nie mają przypisanych umów.`,
+        variant: "destructive",
+      });
+    }
+
+    setSelectedClients(new Set());
+    setShowBulkDeleteDialog(false);
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -142,14 +211,38 @@ const Clients = () => {
         </Dialog>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Szukaj klientów..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Szukaj klientów..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        {duplicateClients.length > 0 && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={toggleAllDuplicates}
+              className="gap-2"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              {selectedClients.size === duplicateClients.length ? "Odznacz" : "Zaznacz"} duplikaty ({duplicateClients.length})
+            </Button>
+            {selectedClients.size > 0 && (
+              <Button
+                variant="destructive"
+                onClick={() => setShowBulkDeleteDialog(true)}
+                className="gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Usuń zaznaczone ({selectedClients.size})
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {isLoading ? (
@@ -165,6 +258,7 @@ const Clients = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12"></TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => handleSort("name")}
@@ -197,46 +291,81 @@ const Clients = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedClients.map((client) => (
-                <TableRow 
-                  key={client.id} 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => navigate(`/clients/${client.id}`)}
-                >
-                  <TableCell className="font-medium">{client.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{client.email}</TableCell>
-                  <TableCell className="text-muted-foreground">{client.phone || "—"}</TableCell>
-                  <TableCell className="text-center">
-                    <span className="inline-flex items-center justify-center bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                      {client.contracts_count}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/clients/${client.id}`);
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteClientId(client.id);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {sortedClients.map((client) => {
+                const isDuplicate = duplicateEmails.has(client.email);
+                return (
+                  <TableRow 
+                    key={client.id} 
+                    className={`hover:bg-muted/50 transition-colors ${isDuplicate ? 'bg-destructive/5' : ''}`}
+                  >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedClients.has(client.id)}
+                        onCheckedChange={() => toggleClientSelection(client.id)}
+                        disabled={!isDuplicate}
+                      />
+                    </TableCell>
+                    <TableCell 
+                      className="font-medium cursor-pointer"
+                      onClick={() => navigate(`/clients/${client.id}`)}
+                    >
+                      <div className="flex items-center gap-2">
+                        {client.name}
+                        {isDuplicate && (
+                          <Badge variant="destructive" className="gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            Duplikat
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell 
+                      className="text-muted-foreground cursor-pointer"
+                      onClick={() => navigate(`/clients/${client.id}`)}
+                    >
+                      {client.email}
+                    </TableCell>
+                    <TableCell 
+                      className="text-muted-foreground cursor-pointer"
+                      onClick={() => navigate(`/clients/${client.id}`)}
+                    >
+                      {client.phone || "—"}
+                    </TableCell>
+                    <TableCell 
+                      className="text-center cursor-pointer"
+                      onClick={() => navigate(`/clients/${client.id}`)}
+                    >
+                      <span className="inline-flex items-center justify-center bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                        {client.contracts_count}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/clients/${client.id}`);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteClientId(client.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
@@ -258,6 +387,31 @@ const Clients = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Usuń
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Czy na pewno chcesz usunąć zaznaczonych klientów?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Ta operacja jest nieodwracalna. Zostaną usunięci <strong>{selectedClients.size} klienci</strong>.
+              Wszystkie dane klientów zostaną trwale usunięte.
+              Klienci z aktywnymi umowami nie zostaną usunięci.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Usuń zaznaczonych ({selectedClients.size})
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
