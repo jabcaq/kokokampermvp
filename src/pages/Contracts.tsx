@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useContracts, useDeleteContract, useAddContract } from "@/hooks/useContracts";
 import { useClients } from "@/hooks/useClients";
 import { useVehicles } from "@/hooks/useVehicles";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import {
   AlertDialog,
@@ -40,6 +41,7 @@ const Contracts = () => {
   const [deleteContractId, setDeleteContractId] = useState<string | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [generatedContractNumber, setGeneratedContractNumber] = useState<string>("");
   const [vehicleData, setVehicleData] = useState({
     model: "",
     vin: "",
@@ -47,7 +49,8 @@ const Contracts = () => {
     next_inspection_date: "",
     insurance_policy_number: "",
     insurance_valid_until: "",
-    additional_info: ""
+    additional_info: "",
+    type: "" as "Kamper" | "Przyczepa" | ""
   });
   const { toast } = useToast();
   
@@ -66,7 +69,7 @@ const Contracts = () => {
     }
   }, [location]);
   
-  const handleVehicleSelect = (vehicleId: string) => {
+  const handleVehicleSelect = async (vehicleId: string) => {
     setSelectedVehicleId(vehicleId);
     const selectedVehicle = vehicles.find(v => v.id === vehicleId);
     if (selectedVehicle) {
@@ -77,8 +80,35 @@ const Contracts = () => {
         next_inspection_date: selectedVehicle.next_inspection_date || "",
         insurance_policy_number: selectedVehicle.insurance_policy_number || "",
         insurance_valid_until: selectedVehicle.insurance_valid_until || "",
-        additional_info: selectedVehicle.additional_info || ""
+        additional_info: selectedVehicle.additional_info || "",
+        type: selectedVehicle.type || ""
       });
+      
+      // Generate contract number based on vehicle type
+      if (selectedVehicle.type) {
+        const prefix = selectedVehicle.type === "Kamper" ? "K" : "P";
+        const currentYear = new Date().getFullYear();
+        
+        // Find the last contract number for this vehicle type
+        const { data: lastContract } = await supabase
+          .from('contracts')
+          .select('contract_number')
+          .like('contract_number', `${prefix}/%/${currentYear}`)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        let nextNumber = 1;
+        if (lastContract?.contract_number) {
+          const parts = lastContract.contract_number.split('/');
+          if (parts.length === 3) {
+            nextNumber = parseInt(parts[1]) + 1;
+          }
+        }
+        
+        const newContractNumber = `${prefix}/${nextNumber}/${currentYear}`;
+        setGeneratedContractNumber(newContractNumber);
+      }
     }
   };
 
@@ -119,7 +149,7 @@ const Contracts = () => {
     
     try {
       await addContractMutation.mutateAsync({
-        contract_number: formData.get('umowa_numer') as string,
+        contract_number: generatedContractNumber || (formData.get('umowa_numer') as string),
         umowa_text: formData.get('umowa_text') as string,
         client_id: selectedClientId,
         vehicle_model: vehicleData.model,
@@ -169,6 +199,7 @@ const Contracts = () => {
       setAdditionalDrivers([]);
       setSelectedVehicleId("");
       setSelectedClientId("");
+      setGeneratedContractNumber("");
       setVehicleData({
         model: "",
         vin: "",
@@ -176,7 +207,8 @@ const Contracts = () => {
         next_inspection_date: "",
         insurance_policy_number: "",
         insurance_valid_until: "",
-        additional_info: ""
+        additional_info: "",
+        type: ""
       });
       e.currentTarget.reset();
     } catch (error) {
@@ -229,6 +261,7 @@ const Contracts = () => {
       setSelectedClientId("");
       setSelectedVehicleId("");
       setAdditionalDrivers([]);
+      setGeneratedContractNumber("");
       setVehicleData({
         model: "",
         vin: "",
@@ -236,7 +269,8 @@ const Contracts = () => {
         next_inspection_date: "",
         insurance_policy_number: "",
         insurance_valid_until: "",
-        additional_info: ""
+        additional_info: "",
+        type: ""
       });
     }
   };
@@ -300,7 +334,20 @@ const Contracts = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="umowa_numer">Numer umowy</Label>
-                    <Input id="umowa_numer" name="umowa_numer" placeholder="60/2024" required />
+                    <Input 
+                      id="umowa_numer" 
+                      name="umowa_numer" 
+                      placeholder="Wybierz pojazd aby wygenerować numer" 
+                      value={generatedContractNumber}
+                      onChange={(e) => setGeneratedContractNumber(e.target.value)}
+                      required 
+                      disabled={!generatedContractNumber}
+                    />
+                    {generatedContractNumber && (
+                      <p className="text-xs text-muted-foreground">
+                        Automatycznie wygenerowany na podstawie typu pojazdu
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="umowa_text">Numer umowy (stary system)</Label>
