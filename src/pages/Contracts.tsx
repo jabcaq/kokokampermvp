@@ -124,22 +124,25 @@ const Contracts = () => {
     const reservationAmount = (total * 0.30).toFixed(2);
     const mainAmount = (total * 0.70).toFixed(2);
     
+    // Get start date for deposit date
+    const startDate = formData.get('okres_od') as string;
+    
     // Przygotuj dane płatności z automatycznymi kwotami
     const paymentsData = {
       rezerwacyjna: {
         data: formData.get('oplata_rez_data') || "",
         wysokosc: `${reservationAmount} zł`,
-        rachunek: formData.get('oplata_rez_rachunek') || "mBank: 34 1140 2004...",
+        rachunek: "mBank: 34 1140 2004...",
       },
       zasadnicza: {
         data: formData.get('oplata_zasad_data') || "",
         wysokosc: `${mainAmount} zł`,
-        rachunek: formData.get('oplata_zasad_rachunek') || "mBank: 34 1140 2004...",
+        rachunek: "mBank: 34 1140 2004...",
       },
       kaucja: {
-        data: formData.get('oplata_kaucja_data') || "",
-        wysokosc: formData.get('oplata_kaucja_wysokosc') || "5000.00 zł",
-        rachunek: formData.get('oplata_kaucja_rachunek') || "mBank: 08 1140 2004...",
+        data: startDate ? new Date(startDate).toISOString().split('T')[0] : "",
+        wysokosc: "1000 zł",
+        rachunek: "mBank: 08 1140 2004...",
       },
     };
     
@@ -148,8 +151,8 @@ const Contracts = () => {
         contract_number: generatedContractNumber || (formData.get('umowa_numer') as string),
         umowa_text: formData.get('umowa_text') as string,
         client_id: selectedClientId,
-        vehicle_model: vehicleData.model,
-        registration_number: vehicleData.registration_number,
+        vehicle_model: vehicleData.model || (formData.get('przedmiot_model') as string) || "",
+        registration_number: vehicleData.registration_number || (formData.get('przedmiot_nr_rej') as string) || "",
         start_date: formData.get('okres_od') as string,
         end_date: formData.get('okres_do') as string,
         status: 'pending',
@@ -176,11 +179,11 @@ const Contracts = () => {
         tenant_nip: "",
         tenant_license_number: "",
         tenant_license_date: "",
-        vehicle_vin: vehicleData.vin,
-        vehicle_next_inspection: vehicleData.next_inspection_date,
-        vehicle_insurance_number: vehicleData.insurance_policy_number,
-        vehicle_insurance_valid_until: vehicleData.insurance_valid_until,
-        vehicle_additional_info: vehicleData.additional_info,
+        vehicle_vin: vehicleData.vin || (formData.get('przedmiot_vin') as string) || "",
+        vehicle_next_inspection: vehicleData.next_inspection_date || (formData.get('przedmiot_nastepne_badanie') as string) || "",
+        vehicle_insurance_number: vehicleData.insurance_policy_number || (formData.get('przedmiot_polisa_numer') as string) || "",
+        vehicle_insurance_valid_until: vehicleData.insurance_valid_until || (formData.get('przedmiot_polisa_wazna_do') as string) || "",
+        vehicle_additional_info: vehicleData.additional_info || (formData.get('przedmiot_dodatkowe_info') as string) || "",
         additional_drivers: [],
         payments: paymentsData,
         notes: formData.get('uwagi') as string,
@@ -485,16 +488,11 @@ const Contracts = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="oplata_kaucja_data">Data kaucji</Label>
-                    <Input id="oplata_kaucja_data" name="oplata_kaucja_data" type="date" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="oplata_kaucja_wysokosc">Wysokość kaucji</Label>
-                    <Input id="oplata_kaucja_wysokosc" name="oplata_kaucja_wysokosc" placeholder="5000.00" defaultValue="5000.00" />
-                  </div>
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  • Data kaucji jest automatycznie ustawiana na dzień rozpoczęcia wynajmu<br/>
+                  • Kwota kaucji: 1000 zł<br/>
+                  • Rachunki bankowe są automatycznie przypisywane
+                </p>
               </div>
 
               {/* Uwagi */}
