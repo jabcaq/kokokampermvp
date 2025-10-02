@@ -151,7 +151,9 @@ export type Database = {
           company_phone2: string | null
           contract_number: string
           created_at: string | null
+          driver_submission_link: string | null
           end_date: string
+          handover_link: string | null
           id: string
           lessor_address: string | null
           lessor_email: string | null
@@ -163,6 +165,7 @@ export type Database = {
           registration_number: string
           rental_location: string | null
           return_by: string | null
+          return_link: string | null
           start_date: string
           status: Database["public"]["Enums"]["contract_status"] | null
           tenant_address: string | null
@@ -195,7 +198,9 @@ export type Database = {
           company_phone2?: string | null
           contract_number: string
           created_at?: string | null
+          driver_submission_link?: string | null
           end_date: string
+          handover_link?: string | null
           id?: string
           lessor_address?: string | null
           lessor_email?: string | null
@@ -207,6 +212,7 @@ export type Database = {
           registration_number: string
           rental_location?: string | null
           return_by?: string | null
+          return_link?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["contract_status"] | null
           tenant_address?: string | null
@@ -239,7 +245,9 @@ export type Database = {
           company_phone2?: string | null
           contract_number?: string
           created_at?: string | null
+          driver_submission_link?: string | null
           end_date?: string
+          handover_link?: string | null
           id?: string
           lessor_address?: string | null
           lessor_email?: string | null
@@ -251,6 +259,7 @@ export type Database = {
           registration_number?: string
           rental_location?: string | null
           return_by?: string | null
+          return_link?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["contract_status"] | null
           tenant_address?: string | null
