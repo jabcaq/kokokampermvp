@@ -164,10 +164,7 @@ const Contracts = () => {
         end_date: endDate as string,
         status: 'pending',
         value: total,
-        company_name: "KOKO KAMPER",
-        company_email: "kontakt@kokokamper.pl",
-        company_phone1: "+48 607 108 993",
-        company_phone2: "+48 660 694 257",
+        tenant_company_name: formData.get('tenant_company_name') as string || "",
         lessor_name: "Koko Group Sp. z o.o.",
         lessor_address: "ul. Lazurowa 85a/53, 01-479 Warszawa",
         lessor_phone: "+48 660 694 257",
@@ -183,7 +180,7 @@ const Contracts = () => {
         tenant_id_number: "",
         tenant_id_issuer: "",
         tenant_pesel: "",
-        tenant_nip: "",
+        tenant_nip: formData.get('tenant_nip') as string || "",
         tenant_license_number: "",
         tenant_license_date: null,
         vehicle_vin: vehicleData.vin || (formData.get('przedmiot_vin') as string) || "",
@@ -293,12 +290,12 @@ const Contracts = () => {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-6 mt-4">
-              {/* Podstawowe informacje */}
+              {/* Klient */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Podstawowe informacje</h3>
+                <h3 className="text-lg font-semibold text-foreground">Klient</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="client_id">Klient *</Label>
+                    <Label htmlFor="client_id">Wybierz klienta *</Label>
                     <Select value={selectedClientId} onValueChange={setSelectedClientId} required>
                       <SelectTrigger id="client_id">
                         <SelectValue placeholder="Wybierz klienta" />
@@ -311,6 +308,29 @@ const Contracts = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Informacje podstawowe (Najemca) */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Informacje podstawowe</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="tenant_company_name">Nazwa firmy (opcjonalnie)</Label>
+                    <Input 
+                      id="tenant_company_name" 
+                      name="tenant_company_name" 
+                      placeholder="Jeśli firma wynajmuje"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tenant_nip">NIP (opcjonalnie)</Label>
+                    <Input 
+                      id="tenant_nip" 
+                      name="tenant_nip" 
+                      placeholder="NIP firmy"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="umowa_numer">Numer umowy</Label>

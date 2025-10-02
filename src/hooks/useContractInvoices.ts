@@ -85,7 +85,7 @@ export const useContractInvoice = (invoiceId: string | undefined) => {
           *,
           contract:contracts(
             contract_number,
-            company_name,
+            tenant_company_name,
             tenant_name,
             tenant_email,
             tenant_phone

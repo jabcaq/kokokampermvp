@@ -138,7 +138,7 @@ const AccountingUpload = () => {
               <span>{invoice.contract?.contract_number}</span>
               
               <span className="font-medium">Klient:</span>
-              <span>{invoice.contract?.tenant_name || invoice.contract?.company_name}</span>
+              <span>{invoice.contract?.tenant_name || invoice.contract?.tenant_company_name}</span>
               
               <span className="font-medium">Email:</span>
               <span>{invoice.contract?.tenant_email}</span>

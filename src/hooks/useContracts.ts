@@ -11,10 +11,7 @@ export interface Contract {
   end_date: string;
   status: 'active' | 'pending' | 'completed' | 'cancelled';
   value: number | null;
-  company_name?: string;
-  company_email?: string;
-  company_phone1?: string;
-  company_phone2?: string;
+  tenant_company_name?: string;
   lessor_name?: string;
   lessor_address?: string;
   lessor_phone?: string;
