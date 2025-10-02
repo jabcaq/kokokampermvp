@@ -263,147 +263,166 @@ const ContractDetails = () => {
         <TabsContent value="contract" className="space-y-8">
 
       <Card className="shadow-md">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
             Informacje podstawowe
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Nazwa firmy</Label>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Nazwa firmy</Label>
               {isEditing ? (
                 <Input value={displayData?.company_name || ''} onChange={(e) => updateField('company_name', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.company_name || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.company_name || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Email</Label>
               {isEditing ? (
                 <Input type="email" value={displayData?.company_email || ''} onChange={(e) => updateField('company_email', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.company_email || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.company_email || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Telefon 1</Label>
+          </div>
+          
+          <Separator />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Telefon 1</Label>
               {isEditing ? (
                 <Input value={displayData?.company_phone1 || ''} onChange={(e) => updateField('company_phone1', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.company_phone1 || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.company_phone1 || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Telefon 2</Label>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Telefon 2</Label>
               {isEditing ? (
                 <Input value={displayData?.company_phone2 || ''} onChange={(e) => updateField('company_phone2', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.company_phone2 || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.company_phone2 || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Numer umowy (stary system)</Label>
-              {isEditing ? (
-                <Input value={displayData?.umowa_text || ''} onChange={(e) => updateField('umowa_text', e.target.value)} placeholder="np. 60/2024" />
-              ) : (
-                <p className="font-medium text-foreground">{displayData?.umowa_text || 'Nie podano'}</p>
-              )}
-            </div>
+          </div>
+          
+          <Separator />
+          
+          <div className="space-y-3">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">Numer umowy (stary system)</Label>
+            {isEditing ? (
+              <Input value={displayData?.umowa_text || ''} onChange={(e) => updateField('umowa_text', e.target.value)} placeholder="np. 60/2024" />
+            ) : (
+              <p className="text-base font-semibold text-foreground pt-1">{displayData?.umowa_text || 'Nie podano'}</p>
+            )}
           </div>
         </CardContent>
       </Card>
 
       {/* Wynajmujący */}
       <Card className="shadow-md">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle>Wynajmujący</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Nazwa</Label>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Nazwa</Label>
               {isEditing ? (
                 <Input value={displayData?.lessor_name || ''} onChange={(e) => updateField('lessor_name', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.lessor_name || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.lessor_name || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Adres</Label>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Adres</Label>
               {isEditing ? (
                 <Input value={displayData?.lessor_address || ''} onChange={(e) => updateField('lessor_address', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.lessor_address || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.lessor_address || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Telefon</Label>
+          </div>
+          
+          <Separator />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Telefon</Label>
               {isEditing ? (
                 <Input value={displayData?.lessor_phone || ''} onChange={(e) => updateField('lessor_phone', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.lessor_phone || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.lessor_phone || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>WWW</Label>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">WWW</Label>
               {isEditing ? (
                 <Input value={displayData?.lessor_website || ''} onChange={(e) => updateField('lessor_website', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.lessor_website || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.lessor_website || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              {isEditing ? (
-                <Input type="email" value={displayData?.lessor_email || ''} onChange={(e) => updateField('lessor_email', e.target.value)} />
-              ) : (
-                <p className="font-medium text-foreground">{displayData?.lessor_email || 'Nie podano'}</p>
-              )}
-            </div>
+          </div>
+          
+          <Separator />
+          
+          <div className="space-y-3">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">Email</Label>
+            {isEditing ? (
+              <Input type="email" value={displayData?.lessor_email || ''} onChange={(e) => updateField('lessor_email', e.target.value)} />
+            ) : (
+              <p className="text-base font-semibold text-foreground pt-1">{displayData?.lessor_email || 'Nie podano'}</p>
+            )}
           </div>
         </CardContent>
       </Card>
 
       {/* Informacje o kliencie */}
       <Card className="shadow-md">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
             Klient
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Imię i nazwisko</Label>
-              <p className="font-medium text-foreground">{contract.client?.name || 'N/A'}</p>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Imię i nazwisko</Label>
+              <p className="text-base font-semibold text-foreground pt-1">{contract.client?.name || 'N/A'}</p>
             </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <p className="font-medium text-foreground">{contract.client?.email || 'N/A'}</p>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Email</Label>
+              <p className="text-base font-semibold text-foreground pt-1">{contract.client?.email || 'N/A'}</p>
             </div>
-            <div className="space-y-2">
-              <Label>Telefon</Label>
-              <p className="font-medium text-foreground">{contract.client?.phone || 'N/A'}</p>
-            </div>
+          </div>
+          
+          <Separator />
+          
+          <div className="space-y-3">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">Telefon</Label>
+            <p className="text-base font-semibold text-foreground pt-1">{contract.client?.phone || 'N/A'}</p>
           </div>
         </CardContent>
       </Card>
 
       {/* Okres najmu */}
       <Card className="shadow-md">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Okres najmu
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Data rozpoczęcia</Label>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data rozpoczęcia</Label>
               {isEditing ? (
                 <Input 
                   type="date" 
@@ -411,13 +430,13 @@ const ContractDetails = () => {
                   onChange={(e) => updateField('start_date', e.target.value)} 
                 />
               ) : (
-                <p className="font-medium text-foreground">
+                <p className="text-base font-semibold text-foreground pt-1">
                   {displayData?.start_date ? format(new Date(displayData.start_date), 'dd.MM.yyyy HH:mm') : 'Nie podano'}
                 </p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Data zakończenia</Label>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data zakończenia</Label>
               {isEditing ? (
                 <Input 
                   type="datetime-local" 
@@ -425,25 +444,30 @@ const ContractDetails = () => {
                   onChange={(e) => updateField('end_date', e.target.value)} 
                 />
               ) : (
-                <p className="font-medium text-foreground">
+                <p className="text-base font-semibold text-foreground pt-1">
                   {displayData?.end_date ? format(new Date(displayData.end_date), 'dd.MM.yyyy HH:mm') : 'Nie podano'}
                 </p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Miejsce</Label>
+          </div>
+          
+          <Separator />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Miejsce</Label>
               {isEditing ? (
                 <Input value={displayData?.rental_location || ''} onChange={(e) => updateField('rental_location', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.rental_location || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.rental_location || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Zwrot do</Label>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Zwrot do</Label>
               {isEditing ? (
                 <Input value={displayData?.return_by || ''} onChange={(e) => updateField('return_by', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.return_by || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.return_by || 'Nie podano'}</p>
               )}
             </div>
           </div>
@@ -452,48 +476,59 @@ const ContractDetails = () => {
 
       {/* Najemca (Główny kierowca) */}
       <Card className="shadow-md">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
             Najemca (Główny kierowca)
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Imię i nazwisko</Label>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Imię i nazwisko</Label>
               {isEditing ? (
                 <Input value={displayData?.tenant_name || ''} onChange={(e) => updateField('tenant_name', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.tenant_name || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_name || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Email</Label>
               {isEditing ? (
                 <Input type="email" value={displayData?.tenant_email || ''} onChange={(e) => updateField('tenant_email', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.tenant_email || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_email || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Telefon</Label>
-              {isEditing ? (
-                <Input value={displayData?.tenant_phone || ''} onChange={(e) => updateField('tenant_phone', e.target.value)} />
-              ) : (
-                <p className="font-medium text-foreground">{displayData?.tenant_phone || 'Nie podano'}</p>
-              )}
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Adres zamieszkania</Label>
-              {isEditing ? (
-                <Input value={displayData?.tenant_address || ''} onChange={(e) => updateField('tenant_address', e.target.value)} />
-              ) : (
-                <p className="font-medium text-foreground">{displayData?.tenant_address || 'Nie podano'}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label>Rodzaj dokumentu tożsamości</Label>
+          </div>
+          
+          <Separator />
+          
+          <div className="space-y-3">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">Telefon</Label>
+            {isEditing ? (
+              <Input value={displayData?.tenant_phone || ''} onChange={(e) => updateField('tenant_phone', e.target.value)} />
+            ) : (
+              <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_phone || 'Nie podano'}</p>
+            )}
+          </div>
+          
+          <Separator />
+          
+          <div className="space-y-3">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">Adres zamieszkania</Label>
+            {isEditing ? (
+              <Input value={displayData?.tenant_address || ''} onChange={(e) => updateField('tenant_address', e.target.value)} />
+            ) : (
+              <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_address || 'Nie podano'}</p>
+            )}
+          </div>
+          
+          <Separator />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Rodzaj dokumentu tożsamości</Label>
               {isEditing ? (
                 <Select value={displayData?.tenant_id_type || ''} onValueChange={(value) => updateField('tenant_id_type', value)}>
                   <SelectTrigger>
@@ -505,57 +540,70 @@ const ContractDetails = () => {
                   </SelectContent>
                 </Select>
               ) : (
-                <p className="font-medium text-foreground">{displayData?.tenant_id_type || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_id_type || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Numer dokumentu</Label>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Numer dokumentu</Label>
               {isEditing ? (
                 <Input value={displayData?.tenant_id_number || ''} onChange={(e) => updateField('tenant_id_number', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.tenant_id_number || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_id_number || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Organ wydający</Label>
+          </div>
+          
+          <Separator />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Organ wydający</Label>
               {isEditing ? (
                 <Input value={displayData?.tenant_id_issuer || ''} onChange={(e) => updateField('tenant_id_issuer', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.tenant_id_issuer || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_id_issuer || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>PESEL</Label>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">PESEL</Label>
               {isEditing ? (
                 <Input value={displayData?.tenant_pesel || ''} onChange={(e) => updateField('tenant_pesel', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.tenant_pesel || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_pesel || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>NIP</Label>
+          </div>
+          
+          <Separator />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">NIP</Label>
               {isEditing ? (
                 <Input value={displayData?.tenant_nip || ''} onChange={(e) => updateField('tenant_nip', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.tenant_nip || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_nip || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Numer prawa jazdy</Label>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Numer prawa jazdy</Label>
               {isEditing ? (
                 <Input value={displayData?.tenant_license_number || ''} onChange={(e) => updateField('tenant_license_number', e.target.value)} />
               ) : (
-                <p className="font-medium text-foreground">{displayData?.tenant_license_number || 'Nie podano'}</p>
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_license_number || 'Nie podano'}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Data wydania prawa jazdy</Label>
-              {isEditing ? (
-                <Input type="date" value={displayData?.tenant_license_date || ''} onChange={(e) => updateField('tenant_license_date', e.target.value)} />
-              ) : (
-                <p className="font-medium text-foreground">{displayData?.tenant_license_date || 'Nie podano'}</p>
-              )}
-            </div>
+          </div>
+          
+          <Separator />
+          
+          <div className="space-y-3">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data wydania prawa jazdy</Label>
+            {isEditing ? (
+              <Input type="date" value={displayData?.tenant_license_date || ''} onChange={(e) => updateField('tenant_license_date', e.target.value)} />
+            ) : (
+              <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_license_date || 'Nie podano'}</p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -674,131 +722,140 @@ const ContractDetails = () => {
 
       {/* Płatności */}
       <Card className="shadow-md">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
             Płatności
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <h4 className="font-semibold">Opłata rezerwacyjna</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Data</Label>
+        <CardContent className="space-y-8">
+          <div>
+            <h4 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">Opłata rezerwacyjna</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              <div className="space-y-3">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data</Label>
                 {isEditing ? (
                   <Input type="date" value={displayData?.payments?.rezerwacyjna?.data || ''} onChange={(e) => {
                     const newPayments = { ...displayData.payments, rezerwacyjna: { ...displayData.payments?.rezerwacyjna, data: e.target.value } };
                     updateField('payments', newPayments);
                   }} />
                 ) : (
-                  <p className="font-medium text-foreground">{displayData?.payments?.rezerwacyjna?.data || 'Nie podano'}</p>
+                  <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.rezerwacyjna?.data || 'Nie podano'}</p>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label>Wysokość</Label>
+              <div className="space-y-3">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Wysokość</Label>
                 {isEditing ? (
                   <Input type="number" step="0.01" value={displayData?.payments?.rezerwacyjna?.wysokosc ?? ''} onChange={(e) => {
                     const newPayments = { ...displayData.payments, rezerwacyjna: { ...displayData.payments?.rezerwacyjna, wysokosc: e.target.value } };
                     updateField('payments', newPayments);
                   }} />
                 ) : (
-                  <p className="font-medium text-foreground">
+                  <p className="text-base font-semibold text-foreground pt-1">
                     {displayData?.payments?.rezerwacyjna?.wysokosc ? `${displayData.payments.rezerwacyjna.wysokosc} PLN` : 'Nie podano'}
                   </p>
                 )}
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label>Rachunek</Label>
-                {isEditing ? (
-                  <Input value={displayData?.payments?.rezerwacyjna?.rachunek || ''} onChange={(e) => {
-                    const newPayments = { ...displayData.payments, rezerwacyjna: { ...displayData.payments?.rezerwacyjna, rachunek: e.target.value } };
-                    updateField('payments', newPayments);
-                  }} />
-                ) : (
-                  <p className="font-medium text-foreground">{displayData?.payments?.rezerwacyjna?.rachunek || 'Nie podano'}</p>
-                )}
-              </div>
+            </div>
+            <Separator className="my-6" />
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Rachunek</Label>
+              {isEditing ? (
+                <Input value={displayData?.payments?.rezerwacyjna?.rachunek || ''} onChange={(e) => {
+                  const newPayments = { ...displayData.payments, rezerwacyjna: { ...displayData.payments?.rezerwacyjna, rachunek: e.target.value } };
+                  updateField('payments', newPayments);
+                }} />
+              ) : (
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.rezerwacyjna?.rachunek || 'Nie podano'}</p>
+              )}
             </div>
           </div>
-          <div className="space-y-4">
-            <h4 className="font-semibold">Opłata zasadnicza</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Data</Label>
+          
+          <Separator />
+          
+          <div>
+            <h4 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">Opłata zasadnicza</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              <div className="space-y-3">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data</Label>
                 {isEditing ? (
                   <Input type="date" value={displayData?.payments?.zasadnicza?.data || ''} onChange={(e) => {
                     const newPayments = { ...displayData.payments, zasadnicza: { ...displayData.payments?.zasadnicza, data: e.target.value } };
                     updateField('payments', newPayments);
                   }} />
                 ) : (
-                  <p className="font-medium text-foreground">{displayData?.payments?.zasadnicza?.data || 'Nie podano'}</p>
+                  <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.zasadnicza?.data || 'Nie podano'}</p>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label>Wysokość</Label>
+              <div className="space-y-3">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Wysokość</Label>
                 {isEditing ? (
                   <Input type="number" step="0.01" value={displayData?.payments?.zasadnicza?.wysokosc ?? ''} onChange={(e) => {
                     const newPayments = { ...displayData.payments, zasadnicza: { ...displayData.payments?.zasadnicza, wysokosc: e.target.value } };
                     updateField('payments', newPayments);
                   }} />
                 ) : (
-                  <p className="font-medium text-foreground">
+                  <p className="text-base font-semibold text-foreground pt-1">
                     {displayData?.payments?.zasadnicza?.wysokosc ? `${displayData.payments.zasadnicza.wysokosc} PLN` : 'Nie podano'}
                   </p>
                 )}
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label>Rachunek</Label>
-                {isEditing ? (
-                  <Input value={displayData?.payments?.zasadnicza?.rachunek || ''} onChange={(e) => {
-                    const newPayments = { ...displayData.payments, zasadnicza: { ...displayData.payments?.zasadnicza, rachunek: e.target.value } };
-                    updateField('payments', newPayments);
-                  }} />
-                ) : (
-                  <p className="font-medium text-foreground">{displayData?.payments?.zasadnicza?.rachunek || 'Nie podano'}</p>
-                )}
-              </div>
+            </div>
+            <Separator className="my-6" />
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Rachunek</Label>
+              {isEditing ? (
+                <Input value={displayData?.payments?.zasadnicza?.rachunek || ''} onChange={(e) => {
+                  const newPayments = { ...displayData.payments, zasadnicza: { ...displayData.payments?.zasadnicza, rachunek: e.target.value } };
+                  updateField('payments', newPayments);
+                }} />
+              ) : (
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.zasadnicza?.rachunek || 'Nie podano'}</p>
+              )}
             </div>
           </div>
-          <div className="space-y-4">
-            <h4 className="font-semibold">Kaucja</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Data</Label>
+          
+          <Separator />
+          
+          <div>
+            <h4 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">Kaucja</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              <div className="space-y-3">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data</Label>
                 {isEditing ? (
                   <Input type="date" value={displayData?.payments?.kaucja?.data || ''} onChange={(e) => {
                     const newPayments = { ...displayData.payments, kaucja: { ...displayData.payments?.kaucja, data: e.target.value } };
                     updateField('payments', newPayments);
                   }} />
                 ) : (
-                  <p className="font-medium text-foreground">{displayData?.payments?.kaucja?.data || 'Nie podano'}</p>
+                  <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.kaucja?.data || 'Nie podano'}</p>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label>Wysokość</Label>
+              <div className="space-y-3">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Wysokość</Label>
                 {isEditing ? (
                   <Input type="number" step="0.01" value={displayData?.payments?.kaucja?.wysokosc ?? ''} onChange={(e) => {
                     const newPayments = { ...displayData.payments, kaucja: { ...displayData.payments?.kaucja, wysokosc: e.target.value } };
                     updateField('payments', newPayments);
                   }} />
                 ) : (
-                  <p className="font-medium text-foreground">
+                  <p className="text-base font-semibold text-foreground pt-1">
                     {displayData?.payments?.kaucja?.wysokosc ? `${displayData.payments.kaucja.wysokosc} PLN` : 'Nie podano'}
                   </p>
                 )}
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label>Rachunek</Label>
-                {isEditing ? (
-                  <Input value={displayData?.payments?.kaucja?.rachunek || ''} onChange={(e) => {
-                    const newPayments = { ...displayData.payments, kaucja: { ...displayData.payments?.kaucja, rachunek: e.target.value } };
-                    updateField('payments', newPayments);
-                  }} />
-                ) : (
-                  <p className="font-medium text-foreground">{displayData?.payments?.kaucja?.rachunek || 'Nie podano'}</p>
-                )}
-              </div>
+            </div>
+            <Separator className="my-6" />
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Rachunek</Label>
+              {isEditing ? (
+                <Input value={displayData?.payments?.kaucja?.rachunek || ''} onChange={(e) => {
+                  const newPayments = { ...displayData.payments, kaucja: { ...displayData.payments?.kaucja, rachunek: e.target.value } };
+                  updateField('payments', newPayments);
+                }} />
+              ) : (
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.kaucja?.rachunek || 'Nie podano'}</p>
+              )}
             </div>
           </div>
         </CardContent>
@@ -806,14 +863,15 @@ const ContractDetails = () => {
 
       {/* Uwagi */}
       <Card className="shadow-md">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle>Uwagi</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
+          <Label className="text-xs text-muted-foreground uppercase tracking-wider">Notatki</Label>
           {isEditing ? (
-            <Textarea value={displayData?.notes || ''} onChange={(e) => updateField('notes', e.target.value)} rows={4} />
+            <Textarea value={displayData?.notes || ''} onChange={(e) => updateField('notes', e.target.value)} rows={4} className="resize-none" />
           ) : (
-            <p className="text-foreground whitespace-pre-wrap">{displayData?.notes || 'Brak uwag'}</p>
+            <p className="text-base font-semibold text-foreground whitespace-pre-wrap pt-1">{displayData?.notes || 'Brak uwag'}</p>
           )}
         </CardContent>
       </Card>
