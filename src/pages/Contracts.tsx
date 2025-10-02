@@ -37,7 +37,6 @@ const Contracts = () => {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [additionalDrivers, setAdditionalDrivers] = useState<number[]>([]);
   const [deleteContractId, setDeleteContractId] = useState<string | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [selectedClientId, setSelectedClientId] = useState<string>("");
@@ -193,7 +192,6 @@ const Contracts = () => {
       });
       
       setIsDialogOpen(false);
-      setAdditionalDrivers([]);
       setSelectedVehicleId("");
       setSelectedClientId("");
       setGeneratedContractNumber("");
@@ -216,16 +214,6 @@ const Contracts = () => {
         variant: "destructive",
       });
     }
-  };
-
-  const addAdditionalDriver = () => {
-    if (additionalDrivers.length < 2) {
-      setAdditionalDrivers([...additionalDrivers, additionalDrivers.length]);
-    }
-  };
-
-  const removeAdditionalDriver = (index: number) => {
-    setAdditionalDrivers(additionalDrivers.filter((_, i) => i !== index));
   };
 
   const handleDeleteContract = async (id: string) => {
@@ -258,7 +246,6 @@ const Contracts = () => {
       // Resetuj formularz gdy dialog się zamyka
       setSelectedClientId("");
       setSelectedVehicleId("");
-      setAdditionalDrivers([]);
       setGeneratedContractNumber("");
       setTotalAmount("");
       setVehicleData({
@@ -463,121 +450,6 @@ const Contracts = () => {
                 </div>
               </div>
 
-              {/* Dodatkowi kierowcy (Osoby upoważnione) */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-foreground">Dodatkowi kierowcy (maks. 2)</h3>
-                  {additionalDrivers.length < 2 && (
-                    <Button type="button" variant="outline" size="sm" onClick={addAdditionalDriver}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Dodaj kierowcę
-                    </Button>
-                  )}
-                </div>
-                
-                {additionalDrivers.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Brak dodatkowych kierowców</p>
-                )}
-
-                {additionalDrivers.map((driverIndex, arrayIndex) => (
-                  <Card key={driverIndex} className="border-2">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">Dodatkowy kierowca #{arrayIndex + 1}</CardTitle>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => removeAdditionalDriver(arrayIndex)}
-                        >
-                          Usuń
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor={`add_driver_${driverIndex}_imie_nazwisko`}>Imię i nazwisko *</Label>
-                          <Input 
-                            id={`add_driver_${driverIndex}_imie_nazwisko`} 
-                            name={`add_driver_${driverIndex}_imie_nazwisko`} 
-                            placeholder="Monika Fedio" 
-                            required 
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`add_driver_${driverIndex}_email`}>Email *</Label>
-                          <Input 
-                            id={`add_driver_${driverIndex}_email`} 
-                            name={`add_driver_${driverIndex}_email`} 
-                            type="email"
-                            placeholder="monika.fedio@gmail.com" 
-                            required 
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`add_driver_${driverIndex}_tel`}>Telefon *</Label>
-                          <Input 
-                            id={`add_driver_${driverIndex}_tel`} 
-                            name={`add_driver_${driverIndex}_tel`} 
-                            placeholder="+48 500 123 456" 
-                            required 
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`add_driver_${driverIndex}_prawo_jazdy_numer`}>Numer prawa jazdy *</Label>
-                          <Input 
-                            id={`add_driver_${driverIndex}_prawo_jazdy_numer`} 
-                            name={`add_driver_${driverIndex}_prawo_jazdy_numer`} 
-                            placeholder="04743/06/1432" 
-                            required 
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`add_driver_${driverIndex}_prawo_jazdy_data`}>Data wydania prawa jazdy *</Label>
-                          <Input 
-                            id={`add_driver_${driverIndex}_prawo_jazdy_data`} 
-                            name={`add_driver_${driverIndex}_prawo_jazdy_data`} 
-                            type="date"
-                            required 
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`add_driver_${driverIndex}_dokument_rodzaj`}>Rodzaj dokumentu *</Label>
-                          <Select name={`add_driver_${driverIndex}_dokument_rodzaj`} defaultValue="dowod">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Wybierz dokument" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="dowod">Dowód osobisty</SelectItem>
-                              <SelectItem value="paszport">Paszport</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`add_driver_${driverIndex}_dokument_numer`}>Numer dokumentu *</Label>
-                          <Input 
-                            id={`add_driver_${driverIndex}_dokument_numer`} 
-                            name={`add_driver_${driverIndex}_dokument_numer`} 
-                            placeholder="DEW863370" 
-                            required 
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`add_driver_${driverIndex}_dokument_organ`}>Organ wydający *</Label>
-                          <Input 
-                            id={`add_driver_${driverIndex}_dokument_organ`} 
-                            name={`add_driver_${driverIndex}_dokument_organ`} 
-                            placeholder="Wójt gminy Stare Babice" 
-                            required 
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
               {/* Opłaty */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-foreground">Opłaty</h3>
@@ -613,7 +485,7 @@ const Contracts = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="oplata_kaucja_data">Data kaucji</Label>
                     <Input id="oplata_kaucja_data" name="oplata_kaucja_data" type="date" />
@@ -621,10 +493,6 @@ const Contracts = () => {
                   <div className="space-y-2">
                     <Label htmlFor="oplata_kaucja_wysokosc">Wysokość kaucji</Label>
                     <Input id="oplata_kaucja_wysokosc" name="oplata_kaucja_wysokosc" placeholder="5000.00" defaultValue="5000.00" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="oplata_kaucja_rachunek">Rachunek kaucji</Label>
-                    <Input id="oplata_kaucja_rachunek" name="oplata_kaucja_rachunek" placeholder="mBank: 08 1140 2004..." defaultValue="mBank: 08 1140 2004..." />
                   </div>
                 </div>
               </div>
