@@ -55,9 +55,11 @@ export const InvoicesReceiptsTab = ({
     amount: '',
     notes: '',
   });
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadingFile, setUploadingFile] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<ContractInvoiceFile | null>(null);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const getAmountForType = (type: 'reservation' | 'main_payment' | 'final') => {
     if (!payments) return '';
@@ -189,29 +191,124 @@ export const InvoicesReceiptsTab = ({
       return;
     }
 
+    setIsSaving(true);
     try {
-      await addInvoice.mutateAsync({
+      // Create invoice record first
+      const invoiceData = {
         contract_id: contractId,
         invoice_type: newInvoice.type,
         amount: parseFloat(newInvoice.amount),
-        status: 'pending',
+        status: (selectedFiles.length > 0 ? 'invoice_uploaded' : 'pending') as 'pending' | 'submitted' | 'invoice_uploaded' | 'completed',
         submitted_at: null,
         invoice_file_url: null,
         invoice_uploaded_at: null,
         notes: newInvoice.notes || null,
         files: [],
-      });
+      };
+
+      const newInvoiceRecord = await addInvoice.mutateAsync(invoiceData);
+
+      // Upload files if any
+      if (selectedFiles.length > 0 && newInvoiceRecord) {
+        const uploadedFiles: ContractInvoiceFile[] = [];
+
+        for (const file of selectedFiles) {
+          const fileExt = file.name.split('.').pop();
+          const fileId = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+          const fileName = `${fileId}.${fileExt}`;
+          const filePath = `${contractId}/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('invoices')
+            .upload(filePath, file);
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('invoices')
+            .getPublicUrl(filePath);
+
+          uploadedFiles.push({
+            id: fileId,
+            url: publicUrl,
+            name: file.name,
+            uploadedAt: new Date().toISOString(),
+            type: file.type,
+          });
+        }
+
+        // Update invoice with files
+        await updateInvoice.mutateAsync({
+          id: newInvoiceRecord.id,
+          updates: {
+            files: uploadedFiles,
+            invoice_file_url: uploadedFiles[0]?.url || null,
+            invoice_uploaded_at: new Date().toISOString(),
+            status: 'invoice_uploaded',
+          },
+        });
+      }
 
       setNewInvoice({ type: 'reservation', amount: '', notes: '' });
+      setSelectedFiles([]);
       
       toast({
         title: "Sukces",
         description: `Dodano ${invoiceType === 'invoice' ? 'fakturę' : 'paragon'}`,
       });
     } catch (error) {
+      console.error('Error adding invoice:', error);
       toast({
         title: "Błąd",
         description: `Nie udało się dodać ${invoiceType === 'invoice' ? 'faktury' : 'paragonu'}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const copyLinkForNewInvoice = async () => {
+    if (!newInvoice.amount || parseFloat(newInvoice.amount) <= 0) {
+      toast({
+        title: "Błąd",
+        description: "Najpierw wypełnij formularz i zapisz dokument",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create invoice first to get ID for link
+    try {
+      const invoiceData = {
+        contract_id: contractId,
+        invoice_type: newInvoice.type,
+        amount: parseFloat(newInvoice.amount),
+        status: 'pending' as 'pending' | 'submitted' | 'invoice_uploaded' | 'completed',
+        submitted_at: null,
+        invoice_file_url: null,
+        invoice_uploaded_at: null,
+        notes: newInvoice.notes || null,
+        files: [],
+      };
+
+      const newInvoiceRecord = await addInvoice.mutateAsync(invoiceData);
+      
+      if (newInvoiceRecord) {
+        const uploadLink = `${window.location.origin}/invoice-upload/${newInvoiceRecord.id}`;
+        await navigator.clipboard.writeText(uploadLink);
+        
+        setNewInvoice({ type: 'reservation', amount: '', notes: '' });
+        
+        toast({
+          title: "Link skopiowany",
+          description: "Link do wgrania dokumentu został skopiowany. Dokument został zapisany.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się utworzyć linku",
         variant: "destructive",
       });
     }
@@ -443,9 +540,55 @@ export const InvoicesReceiptsTab = ({
               />
             </div>
 
-            <Button onClick={handleAddInvoice} disabled={addInvoice.isPending}>
-              {addInvoice.isPending ? "Dodawanie..." : "Dodaj dokument"}
-            </Button>
+            <div className="space-y-2">
+              <Label>Pliki (opcjonalnie)</Label>
+              <div className="space-y-2">
+                <Input
+                  type="file"
+                  multiple
+                  accept="*/*"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    setSelectedFiles(files);
+                  }}
+                />
+                {selectedFiles.length > 0 && (
+                  <div className="text-sm text-muted-foreground">
+                    Wybrano plików: {selectedFiles.length}
+                    <ul className="list-disc list-inside mt-1">
+                      {selectedFiles.map((file, idx) => (
+                        <li key={idx}>{file.name}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleAddInvoice} 
+                disabled={isSaving || addInvoice.isPending}
+                className="flex-1"
+              >
+                {isSaving || addInvoice.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Zapisywanie...
+                  </>
+                ) : (
+                  <>Zapisz dokument</>
+                )}
+              </Button>
+              <Button 
+                onClick={copyLinkForNewInvoice}
+                variant="outline"
+                disabled={isSaving || addInvoice.isPending}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Skopiuj link
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
