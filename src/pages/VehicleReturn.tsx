@@ -155,6 +155,16 @@ const VehicleReturn = () => {
           message: `Wypełniono formularz zwrotu dla umowy ${contractNumber} (${vehicleModel})`,
           link: `/contracts/${contractId}`,
         });
+        
+        // Create notification for deposit refund to account
+        if (formData.canRefundDeposit && !formData.depositRefundedCash) {
+          await createNotificationMutation.mutateAsync({
+            type: 'deposit_refund',
+            title: 'Zwrot kaucji na konto',
+            message: `Kaucja dla umowy ${contractNumber} (${tenantName}) może zostać zwrócona na konto`,
+            link: `/contracts/${contractId}`,
+          });
+        }
       }
 
       // Reset new photos only
