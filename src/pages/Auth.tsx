@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
-import { Truck } from "lucide-react";
+import logoImage from "@/assets/koko-logo.jpeg";
 
 const authSchema = z.object({
   email: z.string().email("Nieprawidłowy adres email"),
@@ -89,9 +89,7 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="h-12 w-12 rounded-lg bg-gradient-primary flex items-center justify-center">
-              <Truck className="h-6 w-6 text-primary-foreground" />
-            </div>
+            <img src={logoImage} alt="Koko Kamper" className="h-20 w-auto" />
           </div>
           <CardTitle className="text-2xl">Koko Kamper CRM</CardTitle>
           <CardDescription>
