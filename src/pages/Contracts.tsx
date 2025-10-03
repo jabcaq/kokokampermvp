@@ -248,7 +248,6 @@ const Contracts = () => {
         animals: "",
         extra_equipment: ""
       });
-      e.currentTarget.reset();
     } catch (error) {
       toast({
         title: "Błąd",
