@@ -589,18 +589,19 @@ const ContractDetails = () => {
       </Card>
 
       {/* Dodatkowi kierowcy */}
-      {displayData?.additional_drivers && displayData.additional_drivers.length > 0 && (
+      {displayData?.additional_drivers && displayData.additional_drivers.length > 1 && (
         <Card className="shadow-md">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Dodatkowy kierowca
+              Dodatkowi kierowcy
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {displayData.additional_drivers.map((driver: any, idx: number) => (
+            {displayData.additional_drivers.slice(1).map((driver: any, idx: number) => (
               <div key={idx}>
                 {idx > 0 && <Separator className="my-6" />}
+                <h4 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">Dodatkowy kierowca {idx + 1}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                   <div className="space-y-3">
                     <Label className="text-xs text-muted-foreground uppercase tracking-wider">Imię i nazwisko</Label>
