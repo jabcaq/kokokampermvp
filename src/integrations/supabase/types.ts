@@ -159,8 +159,6 @@ export type Database = {
           notes: string | null
           payments: Json | null
           registration_number: string
-          rental_location: string | null
-          return_by: string | null
           return_link: string | null
           start_date: string
           status: Database["public"]["Enums"]["contract_status"] | null
@@ -203,8 +201,6 @@ export type Database = {
           notes?: string | null
           payments?: Json | null
           registration_number: string
-          rental_location?: string | null
-          return_by?: string | null
           return_link?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["contract_status"] | null
@@ -247,8 +243,6 @@ export type Database = {
           notes?: string | null
           payments?: Json | null
           registration_number?: string
-          rental_location?: string | null
-          return_by?: string | null
           return_link?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["contract_status"] | null

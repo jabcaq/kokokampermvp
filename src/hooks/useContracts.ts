@@ -17,8 +17,6 @@ export interface Contract {
   lessor_phone?: string;
   lessor_website?: string;
   lessor_email?: string;
-  rental_location?: string;
-  return_by?: string;
   tenant_name?: string;
   tenant_email?: string;
   tenant_phone?: string;

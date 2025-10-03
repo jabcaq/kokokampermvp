@@ -170,8 +170,6 @@ const Contracts = () => {
         lessor_phone: "+48 660 694 257",
         lessor_website: "www.kokokamper.pl",
         lessor_email: "kontakt@kokokamper.pl",
-        rental_location: formData.get('okres_miejsce') as string,
-        return_by: formData.get('okres_zwrot_do') as string,
         tenant_name: selectedClient?.name || "",
         tenant_email: selectedClient?.email || "",
         tenant_phone: selectedClient?.phone || "",
@@ -367,14 +365,6 @@ const Contracts = () => {
                   <div className="space-y-2">
                     <Label htmlFor="okres_do">Data zakończenia</Label>
                     <Input id="okres_do" name="okres_do" type="datetime-local" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="okres_miejsce">Miejsce</Label>
-                    <Input id="okres_miejsce" name="okres_miejsce" placeholder="oddział Warszawa" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="okres_zwrot_do">Zwrot do</Label>
-                    <Input id="okres_zwrot_do" name="okres_zwrot_do" />
                   </div>
                 </div>
               </div>
