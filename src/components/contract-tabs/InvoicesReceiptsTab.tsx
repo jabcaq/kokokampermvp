@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Upload, Download, CheckCircle, Clock, FileUp, Receipt } from "lucide-react";
+import { FileText, Upload, Download, CheckCircle, Clock, FileUp, Receipt, Loader2 } from "lucide-react";
 import { useContractInvoices, useAddContractInvoice, useUpdateContractInvoice } from "@/hooks/useContractInvoices";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
 interface InvoicesReceiptsTabProps {
@@ -23,7 +24,7 @@ interface InvoicesReceiptsTabProps {
 const statusConfig = {
   pending: { label: "Oczekuje", icon: Clock, className: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
   submitted: { label: "Przesłano", icon: FileUp, className: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
-  invoice_uploaded: { label: "Faktura wgrana", icon: Upload, className: "bg-purple-500/10 text-purple-500 border-purple-500/20" },
+  invoice_uploaded: { label: "Dokument wgrany", icon: Upload, className: "bg-purple-500/10 text-purple-500 border-purple-500/20" },
   completed: { label: "Zakończone", icon: CheckCircle, className: "bg-green-500/10 text-green-500 border-green-500/20" },
 };
 
@@ -51,6 +52,49 @@ export const InvoicesReceiptsTab = ({
     amount: '',
     notes: '',
   });
+  const [uploadingFile, setUploadingFile] = useState<string | null>(null);
+
+  const handleFileUpload = async (invoiceId: string, file: File) => {
+    setUploadingFile(invoiceId);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${invoiceId}_${Date.now()}.${fileExt}`;
+      const filePath = `${contractId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('invoices')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('invoices')
+        .getPublicUrl(filePath);
+
+      await updateInvoice.mutateAsync({
+        id: invoiceId,
+        updates: {
+          invoice_file_url: publicUrl,
+          invoice_uploaded_at: new Date().toISOString(),
+          status: 'invoice_uploaded',
+        },
+      });
+
+      toast({
+        title: "Sukces",
+        description: "Plik został wgrany pomyślnie",
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie udało się wgrać pliku",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingFile(null);
+    }
+  };
 
   const handleAddInvoice = async () => {
     if (!newInvoice.amount || parseFloat(newInvoice.amount) <= 0) {
@@ -89,16 +133,14 @@ export const InvoicesReceiptsTab = ({
     }
   };
 
-  const handleFileUpload = async (invoiceId: string) => {
-    // Create a link that accounting can use to upload the invoice
+  const copyLinkToClipboard = async (invoiceId: string) => {
     const uploadLink = `${window.location.origin}/invoice-upload/${invoiceId}`;
     
-    // Copy to clipboard
     await navigator.clipboard.writeText(uploadLink);
     
     toast({
       title: "Link skopiowany",
-      description: "Link do wgrania faktury został skopiowany do schowka",
+      description: "Link do wgrania dokumentu został skopiowany do schowka",
     });
   };
 
@@ -220,16 +262,45 @@ export const InvoicesReceiptsTab = ({
                         </div>
                       )}
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {invoice.status === 'pending' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleFileUpload(invoice.id)}
-                          >
-                            <Upload className="h-4 w-4 mr-2" />
-                            Skopiuj link do wgrania
-                          </Button>
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => copyLinkToClipboard(invoice.id)}
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              Skopiuj link do wgrania
+                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="file"
+                                id={`file-${invoice.id}`}
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    handleFileUpload(invoice.id, file);
+                                  }
+                                }}
+                                disabled={uploadingFile === invoice.id}
+                              />
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => document.getElementById(`file-${invoice.id}`)?.click()}
+                                disabled={uploadingFile === invoice.id}
+                              >
+                                {uploadingFile === invoice.id ? (
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                  <Upload className="h-4 w-4 mr-2" />
+                                )}
+                                {uploadingFile === invoice.id ? 'Wgrywanie...' : 'Wgraj plik'}
+                              </Button>
+                            </div>
+                          </>
                         )}
                         
                         {invoice.invoice_file_url && (
