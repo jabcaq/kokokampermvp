@@ -59,7 +59,6 @@ export const InvoicesReceiptsTab = ({
   const [previewFile, setPreviewFile] = useState<ContractInvoiceFile | null>(null);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
 
-  // Auto-fill amount based on invoice type
   const getAmountForType = (type: 'reservation' | 'main_payment' | 'final') => {
     if (!payments) return '';
     
@@ -77,7 +76,6 @@ export const InvoicesReceiptsTab = ({
           break;
       }
       
-      // Extract numeric value from string (e.g., "3600.00 zł" -> "3600.00")
       if (typeof amount === 'string') {
         const numericValue = amount.replace(/[^\d.]/g, '');
         return numericValue;
@@ -88,7 +86,6 @@ export const InvoicesReceiptsTab = ({
     }
   };
 
-  // Update amount when type changes
   const handleTypeChange = (type: 'reservation' | 'main_payment' | 'final') => {
     const amount = getAmountForType(type);
     setNewInvoice({ ...newInvoice, type, amount });
@@ -127,7 +124,7 @@ export const InvoicesReceiptsTab = ({
         id: invoiceId,
         updates: {
           files: updatedFiles,
-          invoice_file_url: publicUrl, // Keep backward compatibility
+          invoice_file_url: publicUrl,
           invoice_uploaded_at: new Date().toISOString(),
           status: 'invoice_uploaded',
         },
@@ -179,13 +176,8 @@ export const InvoicesReceiptsTab = ({
     setPreviewDialogOpen(true);
   };
 
-  const isImageFile = (type?: string) => {
-    return type?.startsWith('image/');
-  };
-
-  const isPdfFile = (type?: string) => {
-    return type === 'application/pdf';
-  };
+  const isImageFile = (type?: string) => type?.startsWith('image/');
+  const isPdfFile = (type?: string) => type === 'application/pdf';
 
   const handleAddInvoice = async () => {
     if (!newInvoice.amount || parseFloat(newInvoice.amount) <= 0) {
@@ -227,9 +219,7 @@ export const InvoicesReceiptsTab = ({
 
   const copyLinkToClipboard = async (invoiceId: string) => {
     const uploadLink = `${window.location.origin}/invoice-upload/${invoiceId}`;
-    
     await navigator.clipboard.writeText(uploadLink);
-    
     toast({
       title: "Link skopiowany",
       description: "Link do wgrania dokumentu został skopiowany do schowka",
@@ -240,18 +230,134 @@ export const InvoicesReceiptsTab = ({
     return <div className="flex items-center justify-center p-8">Ładowanie...</div>;
   }
 
-  const documentType = invoiceType === 'invoice' ? 'Faktury' : 'Paragony';
-
   return (
     <div className="space-y-6">
+      {/* Existing invoices list - simplified view */}
+      <div className="space-y-4">
+        <h3 className="font-semibold text-lg">Lista dokumentów</h3>
+        {invoices && invoices.length > 0 ? (
+          <div className="grid gap-4">
+            {invoices.map((invoice) => (
+              <Card key={invoice.id}>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    {invoice.files && invoice.files.length > 0 ? (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Wgrane pliki:</Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                          {invoice.files.map((file: ContractInvoiceFile) => (
+                            <div 
+                              key={file.id} 
+                              className="relative group border rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer bg-muted"
+                              onClick={() => openPreview(file)}
+                            >
+                              <div className="aspect-square flex items-center justify-center p-4">
+                                {isImageFile(file.type) ? (
+                                  <img 
+                                    src={file.url} 
+                                    alt={file.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <FileIcon className="h-12 w-12 text-muted-foreground" />
+                                )}
+                              </div>
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openPreview(file);
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteFile(invoice.id, file.id, invoice);
+                                  }}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <div className="p-2 bg-background border-t">
+                                <p className="text-xs truncate" title={file.name}>
+                                  {file.name}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Brak wgranych plików</p>
+                    )}
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyLinkToClipboard(invoice.id)}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Skopiuj link do wgrania
+                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="file"
+                          id={`file-${invoice.id}`}
+                          className="hidden"
+                          accept="*/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleFileUpload(invoice.id, file, invoice);
+                            }
+                          }}
+                          disabled={uploadingFile === invoice.id}
+                        />
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => document.getElementById(`file-${invoice.id}`)?.click()}
+                          disabled={uploadingFile === invoice.id}
+                        >
+                          {uploadingFile === invoice.id ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Upload className="h-4 w-4 mr-2" />
+                          )}
+                          {uploadingFile === invoice.id ? 'Wgrywanie...' : 'Wgraj plik'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="pt-6 text-center text-muted-foreground">
+              Brak dokumentów. Dodaj pierwszy dokument poniżej.
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Add new document form */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {invoiceType === 'invoice' ? <FileText className="h-5 w-5" /> : <Receipt className="h-5 w-5" />}
-            {documentType}
+            Dodaj nowy dokument
           </CardTitle>
           <CardDescription>
-            Zarządzaj {documentType.toLowerCase()} dla umowy {contractNumber}
+            Utwórz nowy wpis dla {invoiceType === 'invoice' ? 'faktury' : 'paragonu'} - umowa {contractNumber}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -269,220 +375,58 @@ export const InvoicesReceiptsTab = ({
               <span className="font-medium">{startDate} - {endDate}</span>
             </div>
           </div>
-
-          <div className="space-y-4 border-t pt-4">
-            <h3 className="font-semibold">Dodaj nowy dokument</h3>
-            <div className="grid gap-4">
-              <div className="space-y-2">
-                <Label>Typ dokumentu</Label>
-                <Select
-                  value={newInvoice.type}
-                  onValueChange={(value: any) => handleTypeChange(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="reservation">{invoiceTypeLabels.reservation}</SelectItem>
-                    <SelectItem value="main_payment">{invoiceTypeLabels.main_payment}</SelectItem>
-                    <SelectItem value="final">{invoiceTypeLabels.final}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Kwota (PLN)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={newInvoice.amount}
-                  onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })}
-                  onBlur={(e) => {
-                    const value = parseFloat(e.target.value);
-                    if (!isNaN(value)) {
-                      setNewInvoice({ ...newInvoice, amount: value.toFixed(2) });
-                    }
-                  }}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Uwagi (opcjonalnie)</Label>
-                <Textarea
-                  placeholder="Dodatkowe informacje..."
-                  value={newInvoice.notes}
-                  onChange={(e) => setNewInvoice({ ...newInvoice, notes: e.target.value })}
-                  rows={2}
-                />
-              </div>
-
-              <Button onClick={handleAddInvoice} disabled={addInvoice.isPending}>
-                {addInvoice.isPending ? "Dodawanie..." : "Dodaj dokument"}
-              </Button>
+          
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label>Typ dokumentu</Label>
+              <Select
+                value={newInvoice.type}
+                onValueChange={(value: any) => handleTypeChange(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="reservation">{invoiceTypeLabels.reservation}</SelectItem>
+                  <SelectItem value="main_payment">{invoiceTypeLabels.main_payment}</SelectItem>
+                  <SelectItem value="final">{invoiceTypeLabels.final}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            <div className="space-y-2">
+              <Label>Kwota (PLN)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={newInvoice.amount}
+                onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })}
+                onBlur={(e) => {
+                  const value = parseFloat(e.target.value);
+                  if (!isNaN(value)) {
+                    setNewInvoice({ ...newInvoice, amount: value.toFixed(2) });
+                  }
+                }}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Uwagi (opcjonalnie)</Label>
+              <Textarea
+                placeholder="Dodatkowe informacje..."
+                value={newInvoice.notes}
+                onChange={(e) => setNewInvoice({ ...newInvoice, notes: e.target.value })}
+                rows={2}
+              />
+            </div>
+
+            <Button onClick={handleAddInvoice} disabled={addInvoice.isPending}>
+              {addInvoice.isPending ? "Dodawanie..." : "Dodaj dokument"}
+            </Button>
           </div>
         </CardContent>
       </Card>
-
-      <div className="space-y-4">
-        <h3 className="font-semibold text-lg">Lista dokumentów</h3>
-        {invoices && invoices.length > 0 ? (
-          <div className="grid gap-4">
-            {invoices.map((invoice) => {
-              const status = statusConfig[invoice.status];
-              const StatusIcon = status.icon;
-              
-              return (
-                <Card key={invoice.id}>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold">
-                              {invoiceTypeLabels[invoice.invoice_type as keyof typeof invoiceTypeLabels]}
-                            </h4>
-                            <Badge variant="outline" className={status.className}>
-                              <StatusIcon className="h-3 w-3 mr-1" />
-                              {status.label}
-                            </Badge>
-                          </div>
-                          <p className="text-2xl font-bold text-primary">
-                            {invoice.amount.toFixed(2)} PLN
-                          </p>
-                        </div>
-                      </div>
-
-                      {invoice.notes && (
-                        <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded">
-                          {invoice.notes}
-                        </div>
-                      )}
-
-                      {/* File thumbnails */}
-                      {invoice.files && invoice.files.length > 0 && (
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium">Wgrane pliki:</Label>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                            {invoice.files.map((file: ContractInvoiceFile) => (
-                              <div 
-                                key={file.id} 
-                                className="relative group border rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer bg-muted"
-                                onClick={() => openPreview(file)}
-                              >
-                                <div className="aspect-square flex items-center justify-center p-4">
-                                  {isImageFile(file.type) ? (
-                                    <img 
-                                      src={file.url} 
-                                      alt={file.name}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <FileIcon className="h-12 w-12 text-muted-foreground" />
-                                  )}
-                                </div>
-                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openPreview(file);
-                                    }}
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteFile(invoice.id, file.id, invoice);
-                                    }}
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                                <div className="p-2 bg-background border-t">
-                                  <p className="text-xs truncate" title={file.name}>
-                                    {file.name}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {(invoice.status === 'pending' || invoice.status === 'invoice_uploaded') && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => copyLinkToClipboard(invoice.id)}
-                            >
-                              <Upload className="h-4 w-4 mr-2" />
-                              Skopiuj link do wgrania
-                            </Button>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="file"
-                                id={`file-${invoice.id}`}
-                                className="hidden"
-                                accept="*/*"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    handleFileUpload(invoice.id, file, invoice);
-                                  }
-                                }}
-                                disabled={uploadingFile === invoice.id}
-                              />
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => document.getElementById(`file-${invoice.id}`)?.click()}
-                                disabled={uploadingFile === invoice.id}
-                              >
-                                {uploadingFile === invoice.id ? (
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                  <Upload className="h-4 w-4 mr-2" />
-                                )}
-                                {uploadingFile === invoice.id ? 'Wgrywanie...' : 'Wgraj plik'}
-                              </Button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      {invoice.submitted_at && (
-                        <p className="text-xs text-muted-foreground">
-                          Przesłano: {format(new Date(invoice.submitted_at), 'dd.MM.yyyy HH:mm')}
-                        </p>
-                      )}
-                      
-                      {invoice.invoice_uploaded_at && (
-                        <p className="text-xs text-muted-foreground">
-                          Wgrano: {format(new Date(invoice.invoice_uploaded_at), 'dd.MM.yyyy HH:mm')}
-                        </p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="pt-6 text-center text-muted-foreground">
-              Brak dokumentów. Dodaj pierwszy dokument powyżej.
-            </CardContent>
-          </Card>
-        )}
-      </div>
 
       {/* Preview Dialog */}
       <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
