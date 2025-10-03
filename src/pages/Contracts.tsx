@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Calendar, Edit, Eye, Loader2, Trash2 } from "lucide-react";
+import { Plus, Search, Calendar, Edit, Eye, Loader2, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -25,6 +25,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 const statusConfig = {
   active: { label: "Aktywna", className: "bg-primary/10 text-primary border-primary/20" },
@@ -40,6 +43,7 @@ const Contracts = () => {
   const [deleteContractId, setDeleteContractId] = useState<string | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [clientSearchOpen, setClientSearchOpen] = useState(false);
   const [generatedContractNumber, setGeneratedContractNumber] = useState<string>("");
   const [totalAmount, setTotalAmount] = useState<string>("");
   const [vehicleData, setVehicleData] = useState({
@@ -294,18 +298,57 @@ const Contracts = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="client_id">Wybierz klienta *</Label>
-                    <Select value={selectedClientId} onValueChange={setSelectedClientId} required>
-                      <SelectTrigger id="client_id">
-                        <SelectValue placeholder="Wybierz klienta" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clients.map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.name} - {client.email}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={clientSearchOpen} onOpenChange={setClientSearchOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={clientSearchOpen}
+                          className="w-full justify-between"
+                        >
+                          {selectedClientId
+                            ? (() => {
+                                const client = clients.find((c) => c.id === selectedClientId);
+                                return client ? `${client.name} - ${client.email}` : "Wybierz klienta";
+                              })()
+                            : "Wybierz klienta"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0 bg-background z-50" align="start">
+                        <Command>
+                          <CommandInput placeholder="Szukaj po imieniu, nazwisku, email lub telefonie..." />
+                          <CommandList>
+                            <CommandEmpty>Nie znaleziono klienta.</CommandEmpty>
+                            <CommandGroup>
+                              {clients.map((client) => (
+                                <CommandItem
+                                  key={client.id}
+                                  value={`${client.name} ${client.email} ${client.phone || ''}`}
+                                  onSelect={() => {
+                                    setSelectedClientId(client.id);
+                                    setClientSearchOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedClientId === client.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{client.name}</span>
+                                    <span className="text-sm text-muted-foreground">
+                                      {client.email} {client.phone ? `• ${client.phone}` : ''}
+                                    </span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
               </div>
