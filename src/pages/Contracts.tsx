@@ -144,15 +144,30 @@ const Contracts = () => {
     // Helper for optional date fields (send null, not empty string)
     const emptyToNull = (v: string | undefined | null) => (v && v.trim() !== "" ? v : null);
     
-    // Przygotuj dane płatności z automatycznymi kwotami
+    // Automatyczne obliczanie dat płatności
+    // Data rezerwacyjna: dzisiaj + 2 dni
+    const today = new Date();
+    const reservationDate = new Date(today);
+    reservationDate.setDate(reservationDate.getDate() + 2);
+    const reservationDateStr = reservationDate.toISOString().split('T')[0];
+    
+    // Data zasadnicza: 14 dni przed datą rozpoczęcia wynajmu
+    let mainPaymentDateStr = "";
+    if (startDate) {
+      const mainPaymentDate = new Date(startDate);
+      mainPaymentDate.setDate(mainPaymentDate.getDate() - 14);
+      mainPaymentDateStr = mainPaymentDate.toISOString().split('T')[0];
+    }
+    
+    // Przygotuj dane płatności z automatycznymi kwotami i datami
     const paymentsData = {
       rezerwacyjna: {
-        data: (formData.get('oplata_rez_data') as string) || "",
+        data: reservationDateStr,
         wysokosc: `${reservationAmount} zł`,
         rachunek: "mBank: 34 1140 2004...",
       },
       zasadnicza: {
-        data: (formData.get('oplata_zasad_data') as string) || "",
+        data: mainPaymentDateStr,
         wysokosc: `${mainAmount} zł`,
         rachunek: "mBank: 34 1140 2004...",
       },
@@ -603,21 +618,26 @@ const Contracts = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="oplata_rez_data">Data opłaty rezerwacyjnej</Label>
-                    <Input id="oplata_rez_data" name="oplata_rez_data" type="date" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="oplata_zasad_data">Data opłaty zasadniczej</Label>
-                    <Input id="oplata_zasad_data" name="oplata_zasad_data" type="date" />
-                  </div>
-                </div>
-
-                <p className="text-xs text-muted-foreground">
-                  • Data kaucji jest automatycznie ustawiana na dzień rozpoczęcia wynajmu<br/>
-                  • Kwota kaucji: 1000 zł<br/>
-                  • Rachunki bankowe są automatycznie przypisywane
+                <p className="text-xs text-muted-foreground space-y-1">
+                  <span className="block font-medium">Daty płatności (automatyczne):</span>
+                  <span className="block">• Data opłaty rezerwacyjnej: {(() => {
+                    const today = new Date();
+                    today.setDate(today.getDate() + 2);
+                    return today.toLocaleDateString('pl-PL');
+                  })()}</span>
+                  {(() => {
+                    const startDateInput = (document.getElementById('okres_od') as HTMLInputElement)?.value;
+                    if (startDateInput) {
+                      const startDate = new Date(startDateInput);
+                      const mainPaymentDate = new Date(startDate);
+                      mainPaymentDate.setDate(mainPaymentDate.getDate() - 14);
+                      return <span className="block">• Data opłaty zasadniczej: {mainPaymentDate.toLocaleDateString('pl-PL')}</span>;
+                    }
+                    return <span className="block">• Data opłaty zasadniczej: zostanie obliczona po wybraniu daty rozpoczęcia</span>;
+                  })()}
+                  <span className="block">• Data kaucji: dzień rozpoczęcia wynajmu</span>
+                  <span className="block">• Kwota kaucji: 1000 zł</span>
+                  <span className="block">• Rachunki bankowe są automatycznie przypisywane</span>
                 </p>
               </div>
 
