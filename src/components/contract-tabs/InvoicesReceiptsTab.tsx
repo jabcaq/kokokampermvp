@@ -298,6 +298,12 @@ export const InvoicesReceiptsTab = ({
                   placeholder="0.00"
                   value={newInvoice.amount}
                   onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })}
+                  onBlur={(e) => {
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                      setNewInvoice({ ...newInvoice, amount: value.toFixed(2) });
+                    }
+                  }}
                 />
               </div>
 
