@@ -53,51 +53,7 @@ export const ContractActionsPanel = ({
       "PRAWO JAZDY:",
       `Numer prawa jazdy: ${contract.tenant_license_number || 'Nie podano'}`,
       `Data wydania prawa jazdy: ${contract.tenant_license_date || 'Nie podano'}`,
-      "",
-      "OKRES NAJMU:",
-      `Data rozpoczęcia: ${contract.start_date || 'Nie podano'}`,
-      `Data zakończenia: ${contract.end_date || 'Nie podano'}`,
-      "",
-      "PRZEDMIOT NAJMU:",
-      `Model pojazdu: ${contract.vehicle_model || 'Nie podano'}`,
-      `Nr rejestracyjny: ${contract.registration_number || 'Nie podano'}`,
-      `VIN: ${contract.vehicle_vin || 'Nie podano'}`,
-      `Następne badanie: ${contract.vehicle_next_inspection || 'Nie podano'}`,
-      `Numer polisy: ${contract.vehicle_insurance_number || 'Nie podano'}`,
-      `Polisa ważna do: ${contract.vehicle_insurance_valid_until || 'Nie podano'}`,
-      contract.vehicle_additional_info ? `Dodatkowe informacje: ${contract.vehicle_additional_info}` : null,
-      "",
-      "PŁATNOŚCI:",
-      contract.value ? `Wartość umowy: ${contract.value} PLN` : null,
-      contract.payments && typeof contract.payments === 'object' && 'rezerwacyjna' in contract.payments ? `Opłata rezerwacyjna: ${(contract.payments as any).rezerwacyjna.wysokosc} (data: ${(contract.payments as any).rezerwacyjna.data})` : null,
-      contract.payments && typeof contract.payments === 'object' && 'zasadnicza' in contract.payments ? `Opłata zasadnicza: ${(contract.payments as any).zasadnicza.wysokosc} (data: ${(contract.payments as any).zasadnicza.data})` : null,
-      contract.payments && typeof contract.payments === 'object' && 'kaucja' in contract.payments ? `Kaucja: ${(contract.payments as any).kaucja.wysokosc} (data: ${(contract.payments as any).kaucja.data})` : null,
-      "",
-      "DODATKOWI KIEROWCY:",
     ];
-
-    if (contract.additional_drivers && Array.isArray(contract.additional_drivers) && contract.additional_drivers.length > 1) {
-      contract.additional_drivers.slice(1).forEach((driver: any, idx: number) => {
-        lines.push(
-          ``,
-          `Kierowca ${idx + 1}:`,
-          `  Imię i nazwisko: ${driver.imie_nazwisko || 'Nie podano'}`,
-          `  Email: ${driver.email || 'Nie podano'}`,
-          `  Telefon: ${driver.tel || 'Nie podano'}`,
-          `  Numer prawa jazdy: ${driver.prawo_jazdy_numer || 'Nie podano'}`,
-          `  Data wydania prawa jazdy: ${driver.prawo_jazdy_data || 'Nie podano'}`,
-          `  Rodzaj dokumentu: ${driver.dokument_rodzaj || 'Nie podano'}`,
-          `  Numer dokumentu: ${driver.dokument_numer || 'Nie podano'}`,
-          `  Organ wydający: ${driver.dokument_organ || 'Nie podano'}`
-        );
-      });
-    } else {
-      lines.push("Brak dodatkowych kierowców");
-    }
-
-    if (contract.notes) {
-      lines.push("", "UWAGI:", contract.notes);
-    }
 
     return lines.filter(line => line !== null).join('\n');
   };
