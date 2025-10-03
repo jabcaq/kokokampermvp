@@ -44,14 +44,15 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Unauthorized");
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
+    // Check if user is admin using the new user_roles table
+    const { data: userRole } = await supabaseAdmin
+      .from("user_roles")
       .select("role")
-      .eq("id", user.id)
-      .single();
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
 
-    if (!profile || profile.role !== "admin") {
+    if (!userRole) {
       throw new Error("Only admins can create users");
     }
 
@@ -71,11 +72,18 @@ const handler = async (req: Request): Promise<Response> => {
       throw createError;
     }
 
-    // Update profile with role
-    await supabaseAdmin
-      .from("profiles")
-      .update({ role })
-      .eq("id", newUser.user.id);
+    // Insert role into user_roles table
+    const { error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .insert({
+        user_id: newUser.user.id,
+        role: role as 'admin' | 'staff' | 'user'
+      });
+
+    if (roleError) {
+      console.error("Error setting user role:", roleError);
+      // Don't fail the entire operation if role assignment fails
+    }
 
     return new Response(
       JSON.stringify({ success: true, user: newUser.user }),

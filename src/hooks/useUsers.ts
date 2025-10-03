@@ -6,7 +6,7 @@ export interface Profile {
   id: string;
   email: string;
   full_name: string | null;
-  role: string;
+  role: string; // This will be fetched from user_roles table
   is_archived: boolean;
   created_at: string;
   updated_at: string;
@@ -19,13 +19,31 @@ export const useUsers = () => {
   const { data: users, isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch profiles with their roles from user_roles table
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data as Profile[];
+      if (profilesError) throw profilesError;
+
+      // Fetch all user roles (types will update after migration)
+      const { data: userRoles, error: rolesError } = await (supabase as any)
+        .from("user_roles")
+        .select("user_id, role");
+
+      if (rolesError) throw rolesError;
+
+      // Combine profiles with their roles
+      const usersWithRoles = profiles.map(profile => {
+        const userRole = userRoles?.find((r: any) => r.user_id === profile.id);
+        return {
+          ...profile,
+          role: userRole?.role || 'user'
+        } as Profile;
+      });
+
+      return usersWithRoles;
     },
   });
 
@@ -75,13 +93,30 @@ export const useUsers = () => {
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Profile> & { id: string }) => {
-      const { error } = await supabase
+    mutationFn: async ({ id, role, ...updates }: Partial<Profile> & { id: string }) => {
+      // Update profile (excluding role)
+      const { error: profileError } = await supabase
         .from("profiles")
         .update(updates)
         .eq("id", id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update role in user_roles table if role is provided
+      if (role) {
+        // Delete existing roles for this user
+        await (supabase as any)
+          .from("user_roles")
+          .delete()
+          .eq("user_id", id);
+
+        // Insert new role (types will update after migration)
+        const { error: roleError } = await (supabase as any)
+          .from("user_roles")
+          .insert({ user_id: id, role: role as 'admin' | 'staff' | 'user' });
+
+        if (roleError) throw roleError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });

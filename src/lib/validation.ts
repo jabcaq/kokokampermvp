@@ -1,0 +1,85 @@
+import { z } from "zod";
+
+// Polish phone number regex (9-15 digits, optional + prefix)
+const phoneRegex = /^\+?[0-9]{9,15}$/;
+
+// Email regex
+const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+// PESEL regex (11 digits)
+const peselRegex = /^[0-9]{11}$/;
+
+// NIP regex (10 digits)
+const nipRegex = /^[0-9]{10}$/;
+
+export const contractSchema = z.object({
+  contract_number: z.string().min(1, "Numer umowy jest wymagany").max(50),
+  tenant_name: z.string().min(1, "Nazwa najemcy jest wymagana").max(200),
+  tenant_email: z.string()
+    .regex(emailRegex, "Nieprawidłowy format adresu email")
+    .max(255)
+    .optional()
+    .or(z.literal("")),
+  tenant_phone: z.string()
+    .regex(phoneRegex, "Nieprawidłowy format numeru telefonu")
+    .optional()
+    .or(z.literal("")),
+  tenant_pesel: z.string()
+    .regex(peselRegex, "PESEL musi składać się z 11 cyfr")
+    .optional()
+    .or(z.literal("")),
+  tenant_nip: z.string()
+    .regex(nipRegex, "NIP musi składać się z 10 cyfr")
+    .optional()
+    .or(z.literal("")),
+  start_date: z.string().min(1, "Data rozpoczęcia jest wymagana"),
+  end_date: z.string().min(1, "Data zakończenia jest wymagana"),
+  value: z.number().positive("Wartość musi być większa od 0").optional(),
+  vehicle_model: z.string().min(1, "Model pojazdu jest wymagany").max(200),
+  registration_number: z.string().min(1, "Numer rejestracyjny jest wymagany").max(50),
+  notes: z.string().max(5000, "Uwagi nie mogą przekraczać 5000 znaków").optional(),
+}).refine(
+  (data) => {
+    if (!data.start_date || !data.end_date) return true;
+    return new Date(data.end_date) > new Date(data.start_date);
+  },
+  { 
+    message: "Data zakończenia musi być późniejsza niż data rozpoczęcia",
+    path: ["end_date"]
+  }
+);
+
+export const clientSchema = z.object({
+  name: z.string().min(1, "Nazwa jest wymagana").max(200),
+  email: z.string().regex(emailRegex, "Nieprawidłowy format adresu email").max(255),
+  phone: z.string()
+    .regex(phoneRegex, "Nieprawidłowy format numeru telefonu")
+    .optional()
+    .or(z.literal("")),
+});
+
+export const inquirySchema = z.object({
+  name: z.string().min(1, "Imię i nazwisko jest wymagane").max(200),
+  email: z.string().regex(emailRegex, "Nieprawidłowy format adresu email").max(255),
+  message: z.string().min(1, "Wiadomość jest wymagana").max(5000),
+  subject: z.string().max(200).optional(),
+  phone: z.string()
+    .regex(phoneRegex, "Nieprawidłowy format numeru telefonu")
+    .optional()
+    .or(z.literal("")),
+  departure_date: z.string().optional(),
+  return_date: z.string().optional(),
+}).refine(
+  (data) => {
+    if (!data.departure_date || !data.return_date) return true;
+    return new Date(data.return_date) >= new Date(data.departure_date);
+  },
+  {
+    message: "Data powrotu musi być taka sama lub późniejsza niż data wyjazdu",
+    path: ["return_date"]
+  }
+);
+
+export type ContractFormData = z.infer<typeof contractSchema>;
+export type ClientFormData = z.infer<typeof clientSchema>;
+export type InquiryFormData = z.infer<typeof inquirySchema>;
