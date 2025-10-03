@@ -1,6 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface ContractInvoiceFile {
+  id: string;
+  url: string;
+  name: string;
+  uploadedAt: string;
+  type?: string;
+}
+
 export interface ContractInvoice {
   id: string;
   contract_id: string;
@@ -11,6 +19,7 @@ export interface ContractInvoice {
   invoice_file_url: string | null;
   invoice_uploaded_at: string | null;
   notes: string | null;
+  files: ContractInvoiceFile[];
   created_at: string;
   updated_at: string;
 }
@@ -27,7 +36,10 @@ export const useContractInvoices = (contractId: string | undefined) => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as ContractInvoice[];
+      return data.map(invoice => ({
+        ...invoice,
+        files: (invoice.files as any) || [],
+      })) as ContractInvoice[];
     },
     enabled: !!contractId,
   });
@@ -38,9 +50,14 @@ export const useAddContractInvoice = () => {
   
   return useMutation({
     mutationFn: async (invoice: Omit<ContractInvoice, 'id' | 'created_at' | 'updated_at'>) => {
+      const invoiceData = {
+        ...invoice,
+        files: invoice.files as any,
+      };
+      
       const { data, error } = await supabase
         .from('contract_invoices')
-        .insert([invoice])
+        .insert([invoiceData])
         .select()
         .single();
       
@@ -58,9 +75,14 @@ export const useUpdateContractInvoice = () => {
   
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<ContractInvoice> }) => {
+      const updatesData = {
+        ...updates,
+        files: updates.files as any,
+      };
+      
       const { data, error } = await supabase
         .from('contract_invoices')
-        .update(updates)
+        .update(updatesData)
         .eq('id', id)
         .select()
         .single();

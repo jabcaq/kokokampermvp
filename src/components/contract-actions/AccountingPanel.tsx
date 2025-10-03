@@ -59,6 +59,7 @@ export const AccountingPanel = ({ contractId, contractNumber }: AccountingPanelP
         invoice_file_url: null,
         invoice_uploaded_at: null,
         notes: notes || null,
+        files: [],
       });
       
       const accountingLink = `${window.location.origin}/accounting-upload/${result.id}`;

@@ -96,6 +96,7 @@ export type Database = {
           amount: number
           contract_id: string
           created_at: string | null
+          files: Json | null
           id: string
           invoice_file_url: string | null
           invoice_type: string
@@ -109,6 +110,7 @@ export type Database = {
           amount: number
           contract_id: string
           created_at?: string | null
+          files?: Json | null
           id?: string
           invoice_file_url?: string | null
           invoice_type: string
@@ -122,6 +124,7 @@ export type Database = {
           amount?: number
           contract_id?: string
           created_at?: string | null
+          files?: Json | null
           id?: string
           invoice_file_url?: string | null
           invoice_type?: string
