@@ -12,7 +12,6 @@ import { useContractInvoices, useAddContractInvoice, useUpdateContractInvoice, C
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-
 interface InvoicesReceiptsTabProps {
   contractId: string;
   invoiceType: 'receipt' | 'invoice';
@@ -22,48 +21,63 @@ interface InvoicesReceiptsTabProps {
   endDate: string;
   payments?: any;
 }
-
 const statusConfig = {
-  pending: { label: "Oczekuje", icon: Clock, className: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
-  submitted: { label: "Przesłano", icon: FileUp, className: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
-  invoice_uploaded: { label: "Dokument wgrany", icon: Upload, className: "bg-purple-500/10 text-purple-500 border-purple-500/20" },
-  completed: { label: "Zakończone", icon: CheckCircle, className: "bg-green-500/10 text-green-500 border-green-500/20" },
+  pending: {
+    label: "Oczekuje",
+    icon: Clock,
+    className: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+  },
+  submitted: {
+    label: "Przesłano",
+    icon: FileUp,
+    className: "bg-blue-500/10 text-blue-500 border-blue-500/20"
+  },
+  invoice_uploaded: {
+    label: "Dokument wgrany",
+    icon: Upload,
+    className: "bg-purple-500/10 text-purple-500 border-purple-500/20"
+  },
+  completed: {
+    label: "Zakończone",
+    icon: CheckCircle,
+    className: "bg-green-500/10 text-green-500 border-green-500/20"
+  }
 };
-
 const invoiceTypeLabels = {
   reservation: "Rezerwacyjna",
-  main_payment: "Zasadnicza", 
-  final: "Końcowa",
+  main_payment: "Zasadnicza",
+  final: "Końcowa"
 };
-
-export const InvoicesReceiptsTab = ({ 
-  contractId, 
-  invoiceType, 
-  contractNumber, 
+export const InvoicesReceiptsTab = ({
+  contractId,
+  invoiceType,
+  contractNumber,
   tenantName,
   startDate,
   endDate,
-  payments 
+  payments
 }: InvoicesReceiptsTabProps) => {
-  const { toast } = useToast();
-  const { data: invoices, isLoading } = useContractInvoices(contractId);
+  const {
+    toast
+  } = useToast();
+  const {
+    data: invoices,
+    isLoading
+  } = useContractInvoices(contractId);
   const addInvoice = useAddContractInvoice();
   const updateInvoice = useUpdateContractInvoice();
-  
   const [newInvoice, setNewInvoice] = useState({
     type: 'reservation' as 'reservation' | 'main_payment' | 'final',
     amount: '',
-    notes: '',
+    notes: ''
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadingFile, setUploadingFile] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<ContractInvoiceFile | null>(null);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
   const getAmountForType = (type: 'reservation' | 'main_payment' | 'final') => {
     if (!payments) return '';
-    
     try {
       let amount = '';
       switch (type) {
@@ -77,7 +91,6 @@ export const InvoicesReceiptsTab = ({
           amount = payments.kaucja?.wysokosc || '';
           break;
       }
-      
       if (typeof amount === 'string') {
         const numericValue = amount.replace(/[^\d.]/g, '');
         return numericValue;
@@ -87,12 +100,14 @@ export const InvoicesReceiptsTab = ({
       return '';
     }
   };
-
   const handleTypeChange = (type: 'reservation' | 'main_payment' | 'final') => {
     const amount = getAmountForType(type);
-    setNewInvoice({ ...newInvoice, type, amount });
+    setNewInvoice({
+      ...newInvoice,
+      type,
+      amount
+    });
   };
-
   const handleFileUpload = async (invoiceId: string, file: File, invoice: any) => {
     setUploadingFile(invoiceId);
     try {
@@ -100,97 +115,85 @@ export const InvoicesReceiptsTab = ({
       const fileId = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
       const fileName = `${fileId}.${fileExt}`;
       const filePath = `${contractId}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('invoices')
-        .upload(filePath, file);
-
+      const {
+        error: uploadError
+      } = await supabase.storage.from('invoices').upload(filePath, file);
       if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('invoices')
-        .getPublicUrl(filePath);
-
+      const {
+        data: {
+          publicUrl
+        }
+      } = supabase.storage.from('invoices').getPublicUrl(filePath);
       const newFile: ContractInvoiceFile = {
         id: fileId,
         url: publicUrl,
         name: file.name,
         uploadedAt: new Date().toISOString(),
-        type: file.type,
+        type: file.type
       };
-
       const existingFiles = invoice.files || [];
       const updatedFiles = [...existingFiles, newFile];
-
       await updateInvoice.mutateAsync({
         id: invoiceId,
         updates: {
           files: updatedFiles,
           invoice_file_url: publicUrl,
           invoice_uploaded_at: new Date().toISOString(),
-          status: 'invoice_uploaded',
-        },
+          status: 'invoice_uploaded'
+        }
       });
-
       toast({
         title: "Sukces",
-        description: "Plik został wgrany pomyślnie",
+        description: "Plik został wgrany pomyślnie"
       });
     } catch (error) {
       console.error('Upload error:', error);
       toast({
         title: "Błąd",
         description: "Nie udało się wgrać pliku",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setUploadingFile(null);
     }
   };
-
   const handleDeleteFile = async (invoiceId: string, fileId: string, invoice: any) => {
     try {
       const updatedFiles = (invoice.files || []).filter((f: ContractInvoiceFile) => f.id !== fileId);
-      
       await updateInvoice.mutateAsync({
         id: invoiceId,
         updates: {
           files: updatedFiles,
-          status: updatedFiles.length > 0 ? 'invoice_uploaded' : 'pending',
-        },
+          status: updatedFiles.length > 0 ? 'invoice_uploaded' : 'pending'
+        }
       });
-
       toast({
         title: "Sukces",
-        description: "Plik został usunięty",
+        description: "Plik został usunięty"
       });
     } catch (error) {
       toast({
         title: "Błąd",
         description: "Nie udało się usunąć pliku",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const openPreview = (file: ContractInvoiceFile) => {
     setPreviewFile(file);
     setPreviewDialogOpen(true);
   };
-
   const isImageFile = (type?: string) => type?.startsWith('image/');
   const isPdfFile = (type?: string) => type === 'application/pdf';
-
   const handleAddInvoice = async () => {
     if (!newInvoice.amount || parseFloat(newInvoice.amount) <= 0) {
       toast({
         title: "Błąd",
         description: "Podaj poprawną kwotę",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     setIsSaving(true);
     try {
       // Create invoice record first
@@ -203,37 +206,33 @@ export const InvoicesReceiptsTab = ({
         invoice_file_url: null,
         invoice_uploaded_at: null,
         notes: newInvoice.notes || null,
-        files: [],
+        files: []
       };
-
       const newInvoiceRecord = await addInvoice.mutateAsync(invoiceData);
 
       // Upload files if any
       if (selectedFiles.length > 0 && newInvoiceRecord) {
         const uploadedFiles: ContractInvoiceFile[] = [];
-
         for (const file of selectedFiles) {
           const fileExt = file.name.split('.').pop();
           const fileId = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
           const fileName = `${fileId}.${fileExt}`;
           const filePath = `${contractId}/${fileName}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from('invoices')
-            .upload(filePath, file);
-
+          const {
+            error: uploadError
+          } = await supabase.storage.from('invoices').upload(filePath, file);
           if (uploadError) throw uploadError;
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('invoices')
-            .getPublicUrl(filePath);
-
+          const {
+            data: {
+              publicUrl
+            }
+          } = supabase.storage.from('invoices').getPublicUrl(filePath);
           uploadedFiles.push({
             id: fileId,
             url: publicUrl,
             name: file.name,
             uploadedAt: new Date().toISOString(),
-            type: file.type,
+            type: file.type
           });
         }
 
@@ -244,36 +243,37 @@ export const InvoicesReceiptsTab = ({
             files: uploadedFiles,
             invoice_file_url: uploadedFiles[0]?.url || null,
             invoice_uploaded_at: new Date().toISOString(),
-            status: 'invoice_uploaded',
-          },
+            status: 'invoice_uploaded'
+          }
         });
       }
-
-      setNewInvoice({ type: 'reservation', amount: '', notes: '' });
+      setNewInvoice({
+        type: 'reservation',
+        amount: '',
+        notes: ''
+      });
       setSelectedFiles([]);
-      
       toast({
         title: "Sukces",
-        description: `Dodano ${invoiceType === 'invoice' ? 'fakturę' : 'paragon'}`,
+        description: `Dodano ${invoiceType === 'invoice' ? 'fakturę' : 'paragon'}`
       });
     } catch (error) {
       console.error('Error adding invoice:', error);
       toast({
         title: "Błąd",
         description: `Nie udało się dodać ${invoiceType === 'invoice' ? 'faktury' : 'paragonu'}`,
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsSaving(false);
     }
   };
-
   const copyLinkForNewInvoice = async () => {
     if (!newInvoice.amount || parseFloat(newInvoice.amount) <= 0) {
       toast({
         title: "Błąd",
         description: "Najpierw wypełnij formularz i zapisz dokument",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -289,184 +289,44 @@ export const InvoicesReceiptsTab = ({
         invoice_file_url: null,
         invoice_uploaded_at: null,
         notes: newInvoice.notes || null,
-        files: [],
+        files: []
       };
-
       const newInvoiceRecord = await addInvoice.mutateAsync(invoiceData);
-      
       if (newInvoiceRecord) {
         const uploadLink = `${window.location.origin}/invoice-upload/${newInvoiceRecord.id}`;
         await navigator.clipboard.writeText(uploadLink);
-        
-        setNewInvoice({ type: 'reservation', amount: '', notes: '' });
-        
+        setNewInvoice({
+          type: 'reservation',
+          amount: '',
+          notes: ''
+        });
         toast({
           title: "Link skopiowany",
-          description: "Link do wgrania dokumentu został skopiowany. Dokument został zapisany.",
+          description: "Link do wgrania dokumentu został skopiowany. Dokument został zapisany."
         });
       }
     } catch (error) {
       toast({
         title: "Błąd",
         description: "Nie udało się utworzyć linku",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const copyLinkToClipboard = async (invoiceId: string) => {
     const uploadLink = `${window.location.origin}/invoice-upload/${invoiceId}`;
     await navigator.clipboard.writeText(uploadLink);
     toast({
       title: "Link skopiowany",
-      description: "Link do wgrania dokumentu został skopiowany do schowka",
+      description: "Link do wgrania dokumentu został skopiowany do schowka"
     });
   };
-
   if (isLoading) {
     return <div className="flex items-center justify-center p-8">Ładowanie...</div>;
   }
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Existing invoices list - simplified view */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-lg">Lista dokumentów</h3>
-        {invoices && invoices.length > 0 ? (
-          <div className="grid gap-4">
-            {invoices.map((invoice) => (
-              <Card key={invoice.id}>
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    {invoice.files && invoice.files.length > 0 ? (
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">Wgrane pliki:</Label>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                          {invoice.files.map((file: ContractInvoiceFile) => (
-                            <div 
-                              key={file.id} 
-                              className="relative group border rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer bg-muted"
-                              onClick={() => openPreview(file)}
-                            >
-                              <div className="aspect-square flex items-center justify-center p-4">
-                                {isImageFile(file.type) ? (
-                                  <img 
-                                    src={file.url} 
-                                    alt={file.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <FileIcon className="h-12 w-12 text-muted-foreground" />
-                                )}
-                              </div>
-                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openPreview(file);
-                                  }}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteFile(invoice.id, file.id, invoice);
-                                  }}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                              <div className="p-2 bg-background border-t">
-                                <p className="text-xs truncate" title={file.name}>
-                                  {file.name}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">Brak wgranych plików</p>
-                    )}
-
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyLinkToClipboard(invoice.id)}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Skopiuj link do wgrania
-                      </Button>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="file"
-                          id={`file-${invoice.id}`}
-                          className="hidden"
-                          accept="*/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              handleFileUpload(invoice.id, file, invoice);
-                            }
-                          }}
-                          disabled={uploadingFile === invoice.id}
-                        />
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => document.getElementById(`file-${invoice.id}`)?.click()}
-                          disabled={uploadingFile === invoice.id}
-                        >
-                          {uploadingFile === invoice.id ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <Upload className="h-4 w-4 mr-2" />
-                          )}
-                          {uploadingFile === invoice.id ? 'Wgrywanie...' : 'Wgraj plik'}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <p className="text-center text-muted-foreground">
-                  Brak dokumentów. Dodaj pierwszy dokument poniżej, a następnie będziesz mógł wgrać pliki i skopiować link do formularza.
-                </p>
-                <div className="flex items-center gap-2 justify-center flex-wrap">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Skopiuj link do wgrania
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    disabled
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Wgraj plik
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      
 
       {/* Add new document form */}
       <Card>
@@ -498,10 +358,7 @@ export const InvoicesReceiptsTab = ({
           <div className="grid gap-4">
             <div className="space-y-2">
               <Label>Typ dokumentu</Label>
-              <Select
-                value={newInvoice.type}
-                onValueChange={(value: any) => handleTypeChange(value)}
-              >
+              <Select value={newInvoice.type} onValueChange={(value: any) => handleTypeChange(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -515,76 +372,52 @@ export const InvoicesReceiptsTab = ({
 
             <div className="space-y-2">
               <Label>Kwota (PLN)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={newInvoice.amount}
-                onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })}
-                onBlur={(e) => {
-                  const value = parseFloat(e.target.value);
-                  if (!isNaN(value)) {
-                    setNewInvoice({ ...newInvoice, amount: value.toFixed(2) });
-                  }
-                }}
-              />
+              <Input type="number" step="0.01" placeholder="0.00" value={newInvoice.amount} onChange={e => setNewInvoice({
+              ...newInvoice,
+              amount: e.target.value
+            })} onBlur={e => {
+              const value = parseFloat(e.target.value);
+              if (!isNaN(value)) {
+                setNewInvoice({
+                  ...newInvoice,
+                  amount: value.toFixed(2)
+                });
+              }
+            }} />
             </div>
 
             <div className="space-y-2">
               <Label>Uwagi (opcjonalnie)</Label>
-              <Textarea
-                placeholder="Dodatkowe informacje..."
-                value={newInvoice.notes}
-                onChange={(e) => setNewInvoice({ ...newInvoice, notes: e.target.value })}
-                rows={2}
-              />
+              <Textarea placeholder="Dodatkowe informacje..." value={newInvoice.notes} onChange={e => setNewInvoice({
+              ...newInvoice,
+              notes: e.target.value
+            })} rows={2} />
             </div>
 
             <div className="space-y-2">
               <Label>Pliki (opcjonalnie)</Label>
               <div className="space-y-2">
-                <Input
-                  type="file"
-                  multiple
-                  accept="*/*"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files || []);
-                    setSelectedFiles(files);
-                  }}
-                />
-                {selectedFiles.length > 0 && (
-                  <div className="text-sm text-muted-foreground">
+                <Input type="file" multiple accept="*/*" onChange={e => {
+                const files = Array.from(e.target.files || []);
+                setSelectedFiles(files);
+              }} />
+                {selectedFiles.length > 0 && <div className="text-sm text-muted-foreground">
                     Wybrano plików: {selectedFiles.length}
                     <ul className="list-disc list-inside mt-1">
-                      {selectedFiles.map((file, idx) => (
-                        <li key={idx}>{file.name}</li>
-                      ))}
+                      {selectedFiles.map((file, idx) => <li key={idx}>{file.name}</li>)}
                     </ul>
-                  </div>
-                )}
+                  </div>}
               </div>
             </div>
 
             <div className="flex gap-2">
-              <Button 
-                onClick={handleAddInvoice} 
-                disabled={isSaving || addInvoice.isPending}
-                className="flex-1"
-              >
-                {isSaving || addInvoice.isPending ? (
-                  <>
+              <Button onClick={handleAddInvoice} disabled={isSaving || addInvoice.isPending} className="flex-1">
+                {isSaving || addInvoice.isPending ? <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Zapisywanie...
-                  </>
-                ) : (
-                  <>Zapisz dokument</>
-                )}
+                  </> : <>Zapisz dokument</>}
               </Button>
-              <Button 
-                onClick={copyLinkForNewInvoice}
-                variant="outline"
-                disabled={isSaving || addInvoice.isPending}
-              >
+              <Button onClick={copyLinkForNewInvoice} variant="outline" disabled={isSaving || addInvoice.isPending}>
                 <Upload className="h-4 w-4 mr-2" />
                 Skopiuj link
               </Button>
@@ -600,53 +433,29 @@ export const InvoicesReceiptsTab = ({
             <DialogTitle>{previewFile?.name}</DialogTitle>
           </DialogHeader>
           <div className="mt-4">
-            {previewFile && (
-              <>
-                {isImageFile(previewFile.type) ? (
-                  <img 
-                    src={previewFile.url} 
-                    alt={previewFile.name}
-                    className="w-full h-auto rounded-lg"
-                  />
-                ) : isPdfFile(previewFile.type) ? (
-                  <iframe
-                    src={previewFile.url}
-                    className="w-full h-[70vh] rounded-lg border"
-                    title={previewFile.name}
-                  />
-                ) : (
-                  <div className="text-center space-y-4 p-8">
+            {previewFile && <>
+                {isImageFile(previewFile.type) ? <img src={previewFile.url} alt={previewFile.name} className="w-full h-auto rounded-lg" /> : isPdfFile(previewFile.type) ? <iframe src={previewFile.url} className="w-full h-[70vh] rounded-lg border" title={previewFile.name} /> : <div className="text-center space-y-4 p-8">
                     <FileIcon className="h-24 w-24 mx-auto text-muted-foreground" />
                     <p className="text-muted-foreground">
                       Podgląd niedostępny dla tego typu pliku
                     </p>
-                    <Button
-                      onClick={() => window.open(previewFile.url, '_blank')}
-                      variant="outline"
-                    >
+                    <Button onClick={() => window.open(previewFile.url, '_blank')} variant="outline">
                       <Download className="h-4 w-4 mr-2" />
                       Pobierz plik
                     </Button>
-                  </div>
-                )}
+                  </div>}
                 <div className="mt-4 flex justify-between items-center">
                   <p className="text-sm text-muted-foreground">
                     Wgrano: {format(new Date(previewFile.uploadedAt), 'dd.MM.yyyy HH:mm')}
                   </p>
-                  <Button
-                    onClick={() => window.open(previewFile.url, '_blank')}
-                    variant="outline"
-                    size="sm"
-                  >
+                  <Button onClick={() => window.open(previewFile.url, '_blank')} variant="outline" size="sm">
                     <Download className="h-4 w-4 mr-2" />
                     Pobierz
                   </Button>
                 </div>
-              </>
-            )}
+              </>}
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 };
