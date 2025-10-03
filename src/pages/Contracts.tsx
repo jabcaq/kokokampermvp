@@ -329,6 +329,7 @@ const Contracts = () => {
                                     setSelectedClientId(client.id);
                                     setClientSearchOpen(false);
                                   }}
+                                  className="cursor-pointer"
                                 >
                                   <Check
                                     className={cn(
@@ -338,7 +339,7 @@ const Contracts = () => {
                                   />
                                   <div className="flex flex-col">
                                     <span className="font-medium">{client.name}</span>
-                                    <span className="text-sm text-muted-foreground">
+                                    <span className="text-sm opacity-70">
                                       {client.email} {client.phone ? `• ${client.phone}` : ''}
                                     </span>
                                   </div>
