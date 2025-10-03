@@ -172,6 +172,14 @@ const InvoiceUpload = () => {
               <span className="font-medium">{contract.contract_number}</span>
             </div>
             <div className="flex justify-between">
+              <span className="text-muted-foreground">Typ dokumentu:</span>
+              <span className="font-medium">
+                {invoice.invoice_type === 'reservation' && 'Rezerwacyjna'}
+                {invoice.invoice_type === 'main_payment' && 'Zasadnicza'}
+                {invoice.invoice_type === 'final' && 'Końcowa'}
+              </span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-muted-foreground">Kwota:</span>
               <span className="font-medium">{invoice.amount?.toFixed(2)} PLN</span>
             </div>
