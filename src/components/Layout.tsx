@@ -43,8 +43,7 @@ export const Layout = () => {
   const NavContent = () => (
     <>
       <div className="p-6 border-b border-sidebar-border bg-white">
-        <img src={logoImage} alt="Koko Kamper" className="h-16 w-auto mb-2" />
-        <p className="text-xs text-muted-foreground">Zarządzanie wynajmem</p>
+        <img src={logoImage} alt="Koko Kamper" className="h-16 w-auto" />
       </div>
       <nav className="flex-1 p-4 space-y-2">
         {navItems.map((item) => {
