@@ -1,0 +1,222 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Upload, Loader2, CheckCircle, FileIcon } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { ContractInvoiceFile } from "@/hooks/useContractInvoices";
+
+const InvoiceUpload = () => {
+  const { invoiceId } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [invoice, setInvoice] = useState<any>(null);
+  const [contract, setContract] = useState<any>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInvoiceData = async () => {
+      try {
+        const { data: invoiceData, error: invoiceError } = await supabase
+          .from('contract_invoices')
+          .select('*, contract:contracts(*)')
+          .eq('id', invoiceId)
+          .single();
+
+        if (invoiceError) throw invoiceError;
+
+        setInvoice(invoiceData);
+        setContract(invoiceData.contract);
+      } catch (error) {
+        console.error('Error fetching invoice:', error);
+        toast({
+          title: "Błąd",
+          description: "Nie znaleziono dokumentu",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (invoiceId) {
+      fetchInvoiceData();
+    }
+  }, [invoiceId, toast]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile || !invoice || !contract) return;
+
+    setUploading(true);
+    try {
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileId = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const fileName = `${fileId}.${fileExt}`;
+      const filePath = `${contract.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('invoices')
+        .upload(filePath, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('invoices')
+        .getPublicUrl(filePath);
+
+      const newFile: ContractInvoiceFile = {
+        id: fileId,
+        url: publicUrl,
+        name: selectedFile.name,
+        uploadedAt: new Date().toISOString(),
+        type: selectedFile.type,
+      };
+
+      const existingFiles = invoice.files || [];
+      const updatedFiles = [...existingFiles, newFile];
+
+      const { error: updateError } = await supabase
+        .from('contract_invoices')
+        .update({
+          files: updatedFiles,
+          invoice_file_url: publicUrl,
+          invoice_uploaded_at: new Date().toISOString(),
+          status: 'invoice_uploaded',
+        })
+        .eq('id', invoiceId);
+
+      if (updateError) throw updateError;
+
+      setUploadSuccess(true);
+      toast({
+        title: "Sukces",
+        description: "Dokument został wgrany pomyślnie",
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie udało się wgrać dokumentu",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!invoice || !contract) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 text-center">
+            <p className="text-muted-foreground">Nie znaleziono dokumentu</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (uploadSuccess) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 text-center space-y-4">
+            <CheckCircle className="h-16 w-16 mx-auto text-green-500" />
+            <h2 className="text-2xl font-bold">Dokument wgrany!</h2>
+            <p className="text-muted-foreground">
+              Twój dokument został pomyślnie wgrany do systemu.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-2xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Upload className="h-5 w-5" />
+            Wgraj dokument
+          </CardTitle>
+          <CardDescription>
+            Prześlij dokument dla umowy {contract.contract_number}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-3 text-sm bg-muted/50 p-4 rounded-lg">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Numer umowy:</span>
+              <span className="font-medium">{contract.contract_number}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Kwota:</span>
+              <span className="font-medium">{invoice.amount?.toFixed(2)} PLN</span>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="file">Wybierz plik</Label>
+              <Input
+                id="file"
+                type="file"
+                accept="*/*"
+                onChange={handleFileSelect}
+                disabled={uploading}
+              />
+              {selectedFile && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <FileIcon className="h-4 w-4" />
+                  <span>{selectedFile.name}</span>
+                </div>
+              )}
+            </div>
+
+            <Button
+              onClick={handleUpload}
+              disabled={!selectedFile || uploading}
+              className="w-full"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Wgrywanie...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Wgraj dokument
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default InvoiceUpload;

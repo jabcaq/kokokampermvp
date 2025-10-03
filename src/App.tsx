@@ -23,6 +23,7 @@ import Protocols from "./pages/Protocols";
 import AccountingUpload from "./pages/AccountingUpload";
 import Documents from "./pages/Documents";
 import InvoicesManagement from "./pages/InvoicesManagement";
+import InvoiceUpload from "./pages/InvoiceUpload";
 import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
 
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/vehicle-handover" element={<VehicleHandover />} />
             <Route path="/vehicle-return" element={<VehicleReturn />} />
             <Route path="/accounting-upload/:invoiceId" element={<AccountingUpload />} />
+            <Route path="/invoice-upload/:invoiceId" element={<InvoiceUpload />} />
             <Route element={
               <ProtectedRoute>
                 <Layout />
