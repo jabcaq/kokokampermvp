@@ -345,9 +345,41 @@ const ContractDetails = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">Typ dokumentu rozliczeniowego</Label>
+            {isEditing ? (
+              <Select 
+                value={displayData?.invoice_type || 'receipt'} 
+                onValueChange={(value) => updateField('invoice_type', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Wybierz typ dokumentu" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="receipt">Paragon</SelectItem>
+                  <SelectItem value="invoice">Faktura</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Badge 
+                variant="outline" 
+                className={displayData?.invoice_type === 'invoice' 
+                  ? "bg-blue-500/10 text-blue-500 border-blue-500/20" 
+                  : "bg-green-500/10 text-green-500 border-green-500/20"
+                }
+              >
+                {displayData?.invoice_type === 'invoice' ? 'Faktura' : 'Paragon'}
+              </Badge>
+            )}
+          </div>
+
+          <Separator />
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             <div className="space-y-3">
-              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Nazwa firmy (opcjonalnie)</Label>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">
+                Nazwa firmy {displayData?.invoice_type === 'invoice' && '(wymagane dla faktury)'}
+              </Label>
               {isEditing ? (
                 <Input value={displayData?.tenant_company_name || ''} onChange={(e) => updateField('tenant_company_name', e.target.value)} placeholder="Jeśli firma wynajmuje" />
               ) : (
@@ -355,7 +387,9 @@ const ContractDetails = () => {
               )}
             </div>
             <div className="space-y-3">
-              <Label className="text-xs text-muted-foreground uppercase tracking-wider">NIP (opcjonalnie)</Label>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">
+                NIP {displayData?.invoice_type === 'invoice' && '(wymagane dla faktury)'}
+              </Label>
               {isEditing ? (
                 <Input value={displayData?.tenant_nip || ''} onChange={(e) => updateField('tenant_nip', e.target.value)} placeholder="NIP firmy" />
               ) : (
