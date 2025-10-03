@@ -151,6 +151,7 @@ export type Database = {
           end_date: string
           handover_link: string | null
           id: string
+          invoice_type: string | null
           lessor_address: string | null
           lessor_email: string | null
           lessor_name: string | null
@@ -193,6 +194,7 @@ export type Database = {
           end_date: string
           handover_link?: string | null
           id?: string
+          invoice_type?: string | null
           lessor_address?: string | null
           lessor_email?: string | null
           lessor_name?: string | null
@@ -235,6 +237,7 @@ export type Database = {
           end_date?: string
           handover_link?: string | null
           id?: string
+          invoice_type?: string | null
           lessor_address?: string | null
           lessor_email?: string | null
           lessor_name?: string | null

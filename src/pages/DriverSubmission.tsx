@@ -20,6 +20,9 @@ const DriverSubmission = () => {
   const [submitted, setSubmitted] = useState(false);
   const [additionalDrivers, setAdditionalDrivers] = useState<number[]>([]);
   const [formData, setFormData] = useState({
+    invoiceType: "receipt" as "receipt" | "invoice",
+    companyName: "",
+    nip: "",
     driverName: "",
     driverEmail: "",
     driverPhone: "",
@@ -34,6 +37,9 @@ const DriverSubmission = () => {
   useEffect(() => {
     if (contract) {
       setFormData({
+        invoiceType: (contract.invoice_type as "receipt" | "invoice") || "receipt",
+        companyName: contract.tenant_company_name || "",
+        nip: contract.tenant_nip || "",
         driverName: contract.tenant_name || "",
         driverEmail: contract.tenant_email || "",
         driverPhone: contract.tenant_phone || "",
@@ -88,6 +94,9 @@ const DriverSubmission = () => {
         id: contract.id,
         updates: {
           additional_drivers: allDrivers,
+          invoice_type: formData.invoiceType,
+          tenant_company_name: formData.companyName,
+          tenant_nip: formData.nip,
           tenant_name: formData.driverName,
           tenant_email: formData.driverEmail,
           tenant_phone: formData.driverPhone,
@@ -211,6 +220,71 @@ const DriverSubmission = () => {
                 <span className="font-medium text-foreground">{contract.start_date}</span>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Typ dokumentu rozliczeniowego
+            </CardTitle>
+            <CardDescription>
+              Wybierz czy potrzebujesz faktury czy paragonu
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="invoiceType">Typ dokumentu *</Label>
+                <Select
+                  value={formData.invoiceType}
+                  onValueChange={(value: "receipt" | "invoice") =>
+                    setFormData({ ...formData, invoiceType: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Wybierz typ dokumentu" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="receipt">Paragon</SelectItem>
+                    <SelectItem value="invoice">Faktura</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.invoiceType === 'invoice' && (
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                  <h4 className="font-semibold text-sm">Dane do faktury</h4>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyName">Nazwa firmy *</Label>
+                    <Input
+                      id="companyName"
+                      value={formData.companyName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, companyName: e.target.value })
+                      }
+                      placeholder="Nazwa firmy"
+                      required={formData.invoiceType === 'invoice'}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="nip">NIP *</Label>
+                    <Input
+                      id="nip"
+                      value={formData.nip}
+                      onChange={(e) =>
+                        setFormData({ ...formData, nip: e.target.value })
+                      }
+                      placeholder="0000000000"
+                      required={formData.invoiceType === 'invoice'}
+                      maxLength={10}
+                    />
+                  </div>
+                </div>
+              )}
+            </form>
           </CardContent>
         </Card>
 

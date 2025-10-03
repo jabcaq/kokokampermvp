@@ -14,6 +14,8 @@ const nipRegex = /^[0-9]{10}$/;
 
 export const contractSchema = z.object({
   contract_number: z.string().min(1, "Numer umowy jest wymagany").max(50),
+  invoice_type: z.enum(['receipt', 'invoice']).default('receipt').optional(),
+  tenant_company_name: z.string().max(200).optional().or(z.literal("")),
   tenant_name: z.string().min(1, "Nazwa najemcy jest wymagana").max(200),
   tenant_email: z.string()
     .regex(emailRegex, "Nieprawidłowy format adresu email")
@@ -38,7 +40,34 @@ export const contractSchema = z.object({
   vehicle_model: z.string().min(1, "Model pojazdu jest wymagany").max(200),
   registration_number: z.string().min(1, "Numer rejestracyjny jest wymagany").max(50),
   notes: z.string().max(5000, "Uwagi nie mogą przekraczać 5000 znaków").optional(),
-}).refine(
+})
+.refine(
+  (data) => {
+    // If invoice is selected, company name is required
+    if (data.invoice_type === 'invoice') {
+      return !!data.tenant_company_name && data.tenant_company_name.trim().length > 0;
+    }
+    return true;
+  },
+  {
+    message: "Nazwa firmy jest wymagana dla faktury",
+    path: ["tenant_company_name"],
+  }
+)
+.refine(
+  (data) => {
+    // If invoice is selected, NIP is required and must be valid
+    if (data.invoice_type === 'invoice') {
+      return !!data.tenant_nip && nipRegex.test(data.tenant_nip);
+    }
+    return true;
+  },
+  {
+    message: "NIP jest wymagany dla faktury i musi mieć 10 cyfr",
+    path: ["tenant_nip"],
+  }
+)
+.refine(
   (data) => {
     if (!data.start_date || !data.end_date) return true;
     return new Date(data.end_date) > new Date(data.start_date);

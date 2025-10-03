@@ -19,6 +19,7 @@ import { format } from "date-fns";
 import { DriversTab } from "@/components/contract-tabs/DriversTab";
 import { HandoverTab } from "@/components/contract-tabs/HandoverTab";
 import { ReturnTab } from "@/components/contract-tabs/ReturnTab";
+import { InvoicesReceiptsTab } from "@/components/contract-tabs/InvoicesReceiptsTab";
 import { ContractActionsPanel } from "@/components/contract-actions/ContractActionsPanel";
 import { AccountingPanel } from "@/components/contract-actions/AccountingPanel";
 
@@ -199,9 +200,20 @@ const ContractDetails = () => {
                 </SelectContent>
               </Select>
             ) : (
-              <Badge variant="outline" className={statusConfig[displayData?.status as keyof typeof statusConfig]?.className}>
-                {statusConfig[displayData?.status as keyof typeof statusConfig]?.label}
-              </Badge>
+              <>
+                <Badge variant="outline" className={statusConfig[displayData?.status as keyof typeof statusConfig]?.className}>
+                  {statusConfig[displayData?.status as keyof typeof statusConfig]?.label}
+                </Badge>
+                <Badge 
+                  variant="outline" 
+                  className={displayData?.invoice_type === 'invoice' 
+                    ? "bg-blue-500/10 text-blue-500 border-blue-500/20" 
+                    : "bg-green-500/10 text-green-500 border-green-500/20"
+                  }
+                >
+                  {displayData?.invoice_type === 'invoice' ? 'Faktura' : 'Paragon'}
+                </Badge>
+              </>
             )}
           </div>
           <p className="text-muted-foreground mt-2">Szczegóły umowy najmu</p>
@@ -241,7 +253,7 @@ const ContractDetails = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-8">
+        <TabsList className="grid w-full grid-cols-5 mb-8">
           <TabsTrigger value="contract" className="gap-2">
             <FileText className="h-4 w-4" />
             Umowa
@@ -249,6 +261,10 @@ const ContractDetails = () => {
           <TabsTrigger value="drivers" className="gap-2">
             <Users className="h-4 w-4" />
             Kierowcy
+          </TabsTrigger>
+          <TabsTrigger value="invoices" className="gap-2">
+            <CreditCard className="h-4 w-4" />
+            {displayData?.invoice_type === 'invoice' ? 'Faktury' : 'Paragony'}
           </TabsTrigger>
           <TabsTrigger value="handover" className="gap-2">
             <Truck className="h-4 w-4" />
@@ -903,6 +919,17 @@ const ContractDetails = () => {
             endDate={contract.end_date}
             vehicleModel={contract.vehicle_model}
             handovers={handovers}
+          />
+        </TabsContent>
+
+        <TabsContent value="invoices">
+          <InvoicesReceiptsTab
+            contractId={id!}
+            invoiceType={contract.invoice_type as 'receipt' | 'invoice'}
+            contractNumber={contract.contract_number}
+            tenantName={contract.tenant_name || contract.client?.name || 'Brak danych'}
+            startDate={contract.start_date}
+            endDate={contract.end_date}
           />
         </TabsContent>
 

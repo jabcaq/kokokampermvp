@@ -40,6 +40,7 @@ export interface Contract {
   handover_link?: string;
   return_link?: string;
   driver_submission_link?: string;
+  invoice_type?: 'receipt' | 'invoice';
   created_at?: string;
   updated_at?: string;
 }
