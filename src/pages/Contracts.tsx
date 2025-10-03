@@ -44,6 +44,7 @@ const Contracts = () => {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
+  const [vehicleSearchOpen, setVehicleSearchOpen] = useState(false);
   const [generatedContractNumber, setGeneratedContractNumber] = useState<string>("");
   const [totalAmount, setTotalAmount] = useState<string>("");
   const [vehicleData, setVehicleData] = useState({
@@ -287,6 +288,8 @@ const Contracts = () => {
       // Resetuj formularz gdy dialog się zamyka
       setSelectedClientId("");
       setSelectedVehicleId("");
+      setClientSearchOpen(false);
+      setVehicleSearchOpen(false);
       setGeneratedContractNumber("");
       setTotalAmount("");
       setVehicleData({
@@ -454,18 +457,60 @@ const Contracts = () => {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="wybor_pojazdu">Wybierz pojazd z bazy</Label>
-                    <Select value={selectedVehicleId} onValueChange={handleVehicleSelect}>
-                      <SelectTrigger id="wybor_pojazdu">
-                        <SelectValue placeholder="Wybierz pojazd lub wprowadź dane ręcznie" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {vehicles.map((vehicle) => (
-                          <SelectItem key={vehicle.id} value={vehicle.id}>
-                            {vehicle.model} - {vehicle.registration_number}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={vehicleSearchOpen} onOpenChange={setVehicleSearchOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={vehicleSearchOpen}
+                          className="w-full justify-between"
+                        >
+                          {selectedVehicleId
+                            ? (() => {
+                                const vehicle = vehicles.find((v) => v.id === selectedVehicleId);
+                                return vehicle ? `${vehicle.model} - ${vehicle.registration_number}` : "Wybierz pojazd";
+                              })()
+                            : "Wybierz pojazd lub wprowadź dane ręcznie"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0 bg-background z-50" align="start">
+                        <Command>
+                          <CommandInput placeholder="Szukaj po modelu, numerze rejestracyjnym lub rodzaju..." />
+                          <CommandList>
+                            <CommandEmpty>Nie znaleziono pojazdu.</CommandEmpty>
+                            <CommandGroup>
+                              {vehicles.map((vehicle) => (
+                                <CommandItem
+                                  key={vehicle.id}
+                                  value={`${vehicle.model} ${vehicle.registration_number} ${vehicle.type || ''}`}
+                                  onSelect={() => {
+                                    handleVehicleSelect(vehicle.id);
+                                    setVehicleSearchOpen(false);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedVehicleId === vehicle.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{vehicle.model} - {vehicle.registration_number}</span>
+                                    {vehicle.type && (
+                                      <span className="text-sm opacity-70">
+                                        {vehicle.type}
+                                      </span>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
