@@ -430,27 +430,6 @@ const ContractDetails = () => {
               )}
             </div>
           </div>
-          
-          <Separator />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-            <div className="space-y-3">
-              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Miejsce</Label>
-              {isEditing ? (
-                <Input value={displayData?.rental_location || ''} onChange={(e) => updateField('rental_location', e.target.value)} />
-              ) : (
-                <p className="text-base font-semibold text-foreground pt-1">{displayData?.rental_location || 'Nie podano'}</p>
-              )}
-            </div>
-            <div className="space-y-3">
-              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Zwrot do</Label>
-              {isEditing ? (
-                <Input value={displayData?.return_by || ''} onChange={(e) => updateField('return_by', e.target.value)} />
-              ) : (
-                <p className="text-base font-semibold text-foreground pt-1">{displayData?.return_by || 'Nie podano'}</p>
-              )}
-            </div>
-          </div>
         </CardContent>
       </Card>
 
