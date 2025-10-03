@@ -4,10 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Loader2, CheckCircle, FileIcon } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Upload, Loader2, CheckCircle, FileIcon, ExternalLink, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContractInvoiceFile } from "@/hooks/useContractInvoices";
+
+const invoiceTypeLabels = {
+  reservation: "Rezerwacyjna",
+  main_payment: "Zasadnicza", 
+  final: "Końcowa",
+};
 
 const InvoiceUpload = () => {
   const { invoiceId } = useParams();
@@ -19,8 +27,18 @@ const InvoiceUpload = () => {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedInvoiceType, setSelectedInvoiceType] = useState<string>('');
+  const [showContractDialog, setShowContractDialog] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    
+    checkAuth();
+
     const fetchInvoiceData = async () => {
       try {
         const { data: invoiceData, error: invoiceError } = await supabase
@@ -33,6 +51,7 @@ const InvoiceUpload = () => {
 
         setInvoice(invoiceData);
         setContract(invoiceData.contract);
+        setSelectedInvoiceType(invoiceData.invoice_type);
       } catch (error) {
         console.error('Error fetching invoice:', error);
         toast({
@@ -95,6 +114,7 @@ const InvoiceUpload = () => {
           invoice_file_url: publicUrl,
           invoice_uploaded_at: new Date().toISOString(),
           status: 'invoice_uploaded',
+          invoice_type: selectedInvoiceType,
         })
         .eq('id', invoiceId);
 
@@ -157,13 +177,54 @@ const InvoiceUpload = () => {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
-            Wgraj dokument
-          </CardTitle>
-          <CardDescription>
-            Prześlij dokument dla umowy {contract.contract_number}
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Wgraj dokument
+              </CardTitle>
+              <CardDescription>
+                Prześlij dokument dla umowy {contract.contract_number}
+              </CardDescription>
+            </div>
+            <Dialog open={showContractDialog} onOpenChange={setShowContractDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Podgląd umowy
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Info className="h-5 w-5" />
+                    Wymagane zalogowanie
+                  </DialogTitle>
+                  <DialogDescription className="space-y-4 pt-4">
+                    <p>
+                      Aby zobaczyć szczegóły umowy, musisz być zalogowany w systemie.
+                    </p>
+                    {isAuthenticated ? (
+                      <Button 
+                        onClick={() => window.open(`/contracts/${contract.id}`, '_blank')}
+                        className="w-full"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Otwórz umowę w nowej karcie
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={() => window.open('/auth', '_blank')}
+                        className="w-full"
+                      >
+                        Zaloguj się w systemie
+                      </Button>
+                    )}
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-3 text-sm bg-muted/50 p-4 rounded-lg">
@@ -187,6 +248,23 @@ const InvoiceUpload = () => {
 
           <div className="space-y-4">
             <div className="space-y-2">
+              <Label>Typ dokumentu</Label>
+              <Select
+                value={selectedInvoiceType}
+                onValueChange={setSelectedInvoiceType}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Wybierz typ dokumentu" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="reservation">{invoiceTypeLabels.reservation}</SelectItem>
+                  <SelectItem value="main_payment">{invoiceTypeLabels.main_payment}</SelectItem>
+                  <SelectItem value="final">{invoiceTypeLabels.final}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="file">Wybierz plik</Label>
               <Input
                 id="file"
@@ -205,7 +283,7 @@ const InvoiceUpload = () => {
 
             <Button
               onClick={handleUpload}
-              disabled={!selectedFile || uploading}
+              disabled={!selectedFile || uploading || !selectedInvoiceType}
               className="w-full"
             >
               {uploading ? (
