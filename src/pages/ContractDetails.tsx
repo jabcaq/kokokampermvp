@@ -588,6 +588,59 @@ const ContractDetails = () => {
         </CardContent>
       </Card>
 
+      {/* Dodatkowi kierowcy */}
+      {displayData?.additional_drivers && displayData.additional_drivers.length > 0 && (
+        <Card className="shadow-md">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Dodatkowy kierowca
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {displayData.additional_drivers.map((driver: any, idx: number) => (
+              <div key={idx}>
+                {idx > 0 && <Separator className="my-6" />}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  <div className="space-y-3">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Imię i nazwisko</Label>
+                    <p className="text-base font-semibold text-foreground pt-1">{driver.imie_nazwisko || 'Nie podano'}</p>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Email</Label>
+                    <p className="text-base font-semibold text-foreground pt-1">{driver.email || 'Nie podano'}</p>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Telefon</Label>
+                    <p className="text-base font-semibold text-foreground pt-1">{driver.tel || 'Nie podano'}</p>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Numer prawa jazdy</Label>
+                    <p className="text-base font-semibold text-foreground pt-1">{driver.prawo_jazdy_numer || 'Nie podano'}</p>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data wydania prawa jazdy</Label>
+                    <p className="text-base font-semibold text-foreground pt-1">{driver.prawo_jazdy_data || 'Nie podano'}</p>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Rodzaj dokumentu</Label>
+                    <p className="text-base font-semibold text-foreground pt-1">{driver.dokument_rodzaj || 'Nie podano'}</p>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Numer dokumentu</Label>
+                    <p className="text-base font-semibold text-foreground pt-1">{driver.dokument_numer || 'Nie podano'}</p>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Organ wydający</Label>
+                    <p className="text-base font-semibold text-foreground pt-1">{driver.dokument_organ || 'Nie podano'}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Przedmiot najmu */}
       <Card className="shadow-md">
         <CardHeader className="pb-3">
@@ -840,60 +893,6 @@ const ContractDetails = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Dodatkowi kierowcy */}
-      {displayData?.additional_drivers && displayData.additional_drivers.length > 0 && (
-        <Card className="shadow-md">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Dodatkowi kierowcy
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {displayData.additional_drivers.map((driver: any, idx: number) => (
-              <div key={idx}>
-                {idx > 0 && <Separator className="my-6" />}
-                <h4 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">Kierowca #{idx + 1}</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                  <div className="space-y-3">
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Imię i nazwisko</Label>
-                    <p className="text-base font-semibold text-foreground pt-1">{driver.imie_nazwisko || 'Nie podano'}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Email</Label>
-                    <p className="text-base font-semibold text-foreground pt-1">{driver.email || 'Nie podano'}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Telefon</Label>
-                    <p className="text-base font-semibold text-foreground pt-1">{driver.tel || 'Nie podano'}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Numer prawa jazdy</Label>
-                    <p className="text-base font-semibold text-foreground pt-1">{driver.prawo_jazdy_numer || 'Nie podano'}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data wydania prawa jazdy</Label>
-                    <p className="text-base font-semibold text-foreground pt-1">{driver.prawo_jazdy_data || 'Nie podano'}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Rodzaj dokumentu</Label>
-                    <p className="text-base font-semibold text-foreground pt-1">{driver.dokument_rodzaj || 'Nie podano'}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Numer dokumentu</Label>
-                    <p className="text-base font-semibold text-foreground pt-1">{driver.dokument_numer || 'Nie podano'}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Organ wydający</Label>
-                    <p className="text-base font-semibold text-foreground pt-1">{driver.dokument_organ || 'Nie podano'}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
 
       {/* Uwagi */}
       <Card className="shadow-md">
