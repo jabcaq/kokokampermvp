@@ -7,6 +7,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { useCheckExpiringDocuments } from "@/hooks/useNotifications";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import logoImage from "@/assets/koko-logo.jpeg";
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: Home },
@@ -41,11 +42,9 @@ export const Layout = () => {
 
   const NavContent = () => (
     <>
-      <div className="p-6 border-b border-sidebar-border">
-        <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-          Koko Kamper CRM
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">Zarządzanie wynajmem</p>
+      <div className="p-6 border-b border-sidebar-border bg-white">
+        <img src={logoImage} alt="Koko Kamper" className="h-16 w-auto mb-2" />
+        <p className="text-xs text-muted-foreground">Zarządzanie wynajmem</p>
       </div>
       <nav className="flex-1 p-4 space-y-2">
         {navItems.map((item) => {
@@ -87,7 +86,7 @@ export const Layout = () => {
   return (
     <div className="flex min-h-screen bg-background">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-sidebar border-r border-sidebar-border">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-white border-r border-sidebar-border shadow-sm">
         <NavContent />
       </aside>
 
@@ -102,7 +101,7 @@ export const Layout = () => {
             <Menu className="h-6 w-6" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="p-0 w-64 bg-sidebar">
+        <SheetContent side="left" className="p-0 w-64 bg-white">
           <div className="flex flex-col h-full">
             <NavContent />
           </div>
