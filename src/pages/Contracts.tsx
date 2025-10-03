@@ -54,7 +54,10 @@ const Contracts = () => {
     insurance_policy_number: "",
     insurance_valid_until: "",
     additional_info: "",
-    type: "" as "Kamper" | "Przyczepa" | ""
+    type: "" as "Kamper" | "Przyczepa" | "",
+    cleaning: "" as "Tak" | "Nie" | "",
+    animals: "" as "Tak" | "Nie" | "",
+    extra_equipment: "" as "Tak" | "Nie" | ""
   });
   const { toast } = useToast();
   
@@ -85,7 +88,10 @@ const Contracts = () => {
         insurance_policy_number: selectedVehicle.insurance_policy_number || "",
         insurance_valid_until: selectedVehicle.insurance_valid_until || "",
         additional_info: selectedVehicle.additional_info || "",
-        type: selectedVehicle.type || ""
+        type: selectedVehicle.type || "",
+        cleaning: "",
+        animals: "",
+        extra_equipment: ""
       });
       
       // Generate contract number based on vehicle type
@@ -189,7 +195,15 @@ const Contracts = () => {
         vehicle_next_inspection: emptyToNull(vehicleData.next_inspection_date || (formData.get('przedmiot_nastepne_badanie') as string)),
         vehicle_insurance_number: vehicleData.insurance_policy_number || (formData.get('przedmiot_polisa_numer') as string) || "",
         vehicle_insurance_valid_until: emptyToNull(vehicleData.insurance_valid_until || (formData.get('przedmiot_polisa_wazna_do') as string)),
-        vehicle_additional_info: vehicleData.additional_info || (formData.get('przedmiot_dodatkowe_info') as string) || "",
+        vehicle_additional_info: (() => {
+          const options = [];
+          if (vehicleData.cleaning) options.push(`Sprzątanie dodatkowo: ${vehicleData.cleaning}`);
+          if (vehicleData.animals) options.push(`Zwierzę: ${vehicleData.animals}`);
+          if (vehicleData.extra_equipment) options.push(`Wyposażenie dodatkowo: ${vehicleData.extra_equipment}`);
+          const additionalText = vehicleData.additional_info || (formData.get('przedmiot_dodatkowe_info') as string) || "";
+          const optionsText = options.join(', ');
+          return additionalText ? `${optionsText}${optionsText ? ' | ' : ''}${additionalText}` : optionsText;
+        })(),
         additional_drivers: [],
         payments: paymentsData,
         notes: formData.get('uwagi') as string,
@@ -213,7 +227,10 @@ const Contracts = () => {
         insurance_policy_number: "",
         insurance_valid_until: "",
         additional_info: "",
-        type: ""
+        type: "",
+        cleaning: "",
+        animals: "",
+        extra_equipment: ""
       });
       e.currentTarget.reset();
     } catch (error) {
@@ -265,7 +282,10 @@ const Contracts = () => {
         insurance_policy_number: "",
         insurance_valid_until: "",
         additional_info: "",
-        type: ""
+        type: "",
+        cleaning: "",
+        animals: "",
+        extra_equipment: ""
       });
     }
   };
@@ -500,12 +520,57 @@ const Contracts = () => {
                         required 
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="sprzatanie">Sprzątanie dodatkowo</Label>
+                      <Select 
+                        value={vehicleData.cleaning} 
+                        onValueChange={(value: "Tak" | "Nie") => setVehicleData({...vehicleData, cleaning: value})}
+                      >
+                        <SelectTrigger id="sprzatanie">
+                          <SelectValue placeholder="Wybierz opcję" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="Tak">Tak</SelectItem>
+                          <SelectItem value="Nie">Nie</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="zwierze">Zwierzę</Label>
+                      <Select 
+                        value={vehicleData.animals} 
+                        onValueChange={(value: "Tak" | "Nie") => setVehicleData({...vehicleData, animals: value})}
+                      >
+                        <SelectTrigger id="zwierze">
+                          <SelectValue placeholder="Wybierz opcję" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="Tak">Tak</SelectItem>
+                          <SelectItem value="Nie">Nie</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="wyposazenie">Wyposażenie dodatkowo</Label>
+                      <Select 
+                        value={vehicleData.extra_equipment} 
+                        onValueChange={(value: "Tak" | "Nie") => setVehicleData({...vehicleData, extra_equipment: value})}
+                      >
+                        <SelectTrigger id="wyposazenie">
+                          <SelectValue placeholder="Wybierz opcję" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="Tak">Tak</SelectItem>
+                          <SelectItem value="Nie">Nie</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="przedmiot_dodatkowe_info">Dodatkowe informacje</Label>
                       <Textarea 
                         id="przedmiot_dodatkowe_info" 
                         name="przedmiot_dodatkowe_info" 
-                        placeholder="pełne wyposażenie, brak zwierząt, bez sprzątania" 
+                        placeholder="Inne uwagi dotyczące pojazdu" 
                         value={vehicleData.additional_info}
                         onChange={(e) => setVehicleData({...vehicleData, additional_info: e.target.value})}
                       />
