@@ -342,8 +342,30 @@ export const InvoicesReceiptsTab = ({
           </div>
         ) : (
           <Card>
-            <CardContent className="pt-6 text-center text-muted-foreground">
-              Brak dokumentów. Dodaj pierwszy dokument poniżej.
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <p className="text-center text-muted-foreground">
+                  Brak dokumentów. Dodaj pierwszy dokument poniżej, a następnie będziesz mógł wgrać pliki i skopiować link do formularza.
+                </p>
+                <div className="flex items-center gap-2 justify-center flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Skopiuj link do wgrania
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    disabled
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Wgraj plik
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
