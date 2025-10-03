@@ -20,6 +20,7 @@ interface InvoicesReceiptsTabProps {
   tenantName: string;
   startDate: string;
   endDate: string;
+  payments?: any;
 }
 
 const statusConfig = {
@@ -41,7 +42,8 @@ export const InvoicesReceiptsTab = ({
   contractNumber, 
   tenantName,
   startDate,
-  endDate 
+  endDate,
+  payments 
 }: InvoicesReceiptsTabProps) => {
   const { toast } = useToast();
   const { data: invoices, isLoading } = useContractInvoices(contractId);
@@ -56,6 +58,41 @@ export const InvoicesReceiptsTab = ({
   const [uploadingFile, setUploadingFile] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<ContractInvoiceFile | null>(null);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+
+  // Auto-fill amount based on invoice type
+  const getAmountForType = (type: 'reservation' | 'main_payment' | 'final') => {
+    if (!payments) return '';
+    
+    try {
+      let amount = '';
+      switch (type) {
+        case 'reservation':
+          amount = payments.rezerwacyjna?.wysokosc || '';
+          break;
+        case 'main_payment':
+          amount = payments.zasadnicza?.wysokosc || '';
+          break;
+        case 'final':
+          amount = payments.kaucja?.wysokosc || '';
+          break;
+      }
+      
+      // Extract numeric value from string (e.g., "3600.00 zł" -> "3600.00")
+      if (typeof amount === 'string') {
+        const numericValue = amount.replace(/[^\d.]/g, '');
+        return numericValue;
+      }
+      return String(amount);
+    } catch (error) {
+      return '';
+    }
+  };
+
+  // Update amount when type changes
+  const handleTypeChange = (type: 'reservation' | 'main_payment' | 'final') => {
+    const amount = getAmountForType(type);
+    setNewInvoice({ ...newInvoice, type, amount });
+  };
 
   const handleFileUpload = async (invoiceId: string, file: File, invoice: any) => {
     setUploadingFile(invoiceId);
@@ -240,7 +277,7 @@ export const InvoicesReceiptsTab = ({
                 <Label>Typ dokumentu</Label>
                 <Select
                   value={newInvoice.type}
-                  onValueChange={(value: any) => setNewInvoice({ ...newInvoice, type: value })}
+                  onValueChange={(value: any) => handleTypeChange(value)}
                 >
                   <SelectTrigger>
                     <SelectValue />

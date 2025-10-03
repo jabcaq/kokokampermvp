@@ -964,6 +964,7 @@ const ContractDetails = () => {
             tenantName={contract.tenant_name || contract.client?.name || 'Brak danych'}
             startDate={contract.start_date}
             endDate={contract.end_date}
+            payments={contract.payments}
           />
         </TabsContent>
 

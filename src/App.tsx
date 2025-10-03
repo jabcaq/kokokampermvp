@@ -22,6 +22,7 @@ import Inquiries from "./pages/Inquiries";
 import Protocols from "./pages/Protocols";
 import AccountingUpload from "./pages/AccountingUpload";
 import Documents from "./pages/Documents";
+import InvoicesManagement from "./pages/InvoicesManagement";
 import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
 
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/inquiries" element={<Inquiries />} />
               <Route path="/protocols" element={<Protocols />} />
               <Route path="/documents" element={<Documents />} />
+              <Route path="/invoices" element={<InvoicesManagement />} />
               <Route path="/users" element={<Users />} />
               <Route path="*" element={<NotFound />} />
             </Route>

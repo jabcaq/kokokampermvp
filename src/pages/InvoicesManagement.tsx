@@ -1,0 +1,359 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ArrowLeft, Search, FileText, Receipt, Eye, Trash2, CheckCircle, Clock, FileUp, Upload } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { ContractInvoice, ContractInvoiceFile, useUpdateContractInvoice } from "@/hooks/useContractInvoices";
+
+const statusConfig = {
+  pending: { label: "Oczekuje", icon: Clock, className: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
+  submitted: { label: "Przesłano", icon: FileUp, className: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
+  invoice_uploaded: { label: "Dokument wgrany", icon: Upload, className: "bg-purple-500/10 text-purple-500 border-purple-500/20" },
+  completed: { label: "Zakończone", icon: CheckCircle, className: "bg-green-500/10 text-green-500 border-green-500/20" },
+};
+
+const invoiceTypeLabels = {
+  reservation: "Rezerwacyjna",
+  main_payment: "Zasadnicza", 
+  final: "Końcowa",
+};
+
+const InvoicesManagement = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [previewInvoice, setPreviewInvoice] = useState<ContractInvoice | null>(null);
+  const [deleteInvoiceId, setDeleteInvoiceId] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<ContractInvoiceFile | null>(null);
+  const updateInvoice = useUpdateContractInvoice();
+
+  const { data: allInvoices, isLoading } = useQuery({
+    queryKey: ['all-invoices'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contract_invoices')
+        .select(`
+          *,
+          contract:contracts(
+            contract_number,
+            tenant_name,
+            tenant_company_name,
+            invoice_type
+          )
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data.map(invoice => ({
+        ...invoice,
+        files: (invoice.files as any) || [],
+      })) as (ContractInvoice & { contract: any })[];
+    },
+  });
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('contract_invoices')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sukces",
+        description: "Dokument został usunięty",
+      });
+      
+      setDeleteInvoiceId(null);
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się usunąć dokumentu",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filteredInvoices = allInvoices?.filter(invoice => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      invoice.contract?.contract_number?.toLowerCase().includes(searchLower) ||
+      invoice.contract?.tenant_name?.toLowerCase().includes(searchLower) ||
+      invoice.contract?.tenant_company_name?.toLowerCase().includes(searchLower) ||
+      invoice.notes?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const isImageFile = (type?: string) => type?.startsWith('image/');
+  const isPdfFile = (type?: string) => type === 'application/pdf';
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Ładowanie...</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Powrót
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Faktury i Paragony</h1>
+              <p className="text-muted-foreground">Zarządzaj wszystkimi dokumentami rozliczeniowymi</p>
+            </div>
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Szukaj po numerze umowy, nazwie klienta..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Numer umowy</TableHead>
+                  <TableHead>Klient</TableHead>
+                  <TableHead>Typ</TableHead>
+                  <TableHead>Kwota</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Pliki</TableHead>
+                  <TableHead>Data utworzenia</TableHead>
+                  <TableHead className="text-right">Akcje</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInvoices?.map((invoice) => {
+                  const status = statusConfig[invoice.status];
+                  const StatusIcon = status.icon;
+                  const docType = invoice.contract?.invoice_type === 'invoice' ? 'Faktura' : 'Paragon';
+                  
+                  return (
+                    <TableRow key={invoice.id}>
+                      <TableCell className="font-medium">
+                        {invoice.contract?.contract_number || 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        {invoice.contract?.tenant_company_name || invoice.contract?.tenant_name || 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {docType === 'Faktura' ? <FileText className="h-4 w-4" /> : <Receipt className="h-4 w-4" />}
+                          <span>{invoiceTypeLabels[invoice.invoice_type as keyof typeof invoiceTypeLabels]}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-semibold">
+                        {invoice.amount.toFixed(2)} PLN
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={status.className}>
+                          <StatusIcon className="h-3 w-3 mr-1" />
+                          {status.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {invoice.files?.length > 0 ? (
+                          <span className="text-sm text-muted-foreground">
+                            {invoice.files.length} {invoice.files.length === 1 ? 'plik' : 'plików'}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Brak plików</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {format(new Date(invoice.created_at), 'dd.MM.yyyy')}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setPreviewInvoice(invoice)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDeleteInvoiceId(invoice.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+
+            {filteredInvoices?.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                Brak dokumentów do wyświetlenia
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewInvoice} onOpenChange={() => setPreviewInvoice(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Szczegóły dokumentu</DialogTitle>
+          </DialogHeader>
+          {previewInvoice && (
+            <div className="space-y-4">
+              <div className="grid gap-3 text-sm bg-muted/50 p-4 rounded-lg">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Numer umowy:</span>
+                  <span className="font-medium">{(previewInvoice as any).contract?.contract_number}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Klient:</span>
+                  <span className="font-medium">
+                    {(previewInvoice as any).contract?.tenant_company_name || (previewInvoice as any).contract?.tenant_name}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Typ:</span>
+                  <span className="font-medium">
+                    {invoiceTypeLabels[previewInvoice.invoice_type as keyof typeof invoiceTypeLabels]}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Kwota:</span>
+                  <span className="font-bold text-lg">{previewInvoice.amount.toFixed(2)} PLN</span>
+                </div>
+                {previewInvoice.notes && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground">Uwagi:</span>
+                    <p className="font-medium">{previewInvoice.notes}</p>
+                  </div>
+                )}
+              </div>
+
+              {previewInvoice.files && previewInvoice.files.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Wgrane pliki:</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {previewInvoice.files.map((file: ContractInvoiceFile) => (
+                      <div 
+                        key={file.id} 
+                        className="relative group border rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer bg-muted"
+                        onClick={() => setPreviewFile(file)}
+                      >
+                        <div className="aspect-square flex items-center justify-center p-4">
+                          {isImageFile(file.type) ? (
+                            <img 
+                              src={file.url} 
+                              alt={file.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <FileText className="h-12 w-12 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="p-2 bg-background border-t">
+                          <p className="text-xs truncate" title={file.name}>
+                            {file.name}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* File Preview Dialog */}
+      <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>{previewFile?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            {previewFile && (
+              <>
+                {isImageFile(previewFile.type) ? (
+                  <img 
+                    src={previewFile.url} 
+                    alt={previewFile.name}
+                    className="w-full h-auto rounded-lg"
+                  />
+                ) : isPdfFile(previewFile.type) ? (
+                  <iframe
+                    src={previewFile.url}
+                    className="w-full h-[70vh] rounded-lg border"
+                    title={previewFile.name}
+                  />
+                ) : (
+                  <div className="text-center space-y-4 p-8">
+                    <FileText className="h-24 w-24 mx-auto text-muted-foreground" />
+                    <p className="text-muted-foreground">
+                      Podgląd niedostępny dla tego typu pliku
+                    </p>
+                    <Button
+                      onClick={() => window.open(previewFile.url, '_blank')}
+                      variant="outline"
+                    >
+                      Pobierz plik
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteInvoiceId} onOpenChange={() => setDeleteInvoiceId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Czy na pewno chcesz usunąć ten dokument?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ta akcja jest nieodwracalna. Dokument zostanie trwale usunięty.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteInvoiceId && handleDelete(deleteInvoiceId)}>
+              Usuń
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
+export default InvoicesManagement;
