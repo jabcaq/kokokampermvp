@@ -82,7 +82,7 @@ export default function ReturnBooking() {
         <Card className="overflow-hidden">
           <div className="grid md:grid-cols-[420px,1fr]">
             {/* Left Side - Info */}
-            <div className="p-8 border-r bg-muted/30">
+            <div className="p-8 border-r bg-background">
               <div className="space-y-6">
                 <div className="flex flex-col items-center pb-4 border-b">
                   <img src={logoImage} alt="Koko Kamper" className="h-20 w-auto mb-4" />
