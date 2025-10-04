@@ -9,6 +9,7 @@ import { useCreateReturnBooking } from "@/hooks/useReturnBookings";
 import { Clock, MapPin, Globe, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import logoImage from "@/assets/koko-logo.jpeg";
 
 const TIME_SLOTS = [
   "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
@@ -79,13 +80,14 @@ export default function ReturnBooking() {
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto p-4 md:p-8">
         <Card className="overflow-hidden">
-          <div className="grid md:grid-cols-[380px,1fr]">
+          <div className="grid md:grid-cols-[420px,1fr]">
             {/* Left Side - Info */}
             <div className="p-8 border-r bg-muted/30">
               <div className="space-y-6">
-                <div>
-                  <h1 className="text-2xl font-bold mb-2">Zwrot kampera</h1>
-                  <p className="text-muted-foreground text-sm">
+                <div className="flex flex-col items-center pb-4 border-b">
+                  <img src={logoImage} alt="Koko Kamper" className="h-20 w-auto mb-4" />
+                  <h1 className="text-2xl font-bold text-center">Zwrot kampera</h1>
+                  <p className="text-muted-foreground text-sm text-center mt-2">
                     Wybierz dogodny termin zwrotu kampera
                   </p>
                 </div>
@@ -136,20 +138,22 @@ export default function ReturnBooking() {
             <div className="p-8">
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-lg font-semibold mb-4">
+                  <h2 className="text-lg font-semibold mb-6">
                     {selectedDate 
                       ? format(selectedDate, "EEEE, d MMMM yyyy", { locale: pl })
                       : "Wybierz datę"
                     }
                   </h2>
                   
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    disabled={(date) => date < new Date()}
-                    className="rounded-md border"
-                  />
+                  <div className="flex justify-center">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      disabled={(date) => date < new Date()}
+                      className="rounded-md border-0 scale-110"
+                    />
+                  </div>
                 </div>
 
                 {selectedDate && (
