@@ -24,13 +24,14 @@ const messages = {
   date: "Data",
   time: "Czas",
   event: "Zdarzenie",
-  noEventsInRange: "Brak zdarzeń w tym okresie",
+  noEventsInRange: "Brak zwrotów w tym okresie",
   showMore: (total: number) => `+${total} więcej`,
+  work_week: "Tydzień roboczy",
 };
 
 export default function ReturnCalendar() {
   const { data: bookings, isLoading } = useReturnBookings();
-  const [view, setView] = useState<View>("month");
+  const [view, setView] = useState<View>("week");
   const [date, setDate] = useState(new Date());
   const navigate = useNavigate();
 
@@ -50,9 +51,16 @@ export default function ReturnCalendar() {
     const endDate = new Date(startDate);
     endDate.setMinutes(endDate.getMinutes() + 30);
 
+    let statusText = "Nowa rezerwacja";
+    if (booking.return_completed) {
+      statusText = "Zakończona";
+    } else if (booking.return_confirmed) {
+      statusText = "Potwierdzona";
+    }
+
     return {
       id: booking.id,
-      title: `Zwrot - ${booking.employee_name}`,
+      title: `${booking.employee_name} - ${statusText}`,
       start: startDate,
       end: endDate,
       resource: booking,
@@ -61,22 +69,28 @@ export default function ReturnCalendar() {
 
   const eventStyleGetter = (event: any) => {
     const booking = event.resource;
-    let backgroundColor = "hsl(var(--primary))";
+    let backgroundColor = "hsl(185 70% 45%)"; // primary color
+    let borderColor = "hsl(185 70% 35%)";
     
     if (booking.return_completed) {
-      backgroundColor = "hsl(var(--muted))";
+      backgroundColor = "hsl(220 15% 75%)"; // muted/gray
+      borderColor = "hsl(220 15% 65%)";
     } else if (booking.return_confirmed) {
-      backgroundColor = "hsl(142.1 76.2% 36.3%)"; // green
+      backgroundColor = "hsl(142 76% 45%)"; // green
+      borderColor = "hsl(142 76% 35%)";
     }
 
     return {
       style: {
         backgroundColor,
+        borderLeft: `4px solid ${borderColor}`,
         borderRadius: "4px",
-        opacity: 0.9,
+        opacity: 0.95,
         color: "white",
-        border: "0px",
-        display: "block",
+        border: "none",
+        padding: "4px 8px",
+        fontSize: "0.875rem",
+        fontWeight: "500",
       },
     };
   };
@@ -87,11 +101,13 @@ export default function ReturnCalendar() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Kalendarz zwrotów</h1>
-        <p className="text-muted-foreground">
-          Przegląd wszystkich zaplanowanych zwrotów kamperów
-        </p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Kalendarz zwrotów</h1>
+          <p className="text-muted-foreground">
+            Przegląd wszystkich zaplanowanych zwrotów kamperów
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -134,14 +150,14 @@ export default function ReturnCalendar() {
         </Card>
       </div>
 
-      <Card>
-        <CardContent className="p-6">
+      <Card className="shadow-sm">
+        <CardContent className="p-4">
           <Calendar
             localizer={localizer}
             events={events}
             startAccessor="start"
             endAccessor="end"
-            style={{ height: 700 }}
+            style={{ height: 800 }}
             view={view}
             onView={setView}
             date={date}
@@ -149,6 +165,12 @@ export default function ReturnCalendar() {
             messages={messages}
             eventPropGetter={eventStyleGetter}
             onSelectEvent={handleSelectEvent}
+            step={30}
+            timeslots={2}
+            min={new Date(2024, 0, 1, 8, 0, 0)}
+            max={new Date(2024, 0, 1, 20, 0, 0)}
+            views={['month', 'week', 'day', 'agenda']}
+            toolbar={true}
           />
         </CardContent>
       </Card>
