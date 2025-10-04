@@ -26,6 +26,8 @@ import InvoicesManagement from "./pages/InvoicesManagement";
 import InvoiceUpload from "./pages/InvoiceUpload";
 import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
+import ReturnCalendar from "./pages/ReturnCalendar";
+import ReturnBooking from "./pages/ReturnBooking";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +45,7 @@ const App = () => (
             <Route path="/vehicle-return" element={<VehicleReturn />} />
             <Route path="/accounting-upload/:invoiceId" element={<AccountingUpload />} />
             <Route path="/invoice-upload/:invoiceId" element={<InvoiceUpload />} />
+            <Route path="/return-booking/:contractId" element={<ReturnBooking />} />
             <Route element={
               <ProtectedRoute>
                 <Layout />
@@ -61,6 +64,7 @@ const App = () => (
               <Route path="/documents" element={<Documents />} />
               <Route path="/invoices" element={<InvoicesManagement />} />
               <Route path="/users" element={<Users />} />
+              <Route path="/return-calendar" element={<ReturnCalendar />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

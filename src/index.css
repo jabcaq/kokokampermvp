@@ -1,3 +1,5 @@
+@import "react-big-calendar/lib/css/react-big-calendar.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -123,4 +125,46 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom calendar styles */
+.rbc-calendar {
+  font-family: inherit;
+}
+
+.rbc-header {
+  padding: 12px 0;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.rbc-today {
+  background-color: hsl(var(--accent));
+}
+
+.rbc-toolbar button {
+  @apply px-4 py-2 rounded-md transition-colors;
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+}
+
+.rbc-toolbar button:hover {
+  background-color: hsl(var(--accent));
+}
+
+.rbc-toolbar button.rbc-active {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.rbc-event {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.rbc-event:focus {
+  outline: 2px solid hsl(var(--ring));
 }

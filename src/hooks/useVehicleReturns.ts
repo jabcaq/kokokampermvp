@@ -14,6 +14,11 @@ export interface VehicleReturn {
   deposit_refunded_cash: boolean;
   vehicle_issue: boolean;
   return_notes: string | null;
+  scheduled_return_date?: string | null;
+  scheduled_return_time?: string | null;
+  return_confirmed?: boolean;
+  return_completed?: boolean;
+  booking_notes?: string | null;
   created_at: string;
   updated_at: string;
 }

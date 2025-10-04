@@ -588,6 +588,7 @@ export type Database = {
       }
       vehicle_returns: {
         Row: {
+          booking_notes: string | null
           can_refund_deposit: boolean | null
           contract_id: string
           created_at: string | null
@@ -598,11 +599,16 @@ export type Database = {
           id: string
           mileage: number
           photos: Json | null
+          return_completed: boolean | null
+          return_confirmed: boolean | null
           return_notes: string | null
+          scheduled_return_date: string | null
+          scheduled_return_time: string | null
           updated_at: string | null
           vehicle_issue: boolean | null
         }
         Insert: {
+          booking_notes?: string | null
           can_refund_deposit?: boolean | null
           contract_id: string
           created_at?: string | null
@@ -613,11 +619,16 @@ export type Database = {
           id?: string
           mileage: number
           photos?: Json | null
+          return_completed?: boolean | null
+          return_confirmed?: boolean | null
           return_notes?: string | null
+          scheduled_return_date?: string | null
+          scheduled_return_time?: string | null
           updated_at?: string | null
           vehicle_issue?: boolean | null
         }
         Update: {
+          booking_notes?: string | null
           can_refund_deposit?: boolean | null
           contract_id?: string
           created_at?: string | null
@@ -628,7 +639,11 @@ export type Database = {
           id?: string
           mileage?: number
           photos?: Json | null
+          return_completed?: boolean | null
+          return_confirmed?: boolean | null
           return_notes?: string | null
+          scheduled_return_date?: string | null
+          scheduled_return_time?: string | null
           updated_at?: string | null
           vehicle_issue?: boolean | null
         }
