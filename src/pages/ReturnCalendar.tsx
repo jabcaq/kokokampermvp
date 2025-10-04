@@ -1,4 +1,4 @@
-import { Calendar, momentLocalizer, View } from "react-big-calendar";
+import { Calendar, momentLocalizer, View, Components } from "react-big-calendar";
 import moment from "moment";
 import "moment/locale/pl";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -8,6 +8,8 @@ import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { pl } from "date-fns/locale";
 
 moment.locale("pl");
 const localizer = momentLocalizer(moment);
@@ -99,6 +101,60 @@ export default function ReturnCalendar() {
     navigate(`/contracts/${event.resource.contract_id}`);
   };
 
+  // Custom Event Component with Tooltip
+  const EventComponent = ({ event }: { event: any }) => {
+    const booking = event.resource;
+    const [showTooltip, setShowTooltip] = useState(false);
+
+    return (
+      <div 
+        className="relative h-full"
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
+        <div className="font-medium truncate">{event.title}</div>
+        
+        {showTooltip && (
+          <div className="absolute z-50 bg-card text-card-foreground shadow-lg rounded-lg border p-4 w-80 left-0 top-full mt-2"
+               style={{ pointerEvents: 'none' }}>
+            <div className="space-y-3">
+              <div>
+                <div className="font-semibold text-base mb-1">{booking.employee_name}</div>
+                <div className="text-sm text-muted-foreground">
+                  {format(new Date(booking.scheduled_return_date), "EEEE, d MMMM yyyy", { locale: pl })}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Godzina: {booking.scheduled_return_time}
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                <Badge variant={booking.return_completed ? "secondary" : booking.return_confirmed ? "default" : "outline"}>
+                  {booking.return_completed ? "Zakończona" : booking.return_confirmed ? "Potwierdzona" : "Nowa"}
+                </Badge>
+              </div>
+
+              {booking.booking_notes && (
+                <div className="pt-2 border-t">
+                  <div className="text-xs font-semibold text-muted-foreground mb-1">Uwagi:</div>
+                  <div className="text-sm">{booking.booking_notes}</div>
+                </div>
+              )}
+
+              <div className="pt-2 border-t text-xs text-muted-foreground">
+                Kliknij aby zobaczyć szczegóły umowy
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const components: Components = {
+    event: EventComponent,
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between mb-6">
@@ -171,6 +227,7 @@ export default function ReturnCalendar() {
             max={new Date(2024, 0, 1, 20, 0, 0)}
             views={['month', 'week', 'day', 'agenda']}
             toolbar={true}
+            components={components}
           />
         </CardContent>
       </Card>
