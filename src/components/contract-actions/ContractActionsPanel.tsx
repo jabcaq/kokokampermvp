@@ -72,12 +72,20 @@ export const ContractActionsPanel = ({
       // Prepare flat JSON without arrays
       const { additional_drivers, payments, client, ...contractData } = contract;
       
+      // Extract simple contract number (e.g., "K/1/2025" -> "1 2025")
+      const contractNumberParts = contract.contract_number.split('/');
+      const simpleContractNumber = contractNumberParts.length >= 2 
+        ? `${contractNumberParts[1]} ${contractNumberParts[2] || ''}`.trim()
+        : contract.contract_number;
+
       const webhookData = {
         ...contractData,
         // Flatten client data
         client_name: client?.name,
         client_email: client?.email,
         client_phone: client?.phone,
+        // Add simple contract number format
+        contract_number_simple: simpleContractNumber,
       };
 
       // Send webhook request with full contract data
