@@ -134,6 +134,8 @@ const Contracts = () => {
     const total = parseFloat(totalAmount) || 0;
     const reservationAmount = (total * 0.30).toFixed(2);
     const mainAmount = (total * 0.70).toFixed(2);
+    
+    console.log('Total amount:', total, 'from totalAmount:', totalAmount);
 
     // Normalize dates
     const startDateInput = (formData.get('okres_od') as string) || "";
@@ -189,7 +191,7 @@ const Contracts = () => {
         start_date: startDate as string,
         end_date: endDate as string,
         status: 'pending',
-        value: total,
+        value: total > 0 ? total : null,
         tenant_company_name: formData.get('tenant_company_name') as string || "",
         lessor_name: "Koko Group Sp. z o.o.",
         lessor_address: "ul. Lazurowa 85a/53, 01-479 Warszawa",
