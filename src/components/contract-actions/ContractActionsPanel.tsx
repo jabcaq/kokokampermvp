@@ -53,7 +53,32 @@ export const ContractActionsPanel = ({
       "PRAWO JAZDY:",
       `Numer prawa jazdy: ${contract.tenant_license_number || 'Nie podano'}`,
       `Data wydania prawa jazdy: ${contract.tenant_license_date || 'Nie podano'}`,
+      `Kategoria prawa jazdy: ${contract.tenant_license_category || 'Nie podano'}`,
     ];
+
+    // Add additional drivers if present
+    if (contract.additional_drivers && Array.isArray(contract.additional_drivers) && contract.additional_drivers.length > 0) {
+      lines.push("");
+      lines.push("=== DODATKOWI KIEROWCY ===");
+      
+      contract.additional_drivers.forEach((driver: any, index: number) => {
+        lines.push("");
+        lines.push(`KIEROWCA ${index + 1}:`);
+        lines.push(`Imię i nazwisko: ${driver.name || 'Nie podano'}`);
+        lines.push(`Email: ${driver.email || 'Nie podano'}`);
+        lines.push(`Telefon: ${driver.phone || 'Nie podano'}`);
+        lines.push("");
+        lines.push("PRAWO JAZDY:");
+        lines.push(`Numer prawa jazdy: ${driver.license_number || 'Nie podano'}`);
+        lines.push(`Data wydania: ${driver.license_issue_date || 'Nie podano'}`);
+        lines.push(`Kategoria: ${driver.license_category || 'Nie podano'}`);
+        lines.push("");
+        lines.push("DOKUMENT TOŻSAMOŚCI:");
+        lines.push(`Rodzaj dokumentu: ${driver.document_type || 'Nie podano'}`);
+        lines.push(`Numer dokumentu: ${driver.document_number || 'Nie podano'}`);
+        lines.push(`Organ wydający: ${driver.document_issued_by || 'Nie podano'}`);
+      });
+    }
 
     return lines.filter(line => line !== null).join('\n');
   };
