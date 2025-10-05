@@ -26,6 +26,7 @@ const DriverSubmission = () => {
     driverName: "",
     driverEmail: "",
     driverPhone: "",
+    driverAddress: "",
     driverPesel: "",
     licenseNumber: "",
     licenseIssueDate: "",
@@ -45,6 +46,7 @@ const DriverSubmission = () => {
         driverName: contract.tenant_name || "",
         driverEmail: contract.tenant_email || "",
         driverPhone: contract.tenant_phone || "",
+        driverAddress: contract.tenant_address || "",
         driverPesel: contract.tenant_pesel || "",
         licenseNumber: contract.tenant_license_number || "",
         licenseIssueDate: contract.tenant_license_date || "",
@@ -107,6 +109,7 @@ const DriverSubmission = () => {
           tenant_name: formData.driverName,
           tenant_email: formData.driverEmail,
           tenant_phone: formData.driverPhone,
+          tenant_address: formData.driverAddress,
           tenant_pesel: formData.driverPesel,
           tenant_license_number: formData.licenseNumber,
           tenant_license_date: formData.licenseIssueDate,
@@ -349,6 +352,19 @@ const DriverSubmission = () => {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="driverAddress">Adres zamieszkania *</Label>
+                <Input
+                  id="driverAddress"
+                  value={formData.driverAddress}
+                  onChange={(e) =>
+                    setFormData({ ...formData, driverAddress: e.target.value })
+                  }
+                  placeholder="ul. Przykładowa 1, 00-000 Warszawa"
+                  required
+                />
               </div>
 
               <div className="space-y-2">
