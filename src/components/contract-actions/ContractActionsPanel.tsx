@@ -60,6 +60,18 @@ export const ContractActionsPanel = ({
 
   const handleGenerateContract = async () => {
     try {
+      // Send webhook request
+      await fetch('https://hook.eu2.make.com/w4rawvvado11i4rj0r44amhxvycg9mhs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          table: 'contracts',
+          record_id: contractId
+        }),
+      });
+
       await addDocument.mutateAsync({
         contract_id: contractId,
         document_type: 'contract',
