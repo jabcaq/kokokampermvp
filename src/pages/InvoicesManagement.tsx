@@ -548,20 +548,6 @@ const InvoicesManagement = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Typ paragonu</Label>
-              <Select value={selectedInvoiceType} onValueChange={(value: any) => setSelectedInvoiceType(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Wybierz typ" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="reservation">Rezerwacyjna</SelectItem>
-                  <SelectItem value="main_payment">Zasadnicza</SelectItem>
-                  <SelectItem value="final">Końcowa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {filePreview && selectedFile && (
               <div className="space-y-2">
                 <Label>Podgląd</Label>
@@ -583,6 +569,20 @@ const InvoicesManagement = () => {
                 </div>
               </div>
             )}
+
+            <div className="space-y-2">
+              <Label>Typ paragonu</Label>
+              <Select value={selectedInvoiceType} onValueChange={(value: any) => setSelectedInvoiceType(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Wybierz typ" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="reservation">Rezerwacyjna</SelectItem>
+                  <SelectItem value="main_payment">Zasadnicza</SelectItem>
+                  <SelectItem value="final">Końcowa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="flex justify-end gap-2 pt-4">
               <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>
