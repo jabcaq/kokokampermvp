@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Search, FileText, Receipt, Eye, Trash2, CheckCircle, Clock, FileUp, Upload, Plus } from "lucide-react";
+import { ArrowLeft, Search, FileText, Receipt, Eye, Trash2, CheckCircle, Clock, FileUp, Upload, Plus, Check, ChevronsUpDown } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +15,9 @@ import { format } from "date-fns";
 import { ContractInvoice, ContractInvoiceFile, useUpdateContractInvoice, useAddContractInvoice } from "@/hooks/useContractInvoices";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 const statusConfig = {
   pending: { label: "Oczekuje", icon: Clock, className: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
@@ -38,6 +41,7 @@ const InvoicesManagement = () => {
   const [deleteInvoiceId, setDeleteInvoiceId] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<ContractInvoiceFile | null>(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [contractComboOpen, setContractComboOpen] = useState(false);
   const [selectedContractId, setSelectedContractId] = useState<string>("");
   const [selectedInvoiceType, setSelectedInvoiceType] = useState<'reservation' | 'main_payment' | 'final'>('reservation');
   const [contractSearchQuery, setContractSearchQuery] = useState("");
@@ -484,28 +488,55 @@ const InvoicesManagement = () => {
           <p id="upload-description" className="sr-only">Formularz do wgrywania paragonu dla wybranej umowy</p>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Wyszukaj umowę</Label>
-              <Input
-                placeholder="Szukaj po numerze umowy, nazwisku..."
-                value={contractSearchQuery}
-                onChange={(e) => setContractSearchQuery(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label>Wybierz umowę</Label>
-              <Select value={selectedContractId} onValueChange={setSelectedContractId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Wybierz umowę" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredContracts?.map((contract) => (
-                    <SelectItem key={contract.id} value={contract.id}>
-                      {contract.contract_number} - {contract.tenant_company_name || contract.tenant_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={contractComboOpen} onOpenChange={setContractComboOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={contractComboOpen}
+                    className="w-full justify-between"
+                  >
+                    {selectedContractId
+                      ? allContracts?.find((contract) => contract.id === selectedContractId)
+                          ? `${allContracts.find((c) => c.id === selectedContractId)?.contract_number} - ${
+                              allContracts.find((c) => c.id === selectedContractId)?.tenant_company_name ||
+                              allContracts.find((c) => c.id === selectedContractId)?.tenant_name
+                            }`
+                          : "Wybierz umowę..."
+                      : "Wybierz umowę..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Szukaj po numerze umowy, nazwisku..." />
+                    <CommandList>
+                      <CommandEmpty>Nie znaleziono umowy.</CommandEmpty>
+                      <CommandGroup>
+                        {allContracts?.map((contract) => (
+                          <CommandItem
+                            key={contract.id}
+                            value={`${contract.contract_number} ${contract.tenant_name || ''} ${contract.tenant_company_name || ''}`}
+                            onSelect={() => {
+                              setSelectedContractId(contract.id);
+                              setContractComboOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedContractId === contract.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {contract.contract_number} - {contract.tenant_company_name || contract.tenant_name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">
