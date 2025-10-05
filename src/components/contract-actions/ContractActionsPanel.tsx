@@ -59,17 +59,34 @@ export const ContractActionsPanel = ({
   };
 
   const handleGenerateContract = async () => {
+    if (!contract) {
+      toast({
+        title: "Błąd",
+        description: "Nie znaleziono danych umowy",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Send webhook request
+      // Prepare flat JSON without arrays
+      const { additional_drivers, payments, client, ...contractData } = contract;
+      
+      const webhookData = {
+        ...contractData,
+        // Flatten client data
+        client_name: client?.name,
+        client_email: client?.email,
+        client_phone: client?.phone,
+      };
+
+      // Send webhook request with full contract data
       await fetch('https://hook.eu2.make.com/w4rawvvado11i4rj0r44amhxvycg9mhs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          table: 'contracts',
-          record_id: contractId
-        }),
+        body: JSON.stringify(webhookData),
       });
 
       await addDocument.mutateAsync({
