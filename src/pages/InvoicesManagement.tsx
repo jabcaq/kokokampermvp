@@ -39,6 +39,7 @@ const InvoicesManagement = () => {
   const [previewFile, setPreviewFile] = useState<ContractInvoiceFile | null>(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedContractId, setSelectedContractId] = useState<string>("");
+  const [selectedInvoiceType, setSelectedInvoiceType] = useState<'reservation' | 'main_payment' | 'final'>('reservation');
   const [contractSearchQuery, setContractSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -116,7 +117,7 @@ const InvoicesManagement = () => {
       // Create invoice record first
       const newInvoice = await addInvoice.mutateAsync({
         contract_id: selectedContractId,
-        invoice_type: 'reservation',
+        invoice_type: selectedInvoiceType,
         amount: 0,
         status: 'invoice_uploaded',
         notes: 'Paragon wgrany przez system',
@@ -170,6 +171,7 @@ const InvoicesManagement = () => {
       // Reset form
       setUploadDialogOpen(false);
       setSelectedContractId("");
+      setSelectedInvoiceType('reservation');
       setSelectedFile(null);
       setFilePreview(null);
       setContractSearchQuery("");
@@ -513,6 +515,20 @@ const InvoicesManagement = () => {
                 accept="image/*,application/pdf"
                 onChange={handleFileSelect}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Typ paragonu</Label>
+              <Select value={selectedInvoiceType} onValueChange={(value: any) => setSelectedInvoiceType(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Wybierz typ" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="reservation">Rezerwacyjna</SelectItem>
+                  <SelectItem value="main_payment">Zasadnicza</SelectItem>
+                  <SelectItem value="final">Końcowa</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {filePreview && selectedFile && (
