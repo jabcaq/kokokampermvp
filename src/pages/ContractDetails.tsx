@@ -606,13 +606,23 @@ const ContractDetails = () => {
           
           <Separator />
           
-          <div className="space-y-3">
-            <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data wydania prawa jazdy</Label>
-            {isEditing ? (
-              <Input type="date" value={displayData?.tenant_license_date || ''} onChange={(e) => updateField('tenant_license_date', e.target.value)} />
-            ) : (
-              <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_license_date || 'Nie podano'}</p>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data wydania prawa jazdy</Label>
+              {isEditing ? (
+                <Input type="date" value={displayData?.tenant_license_date || ''} onChange={(e) => updateField('tenant_license_date', e.target.value)} />
+              ) : (
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_license_date || 'Nie podano'}</p>
+              )}
+            </div>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Kategoria prawa jazdy</Label>
+              {isEditing ? (
+                <Input value={displayData?.tenant_license_category || ''} onChange={(e) => updateField('tenant_license_category', e.target.value)} />
+              ) : (
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_license_category || 'Nie podano'}</p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
