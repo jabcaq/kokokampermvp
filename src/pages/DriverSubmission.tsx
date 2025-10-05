@@ -110,7 +110,7 @@ const DriverSubmission = () => {
           tenant_id_type: formData.documentType,
           tenant_id_number: formData.documentNumber,
           tenant_id_issuer: formData.documentIssuedBy,
-        },
+        } as any,
       });
 
       // Create notification for new drivers
