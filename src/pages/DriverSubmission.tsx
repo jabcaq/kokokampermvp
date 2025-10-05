@@ -28,6 +28,7 @@ const DriverSubmission = () => {
     driverPhone: "",
     licenseNumber: "",
     licenseIssueDate: "",
+    licenseCategory: "",
     documentType: "dowod",
     documentNumber: "",
     documentIssuedBy: "",
@@ -45,6 +46,7 @@ const DriverSubmission = () => {
         driverPhone: contract.tenant_phone || "",
         licenseNumber: contract.tenant_license_number || "",
         licenseIssueDate: contract.tenant_license_date || "",
+        licenseCategory: contract.tenant_license_category || "",
         documentType: contract.tenant_id_type || "dowod",
         documentNumber: contract.tenant_id_number || "",
         documentIssuedBy: contract.tenant_id_issuer || "",
@@ -67,6 +69,7 @@ const DriverSubmission = () => {
         tel: formData.driverPhone,
         prawo_jazdy_numer: formData.licenseNumber,
         prawo_jazdy_data: formData.licenseIssueDate,
+        prawo_jazdy_kategoria: formData.licenseCategory,
         dokument_rodzaj: formData.documentType,
         dokument_numer: formData.documentNumber,
         dokument_organ: formData.documentIssuedBy,
@@ -80,6 +83,7 @@ const DriverSubmission = () => {
         tel: form[`add_driver_${driverIndex}_phone`].value,
         prawo_jazdy_numer: form[`add_driver_${driverIndex}_license`].value,
         prawo_jazdy_data: form[`add_driver_${driverIndex}_license_date`].value,
+        prawo_jazdy_kategoria: form[`add_driver_${driverIndex}_license_category`].value,
         dokument_rodzaj: form[`add_driver_${driverIndex}_doc_type`].value,
         dokument_numer: form[`add_driver_${driverIndex}_doc_number`].value,
         dokument_organ: form[`add_driver_${driverIndex}_doc_issued`].value,
@@ -102,6 +106,7 @@ const DriverSubmission = () => {
           tenant_phone: formData.driverPhone,
           tenant_license_number: formData.licenseNumber,
           tenant_license_date: formData.licenseIssueDate,
+          tenant_license_category: formData.licenseCategory,
           tenant_id_type: formData.documentType,
           tenant_id_number: formData.documentNumber,
           tenant_id_issuer: formData.documentIssuedBy,
@@ -368,6 +373,19 @@ const DriverSubmission = () => {
                     required
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="licenseCategory">Kategoria prawa jazdy *</Label>
+                  <Input
+                    id="licenseCategory"
+                    value={formData.licenseCategory}
+                    onChange={(e) =>
+                      setFormData({ ...formData, licenseCategory: e.target.value })
+                    }
+                    placeholder="np. B, C, D"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -495,6 +513,16 @@ const DriverSubmission = () => {
                             id={`add_driver_${driverIndex}_license_date`} 
                             name={`add_driver_${driverIndex}_license_date`} 
                             type="date"
+                            required 
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor={`add_driver_${driverIndex}_license_category`}>Kategoria prawa jazdy *</Label>
+                          <Input 
+                            id={`add_driver_${driverIndex}_license_category`} 
+                            name={`add_driver_${driverIndex}_license_category`} 
+                            placeholder="np. B, C, D"
                             required 
                           />
                         </div>

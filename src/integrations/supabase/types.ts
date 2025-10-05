@@ -172,6 +172,7 @@ export type Database = {
           tenant_id_issuer: string | null
           tenant_id_number: string | null
           tenant_id_type: string | null
+          tenant_license_category: string | null
           tenant_license_date: string | null
           tenant_license_number: string | null
           tenant_name: string | null
@@ -215,6 +216,7 @@ export type Database = {
           tenant_id_issuer?: string | null
           tenant_id_number?: string | null
           tenant_id_type?: string | null
+          tenant_license_category?: string | null
           tenant_license_date?: string | null
           tenant_license_number?: string | null
           tenant_name?: string | null
@@ -258,6 +260,7 @@ export type Database = {
           tenant_id_issuer?: string | null
           tenant_id_number?: string | null
           tenant_id_type?: string | null
+          tenant_license_category?: string | null
           tenant_license_date?: string | null
           tenant_license_number?: string | null
           tenant_name?: string | null

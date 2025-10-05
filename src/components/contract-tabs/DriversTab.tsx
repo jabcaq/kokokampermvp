@@ -51,6 +51,10 @@ export const DriversTab = ({ additionalDrivers }: DriversTabProps) => {
                 <p className="font-medium text-foreground">{driver.prawo_jazdy_data || 'Nie podano'}</p>
               </div>
               <div className="space-y-2">
+                <Label>Kategoria prawa jazdy</Label>
+                <p className="font-medium text-foreground">{driver.prawo_jazdy_kategoria || 'Nie podano'}</p>
+              </div>
+              <div className="space-y-2">
                 <Label>Rodzaj dokumentu</Label>
                 <p className="font-medium text-foreground">{driver.dokument_rodzaj || 'Nie podano'}</p>
               </div>
