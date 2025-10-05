@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Search, FileText, Receipt, Eye, Trash2, CheckCircle, Clock, FileUp, Upload, Plus } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -32,6 +32,7 @@ const invoiceTypeLabels = {
 const InvoicesManagement = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [previewInvoice, setPreviewInvoice] = useState<ContractInvoice | null>(null);
   const [deleteInvoiceId, setDeleteInvoiceId] = useState<string | null>(null);
@@ -157,6 +158,9 @@ const InvoicesManagement = () => {
           invoice_uploaded_at: new Date().toISOString(),
         }
       });
+
+      // Invalidate all-invoices query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['all-invoices'] });
 
       toast({
         title: "Sukces",
@@ -471,10 +475,11 @@ const InvoicesManagement = () => {
 
       {/* Upload Receipt Dialog */}
       <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto" aria-describedby="upload-description">
           <DialogHeader>
             <DialogTitle>Wgraj paragon</DialogTitle>
           </DialogHeader>
+          <p id="upload-description" className="sr-only">Formularz do wgrywania paragonu dla wybranej umowy</p>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Wyszukaj umowę</Label>
