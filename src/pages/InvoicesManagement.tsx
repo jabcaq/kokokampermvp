@@ -7,12 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Search, FileText, Receipt, Eye, Trash2, CheckCircle, Clock, FileUp, Upload } from "lucide-react";
+import { ArrowLeft, Search, FileText, Receipt, Eye, Trash2, CheckCircle, Clock, FileUp, Upload, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { ContractInvoice, ContractInvoiceFile, useUpdateContractInvoice } from "@/hooks/useContractInvoices";
+import { ContractInvoice, ContractInvoiceFile, useUpdateContractInvoice, useAddContractInvoice } from "@/hooks/useContractInvoices";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const statusConfig = {
   pending: { label: "Oczekuje", icon: Clock, className: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
@@ -34,7 +36,15 @@ const InvoicesManagement = () => {
   const [previewInvoice, setPreviewInvoice] = useState<ContractInvoice | null>(null);
   const [deleteInvoiceId, setDeleteInvoiceId] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<ContractInvoiceFile | null>(null);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [selectedContractId, setSelectedContractId] = useState<string>("");
+  const [contractSearchQuery, setContractSearchQuery] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  
   const updateInvoice = useUpdateContractInvoice();
+  const addInvoice = useAddContractInvoice();
 
   const { data: allInvoices, isLoading } = useQuery({
     queryKey: ['all-invoices'],
@@ -59,6 +69,117 @@ const InvoicesManagement = () => {
       })) as (ContractInvoice & { contract: any })[];
     },
   });
+
+  const { data: allContracts } = useQuery({
+    queryKey: ['all-contracts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contracts')
+        .select('id, contract_number, tenant_name, tenant_company_name')
+        .order('contract_number', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+    
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFilePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else if (file.type === 'application/pdf') {
+      setFilePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleUploadReceipt = async () => {
+    if (!selectedContractId || !selectedFile) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz umowę i plik",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // Create invoice record first
+      const newInvoice = await addInvoice.mutateAsync({
+        contract_id: selectedContractId,
+        invoice_type: 'reservation',
+        amount: 0,
+        status: 'invoice_uploaded',
+        notes: 'Paragon wgrany przez system',
+        submitted_at: null,
+        invoice_file_url: null,
+        invoice_uploaded_at: null,
+        files: [],
+      });
+
+      // Upload file to storage
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${newInvoice.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${selectedContractId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('invoices')
+        .upload(filePath, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('invoices')
+        .getPublicUrl(filePath);
+
+      // Update invoice with file info
+      const fileData: ContractInvoiceFile = {
+        id: Date.now().toString(),
+        name: selectedFile.name,
+        url: publicUrl,
+        type: selectedFile.type,
+        uploadedAt: new Date().toISOString(),
+      };
+
+      await updateInvoice.mutateAsync({
+        id: newInvoice.id,
+        updates: {
+          files: [fileData],
+          invoice_uploaded_at: new Date().toISOString(),
+        }
+      });
+
+      toast({
+        title: "Sukces",
+        description: "Paragon został wgrany",
+      });
+
+      // Reset form
+      setUploadDialogOpen(false);
+      setSelectedContractId("");
+      setSelectedFile(null);
+      setFilePreview(null);
+      setContractSearchQuery("");
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie udało się wgrać paragonu",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleDelete = async (id: string) => {
     try {
@@ -94,6 +215,15 @@ const InvoicesManagement = () => {
     );
   });
 
+  const filteredContracts = allContracts?.filter(contract => {
+    const searchLower = contractSearchQuery.toLowerCase();
+    return (
+      contract.contract_number?.toLowerCase().includes(searchLower) ||
+      contract.tenant_name?.toLowerCase().includes(searchLower) ||
+      contract.tenant_company_name?.toLowerCase().includes(searchLower)
+    );
+  });
+
   const isImageFile = (type?: string) => type?.startsWith('image/');
   const isPdfFile = (type?: string) => type === 'application/pdf';
 
@@ -115,6 +245,10 @@ const InvoicesManagement = () => {
               <p className="text-muted-foreground">Zarządzaj wszystkimi dokumentami rozliczeniowymi</p>
             </div>
           </div>
+          <Button onClick={() => setUploadDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Wgraj paragon
+          </Button>
         </div>
 
         <Card>
@@ -331,6 +465,84 @@ const InvoicesManagement = () => {
                 )}
               </>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Receipt Dialog */}
+      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Wgraj paragon</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Wyszukaj umowę</Label>
+              <Input
+                placeholder="Szukaj po numerze umowy, nazwisku..."
+                value={contractSearchQuery}
+                onChange={(e) => setContractSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Wybierz umowę</Label>
+              <Select value={selectedContractId} onValueChange={setSelectedContractId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Wybierz umowę" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredContracts?.map((contract) => (
+                    <SelectItem key={contract.id} value={contract.id}>
+                      {contract.contract_number} - {contract.tenant_company_name || contract.tenant_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Wybierz plik</Label>
+              <Input
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={handleFileSelect}
+              />
+            </div>
+
+            {filePreview && selectedFile && (
+              <div className="space-y-2">
+                <Label>Podgląd</Label>
+                <div className="border rounded-lg p-4 bg-muted/50">
+                  {selectedFile.type.startsWith('image/') ? (
+                    <img src={filePreview} alt="Preview" className="max-h-64 mx-auto rounded" />
+                  ) : selectedFile.type === 'application/pdf' ? (
+                    <iframe
+                      src={filePreview}
+                      className="w-full h-64 rounded"
+                      title="PDF Preview"
+                    />
+                  ) : (
+                    <div className="text-center py-8">
+                      <FileText className="h-12 w-12 mx-auto text-muted-foreground" />
+                      <p className="mt-2 text-sm text-muted-foreground">{selectedFile.name}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>
+                Anuluj
+              </Button>
+              <Button 
+                onClick={handleUploadReceipt} 
+                disabled={!selectedContractId || !selectedFile || isUploading}
+              >
+                {isUploading ? "Wgrywanie..." : "Zapisz"}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
