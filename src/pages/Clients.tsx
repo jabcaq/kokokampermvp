@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { useClients, useAddClient, useDeleteClient } from "@/hooks/useClients";
 import { useToast } from "@/hooks/use-toast";
+import { clientSchema } from "@/lib/validation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -120,12 +121,26 @@ const Clients = () => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
-    try {
-      await addClientMutation.mutateAsync({
-        name: formData.get("name") as string,
-        email: formData.get("email") as string,
-        phone: formData.get("phone") as string,
+    const clientData = {
+      name: formData.get("name") as string,
+      email: formData.get("email") as string,
+      phone: formData.get("phone") as string,
+    };
+
+    // Validate the data
+    const validation = clientSchema.safeParse(clientData);
+    if (!validation.success) {
+      const errorMessage = validation.error.errors[0]?.message || "Nieprawidłowe dane";
+      toast({
+        title: "Błąd walidacji",
+        description: errorMessage,
+        variant: "destructive",
       });
+      return;
+    }
+    
+    try {
+      await addClientMutation.mutateAsync(clientData);
       
       toast({
         title: "Sukces",
@@ -134,10 +149,10 @@ const Clients = () => {
       
       setIsDialogOpen(false);
       e.currentTarget.reset();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Błąd",
-        description: "Nie udało się dodać klienta.",
+        description: error?.message || "Nie udało się dodać klienta.",
         variant: "destructive",
       });
     }
