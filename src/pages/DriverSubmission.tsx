@@ -26,6 +26,7 @@ const DriverSubmission = () => {
     driverName: "",
     driverEmail: "",
     driverPhone: "",
+    driverPesel: "",
     licenseNumber: "",
     licenseIssueDate: "",
     licenseCategory: "",
@@ -44,6 +45,7 @@ const DriverSubmission = () => {
         driverName: contract.tenant_name || "",
         driverEmail: contract.tenant_email || "",
         driverPhone: contract.tenant_phone || "",
+        driverPesel: contract.tenant_pesel || "",
         licenseNumber: contract.tenant_license_number || "",
         licenseIssueDate: contract.tenant_license_date || "",
         licenseCategory: contract.tenant_license_category || "",
@@ -67,6 +69,7 @@ const DriverSubmission = () => {
         imie_nazwisko: formData.driverName,
         email: formData.driverEmail,
         tel: formData.driverPhone,
+        pesel: formData.driverPesel,
         prawo_jazdy_numer: formData.licenseNumber,
         prawo_jazdy_data: formData.licenseIssueDate,
         prawo_jazdy_kategoria: formData.licenseCategory,
@@ -104,6 +107,7 @@ const DriverSubmission = () => {
           tenant_name: formData.driverName,
           tenant_email: formData.driverEmail,
           tenant_phone: formData.driverPhone,
+          tenant_pesel: formData.driverPesel,
           tenant_license_number: formData.licenseNumber,
           tenant_license_date: formData.licenseIssueDate,
           tenant_license_category: formData.licenseCategory,
@@ -345,6 +349,19 @@ const DriverSubmission = () => {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="driverPesel">PESEL</Label>
+                <Input
+                  id="driverPesel"
+                  value={formData.driverPesel}
+                  onChange={(e) =>
+                    setFormData({ ...formData, driverPesel: e.target.value })
+                  }
+                  placeholder="00000000000"
+                  maxLength={11}
+                />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
