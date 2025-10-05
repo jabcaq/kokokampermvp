@@ -157,7 +157,7 @@ export const ContractActionsPanel = ({
     try {
       const verificationText = generateVerificationText();
       
-      await fetch('https://hook.eu2.make.com/s8needjlwk6wes4k8aae6hxez55i8gko', {
+      await fetch('https://hook.eu2.make.com/o66tfsx4rg87tehck0mx2pm4065idl9i', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
