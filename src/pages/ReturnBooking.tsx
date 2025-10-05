@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateReturnBooking } from "@/hooks/useReturnBookings";
-import { Clock, MapPin, Globe, CheckCircle2 } from "lucide-react";
-import { format } from "date-fns";
+import { Clock, MapPin, Globe, CheckCircle2, AlertCircle } from "lucide-react";
+import { format, isAfter, startOfDay } from "date-fns";
 import { pl } from "date-fns/locale";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import logoImage from "@/assets/koko-logo.jpeg";
 
 const TIME_SLOTS = [
@@ -32,6 +33,14 @@ export default function ReturnBooking() {
   const [isBooked, setIsBooked] = useState(false);
 
   const createBooking = useCreateReturnBooking();
+
+  // Calculate minimum date (contract end date)
+  const minDate = endDate ? startOfDay(new Date(endDate)) : new Date();
+  
+  // Check if selected date is after contract end date
+  const isLateReturn = selectedDate && endDate 
+    ? isAfter(startOfDay(selectedDate), startOfDay(new Date(endDate)))
+    : false;
 
   const handleConfirm = () => {
     if (!selectedDate || !selectedTime || !contractId) return;
@@ -150,11 +159,22 @@ export default function ReturnBooking() {
                       mode="single"
                       selected={selectedDate}
                       onSelect={setSelectedDate}
-                      disabled={(date) => date < new Date()}
+                      disabled={(date) => date < minDate}
                       className="rounded-md border-0 scale-110"
                     />
                   </div>
                 </div>
+
+                {isLateReturn && (
+                  <Alert variant="destructive" className="mt-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>UWAGA!</strong> Wybrałeś datę późniejszą niż data zakończenia wynajmu. 
+                      Zostaniesz obciążony dodatkową opłatą. Musisz natychmiast skontaktować się pod numerem:{" "}
+                      <a href="tel:+48660694257" className="font-bold underline">+48 660 694 257</a>
+                    </AlertDescription>
+                  </Alert>
+                )}
 
                 {selectedDate && (
                   <div className="space-y-4">
