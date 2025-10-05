@@ -34,7 +34,7 @@ export const useProtocols = () => {
 
       if (handoversError) throw handoversError;
 
-      // Fetch returns (only completed protocols, not bookings)
+      // Fetch returns
       const { data: returns, error: returnsError } = await supabase
         .from("vehicle_returns")
         .select(`
@@ -45,7 +45,6 @@ export const useProtocols = () => {
           photos,
           created_at
         `)
-        .eq('return_completed', true)
         .order('created_at', { ascending: false });
 
       if (returnsError) throw returnsError;
