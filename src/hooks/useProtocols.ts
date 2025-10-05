@@ -34,7 +34,7 @@ export const useProtocols = () => {
 
       if (handoversError) throw handoversError;
 
-      // Fetch returns - only completed ones
+      // Fetch returns where protocol was filled (mileage > 0 indicates filled protocol)
       const { data: returns, error: returnsError } = await supabase
         .from("vehicle_returns")
         .select(`
@@ -45,7 +45,7 @@ export const useProtocols = () => {
           photos,
           created_at
         `)
-        .eq('return_completed', true)
+        .gt('mileage', 0)
         .order('created_at', { ascending: false });
 
       if (returnsError) throw returnsError;
