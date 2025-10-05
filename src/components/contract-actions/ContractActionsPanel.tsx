@@ -21,7 +21,6 @@ export const ContractActionsPanel = ({
   const { toast } = useToast();
   const addDocument = useAddContractDocument();
   const { data: contract } = useContract(contractId);
-  const [showVerificationData, setShowVerificationData] = useState(false);
 
   const generateVerificationText = () => {
     if (!contract) return "";
@@ -154,8 +153,32 @@ export const ContractActionsPanel = ({
     }
   };
 
-  const handleSendVerification = () => {
-    setShowVerificationData(true);
+  const handleSendVerification = async () => {
+    try {
+      const verificationText = generateVerificationText();
+      
+      await fetch('https://hook.eu2.make.com/s8needjlwk6wes4k8aae6hxez55i8gko', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contract_number: contractNumber,
+          verification_data: verificationText,
+        }),
+      });
+      
+      toast({
+        title: "Sukces",
+        description: "Dane zostały wysłane do weryfikacji",
+      });
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się wysłać danych do weryfikacji",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCopyDriverForm = () => {
@@ -218,38 +241,6 @@ export const ContractActionsPanel = ({
         </CardContent>
       </Card>
 
-      <Dialog open={showVerificationData} onOpenChange={setShowVerificationData}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Dane do weryfikacji</DialogTitle>
-            <DialogDescription>
-              Wszystkie informacje o najemcy z umowy {contractNumber}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="mt-4">
-            <pre className="whitespace-pre-wrap bg-muted p-4 rounded-lg text-sm font-mono">
-              {generateVerificationText()}
-            </pre>
-            <div className="mt-4 flex gap-2">
-              <Button
-                onClick={() => {
-                  navigator.clipboard.writeText(generateVerificationText());
-                  toast({
-                    title: "Skopiowano",
-                    description: "Dane zostały skopiowane do schowka",
-                  });
-                }}
-                variant="outline"
-              >
-                Kopiuj do schowka
-              </Button>
-              <Button onClick={() => setShowVerificationData(false)}>
-                Zamknij
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
