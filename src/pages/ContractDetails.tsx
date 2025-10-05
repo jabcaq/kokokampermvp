@@ -145,6 +145,30 @@ const ContractDetails = () => {
     console.log('Updating field:', field, 'with value:', value);
     setEditedData(prev => {
       const updated = { ...prev, [field]: value };
+      
+      // Auto-update payment amounts when value changes
+      if (field === 'value') {
+        const numValue = parseFloat(value) || 0;
+        const reservationAmount = numValue * 0.30;
+        const mainAmount = numValue * 0.70;
+        
+        updated.payments = {
+          ...prev.payments,
+          rezerwacyjna: {
+            ...prev.payments?.rezerwacyjna,
+            wysokosc: reservationAmount > 0 ? reservationAmount : null,
+          },
+          zasadnicza: {
+            ...prev.payments?.zasadnicza,
+            wysokosc: mainAmount > 0 ? mainAmount : null,
+          },
+          kaucja: {
+            ...prev.payments?.kaucja,
+            wysokosc: 1000,
+          },
+        };
+      }
+      
       console.log('Updated editedData:', updated);
       return updated;
     });
