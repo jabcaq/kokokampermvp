@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Loader2, Trash2, ArrowUpDown, Eye, AlertTriangle } from "lucide-react";
+import { Plus, Search, Loader2, Trash2, ArrowUpDown, Eye, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useClients, useAddClient, useDeleteClient } from "@/hooks/useClients";
 import { useToast } from "@/hooks/use-toast";
 import { clientSchema } from "@/lib/validation";
@@ -33,6 +34,8 @@ const Clients = () => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const { toast } = useToast();
   
   const { data: clients = [], isLoading } = useClients();
@@ -89,6 +92,18 @@ const Clients = () => {
   });
 
   const duplicateClientsToDelete = sortedClients.filter(client => deletableDuplicates.has(client.id));
+
+  // Pagination
+  const totalPages = Math.ceil(sortedClients.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedClients = sortedClients.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1);
+  };
 
   const toggleClientSelection = (clientId: string) => {
     if (!deletableDuplicates.has(clientId)) return;
@@ -292,6 +307,27 @@ const Clients = () => {
           <p className="text-muted-foreground">Nie znaleziono klientów</p>
         </div>
       ) : (
+        <>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Pokaż</span>
+              <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">rekordów na stronę</span>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Pokazywanie {startIndex + 1}-{Math.min(endIndex, sortedClients.length)} z {sortedClients.length} klientów
+            </div>
+          </div>
+          
         <div className="border rounded-lg bg-card shadow-sm">
           <Table>
             <TableHeader>
@@ -338,7 +374,7 @@ const Clients = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedClients.map((client) => {
+              {paginatedClients.map((client) => {
                 const isDuplicate = duplicateEmails.has(client.email);
                 const isFirstOccurrence = firstOccurrences.get(client.email) === client.id;
                 const isDeletable = deletableDuplicates.has(client.id);
@@ -425,6 +461,58 @@ const Clients = () => {
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Poprzednia
+            </Button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                // Show first page, last page, current page, and pages around current
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className="w-10"
+                    >
+                      {page}
+                    </Button>
+                  );
+                } else if (page === currentPage - 2 || page === currentPage + 2) {
+                  return <span key={page} className="px-2">...</span>;
+                }
+                return null;
+              })}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Następna
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+        </>
       )}
 
       <AlertDialog open={!!deleteClientId} onOpenChange={() => setDeleteClientId(null)}>

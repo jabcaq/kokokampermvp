@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Loader2, Trash2, ArrowUpDown, FileText, Eye } from "lucide-react";
+import { Plus, Search, Loader2, Trash2, ArrowUpDown, FileText, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -30,6 +30,8 @@ const Documents = () => {
   const [deleteDocumentId, setDeleteDocumentId] = useState<string | null>(null);
   const [sortField, setSortField] = useState<"rodzaj" | "nazwa_pliku" | "data">("data");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const { toast } = useToast();
   
   const { data: documents = [], isLoading } = useDocuments();
@@ -71,6 +73,17 @@ const Documents = () => {
       return aValue < bValue ? 1 : -1;
     }
   });
+
+  // Pagination
+  const totalPages = Math.ceil(sortedDocuments.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedDocuments = sortedDocuments.slice(startIndex, endIndex);
+
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1);
+  };
 
   const handleSort = (field: "rodzaj" | "nazwa_pliku" | "data") => {
     if (sortField === field) {
@@ -314,6 +327,27 @@ const Documents = () => {
           <p className="text-muted-foreground">Nie znaleziono dokumentów</p>
         </div>
       ) : (
+        <>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Pokaż</span>
+              <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">rekordów na stronę</span>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Pokazywanie {startIndex + 1}-{Math.min(endIndex, sortedDocuments.length)} z {sortedDocuments.length} dokumentów
+            </div>
+          </div>
+
         <div className="border rounded-lg bg-card shadow-sm overflow-x-auto">
           <Table>
             <TableHeader>
@@ -345,7 +379,7 @@ const Documents = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedDocuments.map((doc) => (
+              {paginatedDocuments.map((doc) => (
                 <TableRow key={doc.id}>
                   <TableCell className="font-medium">{doc.rodzaj}</TableCell>
                   <TableCell className="text-muted-foreground text-sm">
@@ -401,6 +435,57 @@ const Documents = () => {
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Poprzednia
+            </Button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className="w-10"
+                    >
+                      {page}
+                    </Button>
+                  );
+                } else if (page === currentPage - 2 || page === currentPage + 2) {
+                  return <span key={page} className="px-2">...</span>;
+                }
+                return null;
+              })}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Następna
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+        </>
       )}
 
       <AlertDialog open={!!deleteDocumentId} onOpenChange={() => setDeleteDocumentId(null)}>
