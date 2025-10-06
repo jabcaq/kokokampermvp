@@ -439,6 +439,7 @@ export type Database = {
           gearbox: string | null
           height: number | null
           id: string
+          inquiry_number: string | null
           inquiry_type: string | null
           last_name: string | null
           meals: string | null
@@ -483,6 +484,7 @@ export type Database = {
           gearbox?: string | null
           height?: number | null
           id?: string
+          inquiry_number?: string | null
           inquiry_type?: string | null
           last_name?: string | null
           meals?: string | null
@@ -527,6 +529,7 @@ export type Database = {
           gearbox?: string | null
           height?: number | null
           id?: string
+          inquiry_number?: string | null
           inquiry_type?: string | null
           last_name?: string | null
           meals?: string | null
@@ -862,6 +865,10 @@ export type Database = {
       check_expiring_documents: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      generate_inquiry_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       has_role: {
         Args: {

@@ -131,6 +131,9 @@ const Inquiries = () => {
                           <div className="flex-1">
                             <p className="font-medium text-sm">{inquiry.name}</p>
                             <p className="text-xs text-muted-foreground">{inquiry.email}</p>
+                            {inquiry.inquiry_number && (
+                              <p className="text-xs font-mono text-primary mt-1">{inquiry.inquiry_number}</p>
+                            )}
                           </div>
                           {getStatusBadge(inquiry.status)}
                         </div>
@@ -157,7 +160,12 @@ const Inquiries = () => {
               Edytor odpowiedzi
             </CardTitle>
             <CardDescription>
-              {selectedInquiry ? `Odpowiedz na: ${selectedInquiry.subject}` : "Wybierz zapytanie"}
+              {selectedInquiry ? (
+                <span>
+                  {selectedInquiry.inquiry_number && <span className="font-mono">{selectedInquiry.inquiry_number} - </span>}
+                  {selectedInquiry.subject || 'Bez tematu'}
+                </span>
+              ) : "Wybierz zapytanie"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -168,6 +176,9 @@ const Inquiries = () => {
                       <div>
                         <p className="font-medium">{selectedInquiry.name}</p>
                         <p className="text-sm text-muted-foreground">{selectedInquiry.email}</p>
+                        {selectedInquiry.inquiry_number && (
+                          <p className="text-xs font-mono text-primary mt-1">{selectedInquiry.inquiry_number}</p>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {selectedInquiry.created_at ? format(new Date(selectedInquiry.created_at), 'dd.MM.yyyy HH:mm') : 'Brak daty'}

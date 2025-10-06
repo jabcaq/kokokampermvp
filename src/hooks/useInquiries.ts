@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface Inquiry {
   id: string;
+  inquiry_number?: string;
   name: string;
   email: string;
   subject: string | null;
