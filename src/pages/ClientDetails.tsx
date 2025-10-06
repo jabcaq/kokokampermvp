@@ -2,12 +2,16 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Mail, Phone, FileText, Calendar, MapPin, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Mail, Phone, FileText, Calendar, MapPin, Loader2, Trash2, Edit } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useClient, useDeleteClient } from "@/hooks/useClients";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { useClient, useDeleteClient, useUpdateClient } from "@/hooks/useClients";
 import { useContractsByClient } from "@/hooks/useContracts";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { clientSchema } from "@/lib/validation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,10 +29,17 @@ const ClientDetails = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
   
   const { data: client, isLoading: clientLoading } = useClient(id);
   const { data: contracts = [], isLoading: contractsLoading } = useContractsByClient(id);
   const deleteClientMutation = useDeleteClient();
+  const updateClientMutation = useUpdateClient();
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive"; label: string }> = {
@@ -55,6 +66,52 @@ const ClientDetails = () => {
       toast({
         title: "Błąd",
         description: "Nie udało się usunąć klienta. Sprawdź czy nie ma przypisanych umów.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleOpenEditDialog = () => {
+    if (client) {
+      setEditForm({
+        name: client.name,
+        email: client.email,
+        phone: client.phone || "",
+      });
+      setShowEditDialog(true);
+    }
+  };
+
+  const handleUpdateClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+
+    // Validate the data
+    const validation = clientSchema.safeParse(editForm);
+    if (!validation.success) {
+      const errorMessage = validation.error.errors[0]?.message || "Nieprawidłowe dane";
+      toast({
+        title: "Błąd walidacji",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await updateClientMutation.mutateAsync({
+        id,
+        updates: editForm,
+      });
+      toast({
+        title: "Sukces",
+        description: "Dane klienta zostały zaktualizowane.",
+      });
+      setShowEditDialog(false);
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się zaktualizować danych klienta.",
         variant: "destructive",
       });
     }
@@ -99,13 +156,22 @@ const ClientDetails = () => {
             <p className="text-muted-foreground mt-1">Szczegóły klienta</p>
           </div>
         </div>
-        <Button
-          variant="destructive"
-          onClick={() => setShowDeleteDialog(true)}
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Usuń klienta
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleOpenEditDialog}
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Edytuj
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Usuń klienta
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -240,6 +306,57 @@ const ClientDetails = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edytuj dane klienta</DialogTitle>
+            <DialogDescription>
+              Wprowadź zmiany w danych klienta
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateClient} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Imię i nazwisko</Label>
+              <Input
+                id="edit-name"
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                placeholder="Jan Kowalski"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                placeholder="jan@example.com"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Telefon</Label>
+              <Input
+                id="edit-phone"
+                value={editForm.phone}
+                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                placeholder="+48 500 123 456"
+                required
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
+                Anuluj
+              </Button>
+              <Button type="submit">Zapisz zmiany</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

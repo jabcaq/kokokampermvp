@@ -64,6 +64,28 @@ export const useAddClient = () => {
   });
 };
 
+export const useUpdateClient = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Omit<Client, 'id' | 'created_at' | 'updated_at' | 'contracts_count'>> }) => {
+      const { data, error } = await supabase
+        .from('clients')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['client', variables.id] });
+    },
+  });
+};
+
 export const useDeleteClient = () => {
   const queryClient = useQueryClient();
   
