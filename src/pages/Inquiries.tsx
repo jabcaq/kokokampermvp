@@ -330,9 +330,9 @@ const Inquiries = () => {
               ) : "Wybierz zapytanie"}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col overflow-hidden min-h-0">
+          <CardContent className="flex-1 flex flex-col overflow-hidden min-h-0 p-6">
             {selectedInquiry ? (
-              <div className="flex flex-col h-full gap-4 overflow-hidden">
+              <div className="flex flex-col h-full gap-4">
                 <div className="bg-muted p-4 rounded-lg space-y-2 flex-shrink-0">
                     <div className="flex items-start justify-between">
                       <div>
@@ -353,9 +353,9 @@ const Inquiries = () => {
                     </div>
                 </div>
 
-                <div className="flex-1 flex flex-col gap-2 min-h-0">
+                <div className="flex-1 flex flex-col gap-2 min-h-0 overflow-hidden">
                   <label className="text-sm font-medium flex-shrink-0">Twoja odpowiedź</label>
-                  <div className="flex-1 min-h-0">
+                  <div className="flex-1 min-h-0 overflow-auto">
                     <RichTextEditor
                       content={replyMessage}
                       onChange={setReplyMessage}
@@ -365,7 +365,7 @@ const Inquiries = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-2 justify-end flex-shrink-0">
+                <div className="flex gap-2 justify-end flex-shrink-0 pt-2 border-t">
                   <Button
                     variant="secondary"
                     onClick={() => setIsDialogOpen(true)}
