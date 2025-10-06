@@ -330,10 +330,10 @@ const Inquiries = () => {
               ) : "Wybierz zapytanie"}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 overflow-y-auto">
+          <CardContent className="flex-1 flex flex-col overflow-hidden min-h-0">
             {selectedInquiry ? (
-              <div className="space-y-4">
-                <div className="bg-muted p-4 rounded-lg space-y-2">
+              <div className="flex flex-col h-full gap-4 overflow-hidden">
+                <div className="bg-muted p-4 rounded-lg space-y-2 flex-shrink-0">
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="font-medium">{selectedInquiry.name}</p>
@@ -353,17 +353,19 @@ const Inquiries = () => {
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Twoja odpowiedź</label>
-                  <RichTextEditor
-                    content={replyMessage}
-                    onChange={setReplyMessage}
-                    placeholder="Napisz odpowiedź..."
-                    inquiryData={selectedInquiry}
-                  />
+                <div className="flex-1 flex flex-col gap-2 min-h-0">
+                  <label className="text-sm font-medium flex-shrink-0">Twoja odpowiedź</label>
+                  <div className="flex-1 min-h-0">
+                    <RichTextEditor
+                      content={replyMessage}
+                      onChange={setReplyMessage}
+                      placeholder="Napisz odpowiedź..."
+                      inquiryData={selectedInquiry}
+                    />
+                  </div>
                 </div>
 
-                <div className="flex gap-2 justify-end">
+                <div className="flex gap-2 justify-end flex-shrink-0">
                   <Button
                     variant="secondary"
                     onClick={() => setIsDialogOpen(true)}
@@ -407,10 +409,10 @@ const Inquiries = () => {
               {selectedInquiry ? `${messages.length} wiadomości` : "Wybierz zapytanie"}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 overflow-hidden">
+          <CardContent className="flex-1 overflow-hidden min-h-0">
             {selectedInquiry && messages.length > 0 ? (
-              <ScrollArea className="h-full pr-4">
-                <div className="space-y-3">
+              <ScrollArea className="h-full">
+                <div className="space-y-3 pr-4">
                   {messages.map((msg) => (
                     <div
                       key={msg.id}
