@@ -22,6 +22,7 @@ const navItems = [
   { path: "/invoices", label: "Faktury i Paragony", icon: Receipt },
   { path: "/inquiries", label: "Zapytania", icon: Mail },
   { path: "/users", label: "Użytkownicy", icon: UserCog },
+  { path: "/admin/employee-schedules", label: "Harmonogramy pracowników", icon: CalendarClock, adminOnly: true },
 ];
 
 export const Layout = () => {
@@ -31,32 +32,44 @@ export const Layout = () => {
   const { signOut, user } = useAuth();
   const { toast } = useToast();
 
-  // Check if user is a return handler
-  const { data: isReturnHandler } = useQuery({
-    queryKey: ["user_role", user?.id],
+  // Check user roles
+  const { data: userRoles } = useQuery({
+    queryKey: ["user_roles", user?.id],
     queryFn: async () => {
-      if (!user?.id) return false;
+      if (!user?.id) return { isAdmin: false, isReturnHandler: false };
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "return_handler")
-        .maybeSingle();
+        .eq("user_id", user.id);
       
-      return !!data;
+      if (error) throw error;
+      
+      const roles = data?.map(r => r.role) || [];
+      return {
+        isAdmin: roles.includes("admin"),
+        isReturnHandler: roles.includes("return_handler"),
+      };
     },
     enabled: !!user?.id,
   });
 
   // Add employee-specific nav items if user is a return handler
-  const employeeNavItems = isReturnHandler
+  const employeeNavItems = userRoles?.isReturnHandler
     ? [
         { path: "/employee-schedule", label: "Mój harmonogram", icon: CalendarClock },
         { path: "/my-returns", label: "Moje zwroty", icon: CalendarCheck },
       ]
     : [];
 
-  const allNavItems = [...navItems, ...employeeNavItems];
+  // Filter nav items based on user role
+  const filteredNavItems = navItems.filter(item => {
+    if (item.adminOnly) {
+      return userRoles?.isAdmin;
+    }
+    return true;
+  });
+
+  const allNavItems = [...filteredNavItems, ...employeeNavItems];
 
   const handleSignOut = async () => {
     await signOut();

@@ -30,6 +30,7 @@ import ReturnCalendar from "./pages/ReturnCalendar";
 import ReturnBooking from "./pages/ReturnBooking";
 import EmployeeSchedule from "./pages/EmployeeSchedule";
 import MyReturns from "./pages/MyReturns";
+import AdminEmployeeSchedules from "./pages/AdminEmployeeSchedules";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => (
               <Route path="/return-calendar" element={<ReturnCalendar />} />
               <Route path="/employee-schedule" element={<EmployeeSchedule />} />
               <Route path="/my-returns" element={<MyReturns />} />
+              <Route path="/admin/employee-schedules" element={<AdminEmployeeSchedules />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
