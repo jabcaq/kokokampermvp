@@ -3,14 +3,15 @@ import moment from "moment";
 import "moment/locale/pl";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { useState } from "react";
-import { useReturnBookings } from "@/hooks/useReturnBookings";
+import { useReturnBookings, useUpdateReturnBooking } from "@/hooks/useReturnBookings";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 
@@ -39,23 +40,54 @@ export default function ReturnCalendar() {
   const [view, setView] = useState<View>("week");
   const [date, setDate] = useState(new Date());
   const [selectedEmployee, setSelectedEmployee] = useState<string>("all");
-  const navigate = useNavigate();
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [editedEmployeeId, setEditedEmployeeId] = useState<string>("");
+  const updateBooking = useUpdateReturnBooking();
 
   // Get list of employees who handle returns
   const { data: employees } = useQuery({
     queryKey: ["return_handlers"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: userRoles, error: rolesError } = await supabase
         .from("user_roles")
-        .select("user_id, profiles(id, full_name)")
+        .select("user_id")
         .eq("role", "return_handler");
       
-      if (error) throw error;
-      return data.map((ur: any) => ({
-        id: ur.user_id,
-        name: ur.profiles?.full_name || "Nieznany",
+      if (rolesError) throw rolesError;
+      
+      const userIds = userRoles.map(ur => ur.user_id);
+      if (userIds.length === 0) return [];
+      
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+      
+      if (profilesError) throw profilesError;
+      
+      return profiles.map(profile => ({
+        id: profile.id,
+        name: profile.full_name || "Nieznany",
       }));
     },
+  });
+
+  // Get contract details for selected booking
+  const { data: contractDetails } = useQuery({
+    queryKey: ["contract_details", selectedBooking?.contract_id],
+    queryFn: async () => {
+      if (!selectedBooking?.contract_id) return null;
+      
+      const { data, error } = await supabase
+        .from("contracts")
+        .select("contract_number, vehicle_model")
+        .eq("id", selectedBooking.contract_id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedBooking?.contract_id,
   });
 
   if (isLoading) {
@@ -124,7 +156,22 @@ export default function ReturnCalendar() {
   };
 
   const handleSelectEvent = (event: any) => {
-    navigate(`/contracts/${event.resource.contract_id}`);
+    setSelectedBooking(event.resource);
+    setEditedEmployeeId(event.resource.assigned_employee_id || "");
+  };
+
+  const handleSaveEmployee = async () => {
+    if (!selectedBooking || !editedEmployeeId) return;
+    
+    const employee = employees?.find(e => e.id === editedEmployeeId);
+    
+    await updateBooking.mutateAsync({
+      id: selectedBooking.id,
+      assigned_employee_id: editedEmployeeId,
+      employee_name: employee?.name || "Nieznany",
+    });
+    
+    setSelectedBooking(null);
   };
 
   // Custom Event Component with Tooltip
@@ -274,6 +321,68 @@ export default function ReturnCalendar() {
           />
         </CardContent>
       </Card>
+
+      <Dialog open={!!selectedBooking} onOpenChange={() => setSelectedBooking(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Szczegóły zwrotu</DialogTitle>
+          </DialogHeader>
+          
+          {selectedBooking && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Numer umowy</p>
+                <p className="font-medium">{contractDetails?.contract_number || "Ładowanie..."}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm text-muted-foreground">Model pojazdu</p>
+                <p className="font-medium">{contractDetails?.vehicle_model || "Ładowanie..."}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm text-muted-foreground">Data i godzina zwrotu</p>
+                <p className="font-medium">
+                  {format(new Date(selectedBooking.scheduled_return_date), "EEEE, d MMMM yyyy", { locale: pl })}
+                  {" o "}{selectedBooking.scheduled_return_time}
+                </p>
+              </div>
+              
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Osoba przyjmująca zwrot</p>
+                <Select value={editedEmployeeId} onValueChange={setEditedEmployeeId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Wybierz pracownika" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees?.map((emp) => (
+                      <SelectItem key={emp.id} value={emp.id}>
+                        {emp.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {selectedBooking.booking_notes && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Uwagi</p>
+                  <p className="text-sm">{selectedBooking.booking_notes}</p>
+                </div>
+              )}
+              
+              <div className="flex gap-2 pt-4">
+                <Button onClick={handleSaveEmployee} disabled={!editedEmployeeId}>
+                  Zapisz
+                </Button>
+                <Button variant="outline" onClick={() => setSelectedBooking(null)}>
+                  Anuluj
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
