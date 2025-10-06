@@ -57,6 +57,25 @@ const Inquiries = () => {
         message: `Odpowiedziano na zapytanie od ${selectedInquiry.name}: ${selectedInquiry.subject || 'Bez tematu'}`,
         link: `/inquiries`,
       });
+
+      // Send all data to Make.com webhook for AI training
+      try {
+        await fetch('https://hook.eu2.make.com/xtmpyhgk5ls5gslzwr2x6qclmte23zvv', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          mode: 'no-cors',
+          body: JSON.stringify({
+            inquiry: selectedInquiry,
+            admin_response: replyMessage,
+            conversation_history: messages,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+      } catch (webhookError) {
+        console.error('Webhook error:', webhookError);
+      }
       
       setReplyMessage("");
     } catch (error) {
