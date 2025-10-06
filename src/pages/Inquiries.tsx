@@ -330,25 +330,27 @@ const Inquiries = () => {
           <CardContent className="flex-1 flex flex-col overflow-hidden min-h-0 p-4">
             {selectedInquiry ? (
               <div className="flex flex-col h-full gap-3">
-                <div className="bg-muted p-4 rounded-lg space-y-2 flex-shrink-0">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium">{selectedInquiry.name}</p>
-                        <p className="text-sm text-muted-foreground">{selectedInquiry.email}</p>
-                        {selectedInquiry.inquiry_number && (
-                          <p className="text-xs font-mono text-primary mt-1">{selectedInquiry.inquiry_number}</p>
-                        )}
+                <ScrollArea className="flex-shrink-0 max-h-[30vh]">
+                  <div className="bg-muted p-4 rounded-lg space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-medium">{selectedInquiry.name}</p>
+                          <p className="text-sm text-muted-foreground">{selectedInquiry.email}</p>
+                          {selectedInquiry.inquiry_number && (
+                            <p className="text-xs font-mono text-primary mt-1">{selectedInquiry.inquiry_number}</p>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {selectedInquiry.created_at ? format(new Date(selectedInquiry.created_at), 'dd.MM.yyyy HH:mm') : 'Brak daty'}
+                        </p>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {selectedInquiry.created_at ? format(new Date(selectedInquiry.created_at), 'dd.MM.yyyy HH:mm') : 'Brak daty'}
-                      </p>
-                    </div>
-                    <Separator className="my-2" />
-                    <div>
-                      <p className="font-medium text-sm mb-1">{selectedInquiry.subject || 'Bez tematu'}</p>
-                      <p className="text-sm whitespace-pre-wrap">{selectedInquiry.message}</p>
-                    </div>
-                </div>
+                      <Separator className="my-2" />
+                      <div>
+                        <p className="font-medium text-sm mb-1">{selectedInquiry.subject || 'Bez tematu'}</p>
+                        <p className="text-sm whitespace-pre-wrap">{selectedInquiry.message}</p>
+                      </div>
+                  </div>
+                </ScrollArea>
 
                 <div className="flex-1 flex flex-col gap-2 min-h-0 overflow-hidden">
                   <label className="text-sm font-medium flex-shrink-0">Twoja odpowiedź</label>
