@@ -325,8 +325,120 @@ export const InvoicesReceiptsTab = ({
     return <div className="flex items-center justify-center p-8">Ładowanie...</div>;
   }
   return <div className="space-y-6">
-      {/* Existing invoices list - simplified view */}
-      
+      {/* Existing invoices table */}
+      {invoices && invoices.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {invoiceType === 'invoice' ? <FileText className="h-5 w-5" /> : <Receipt className="h-5 w-5" />}
+              Lista dokumentów
+            </CardTitle>
+            <CardDescription>
+              Wszystkie {invoiceType === 'invoice' ? 'faktury' : 'paragony'} dla umowy {contractNumber}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {invoices.map((invoice) => {
+                const StatusIcon = statusConfig[invoice.status as keyof typeof statusConfig]?.icon || Clock;
+                const statusLabel = statusConfig[invoice.status as keyof typeof statusConfig]?.label || invoice.status;
+                const statusClass = statusConfig[invoice.status as keyof typeof statusConfig]?.className || '';
+                
+                return (
+                  <div key={invoice.id} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold">
+                            {invoiceTypeLabels[invoice.invoice_type as keyof typeof invoiceTypeLabels]}
+                          </h4>
+                          <Badge variant="outline" className={statusClass}>
+                            <StatusIcon className="h-3 w-3 mr-1" />
+                            {statusLabel}
+                          </Badge>
+                        </div>
+                        <p className="text-2xl font-bold">{invoice.amount.toFixed(2)} PLN</p>
+                        {invoice.notes && (
+                          <p className="text-sm text-muted-foreground">{invoice.notes}</p>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyLinkToClipboard(invoice.id)}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Kopiuj link
+                      </Button>
+                    </div>
+
+                    {invoice.files && invoice.files.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Załączone pliki:</Label>
+                        <div className="grid gap-2">
+                          {invoice.files.map((file: ContractInvoiceFile) => (
+                            <div key={file.id} className="flex items-center justify-between p-2 border rounded bg-muted/50">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <FileText className="h-4 w-4 flex-shrink-0" />
+                                <span className="text-sm truncate">{file.name}</span>
+                                <span className="text-xs text-muted-foreground flex-shrink-0">
+                                  {format(new Date(file.uploadedAt), 'dd.MM.yyyy HH:mm')}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openPreview(file)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => window.open(file.url, '_blank')}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteFile(invoice.id, file.id, invoice)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {(!invoice.files || invoice.files.length === 0) && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Dodaj plik:</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="file"
+                            accept="*/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleFileUpload(invoice.id, file, invoice);
+                              }
+                            }}
+                            disabled={uploadingFile === invoice.id}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Add new document form */}
       <Card>
