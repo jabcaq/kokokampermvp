@@ -100,12 +100,12 @@ export const Layout = () => {
             <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}>
               <Button
                 variant={isActive ? "default" : "ghost"}
-                className={`w-full justify-start gap-3 transition-all ${
+                className={`w-full justify-start gap-3 transition-all h-auto min-h-[44px] py-2 ${
                   isActive ? "shadow-md" : ""
                 }`}
               >
-                <Icon className="h-5 w-5" />
-                <span>{item.label}</span>
+                <Icon className="h-5 w-5 flex-shrink-0" />
+                <span className="text-left leading-tight">{item.label}</span>
               </Button>
             </Link>
           );
