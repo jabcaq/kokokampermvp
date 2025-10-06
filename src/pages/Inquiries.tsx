@@ -102,10 +102,163 @@ const Inquiries = () => {
         </p>
       </div>
 
-      <ResizablePanelGroup direction="horizontal" className="gap-6">
+      {/* Mobile Layout */}
+      <div className="flex flex-col lg:hidden gap-4 h-[calc(100vh-12rem)]">
+        <Card className="flex flex-col overflow-hidden max-h-[40vh]">
+          <CardHeader className="flex-shrink-0">
+            <CardTitle className="flex items-center gap-2">
+              <Inbox className="h-5 w-5" />
+              Przychodzące zapytania
+            </CardTitle>
+            <CardDescription>
+              {inquiries.filter(i => i.status === "new").length} nowych zapytań
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-hidden">
+            {isLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <ScrollArea className="h-full pr-4">
+                <div className="space-y-3">
+                  {inquiries.map((inquiry) => (
+                    <Card
+                      key={inquiry.id}
+                      className={`cursor-pointer transition-all hover:shadow-md ${
+                        selectedInquiry?.id === inquiry.id ? "border-primary shadow-md" : ""
+                      }`}
+                      onClick={() => setSelectedInquiry(inquiry)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">{inquiry.name}</p>
+                            <p className="text-xs text-muted-foreground">{inquiry.email}</p>
+                            {inquiry.inquiry_number && (
+                              <p className="text-xs font-mono text-primary mt-1">{inquiry.inquiry_number}</p>
+                            )}
+                          </div>
+                          {getStatusBadge(inquiry.status)}
+                        </div>
+                        <p className="font-medium text-sm mb-1">{inquiry.subject || 'Bez tematu'}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{inquiry.message}</p>
+                        <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {inquiry.created_at ? format(new Date(inquiry.created_at), 'dd.MM.yyyy HH:mm') : 'Brak daty'}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </CardContent>
+        </Card>
+
+        {selectedInquiry && (
+          <Card className="flex flex-col overflow-hidden flex-1">
+            <CardHeader className="flex-shrink-0">
+              <CardTitle className="flex items-center gap-2">
+                <Reply className="h-5 w-5" />
+                Edytor odpowiedzi
+              </CardTitle>
+              <CardDescription>
+                {selectedInquiry.inquiry_number && <span className="font-mono">{selectedInquiry.inquiry_number} - </span>}
+                {selectedInquiry.subject || 'Bez tematu'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-y-auto">
+              <div className="space-y-4">
+                <div className="bg-muted p-4 rounded-lg space-y-2">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-medium">{selectedInquiry.name}</p>
+                        <p className="text-sm text-muted-foreground">{selectedInquiry.email}</p>
+                        {selectedInquiry.inquiry_number && (
+                          <p className="text-xs font-mono text-primary mt-1">{selectedInquiry.inquiry_number}</p>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedInquiry.created_at ? format(new Date(selectedInquiry.created_at), 'dd.MM.yyyy HH:mm') : 'Brak daty'}
+                      </p>
+                    </div>
+                    <Separator className="my-2" />
+                    <div>
+                      <p className="font-medium text-sm mb-1">{selectedInquiry.subject || 'Bez tematu'}</p>
+                      <p className="text-sm whitespace-pre-wrap">{selectedInquiry.message}</p>
+                    </div>
+                </div>
+
+                {messages.length > 0 && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Historia konwersacji</label>
+                    <ScrollArea className="max-h-[200px] border rounded-lg p-4">
+                      <div className="space-y-3">
+                        {messages.map((msg) => (
+                          <div
+                            key={msg.id}
+                            className={`p-3 rounded-lg ${
+                              msg.sender_type === 'admin' 
+                                ? 'bg-primary/10' 
+                                : 'bg-muted'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between mb-1">
+                              <p className="text-xs font-medium">
+                                {msg.sender_type === 'admin' ? 'Administrator' : selectedInquiry.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(msg.created_at), 'dd.MM.yyyy HH:mm')}
+                              </p>
+                            </div>
+                            <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Twoja odpowiedź</label>
+                  <RichTextEditor
+                    content={replyMessage}
+                    onChange={setReplyMessage}
+                    placeholder="Napisz odpowiedź..."
+                    inquiryData={selectedInquiry}
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 justify-end">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setIsDialogOpen(true)}
+                    className="w-full sm:w-auto"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Utwórz klienta i umowę
+                  </Button>
+                  <Button variant="outline" onClick={() => setReplyMessage("")} className="w-full sm:w-auto">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Wyczyść
+                  </Button>
+                  <Button onClick={handleSendReply} disabled={!replyMessage.trim()} className="w-full sm:w-auto">
+                    <Send className="h-4 w-4 mr-2" />
+                    Wyślij odpowiedź
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Desktop Layout */}
+      <ResizablePanelGroup direction="horizontal" className="hidden lg:flex gap-6 h-[calc(100vh-12rem)]">
         {/* Lista zapytań */}
         <ResizablePanel defaultSize={25} minSize={20}>
-        <Card className="flex flex-col overflow-hidden h-[calc(100vh-16rem)]">
+        <Card className="flex flex-col overflow-hidden h-full">
           <CardHeader className="flex-shrink-0">
             <CardTitle className="flex items-center gap-2">
               <Inbox className="h-5 w-5" />
@@ -162,7 +315,7 @@ const Inquiries = () => {
 
         {/* Edytor odpowiedzi */}
         <ResizablePanel defaultSize={40} minSize={30}>
-        <Card className="flex flex-col overflow-hidden h-[calc(100vh-16rem)]">
+        <Card className="flex flex-col overflow-hidden h-full">
           <CardHeader className="flex-shrink-0">
             <CardTitle className="flex items-center gap-2">
               <Reply className="h-5 w-5" />
@@ -244,7 +397,7 @@ const Inquiries = () => {
 
         {/* Historia konwersacji */}
         <ResizablePanel defaultSize={35} minSize={25}>
-        <Card className="flex flex-col overflow-hidden h-[calc(100vh-16rem)]">
+        <Card className="flex flex-col overflow-hidden h-full">
           <CardHeader className="flex-shrink-0">
             <CardTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5" />

@@ -157,12 +157,12 @@ export const Layout = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         <div className="z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b flex-shrink-0">
-          <div className="container mx-auto px-6 lg:px-8 max-w-7xl py-4 flex justify-end">
+          <div className="w-full px-4 sm:px-6 lg:px-8 py-4 flex justify-end">
             <NotificationBell />
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <div className="container mx-auto p-6 lg:p-8 max-w-7xl">
+          <div className="w-full h-full p-4 sm:p-6 lg:p-8">
             <Outlet />
           </div>
         </div>
