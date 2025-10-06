@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -108,6 +108,17 @@ export const InvoicesReceiptsTab = ({
       amount
     });
   };
+
+  // Set initial amount on mount
+  useEffect(() => {
+    const initialAmount = getAmountForType('reservation');
+    if (initialAmount && !newInvoice.amount) {
+      setNewInvoice(prev => ({
+        ...prev,
+        amount: initialAmount
+      }));
+    }
+  }, [payments]);
   const handleFileUpload = async (invoiceId: string, file: File, invoice: any) => {
     setUploadingFile(invoiceId);
     try {
