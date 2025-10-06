@@ -10,45 +10,45 @@ import { useToast } from "@/hooks/use-toast";
 import { useAddContractInvoice, useContractInvoices } from "@/hooks/useContractInvoices";
 import { Send, ExternalLink, FileCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
 interface AccountingPanelProps {
   contractId: string;
   contractNumber: string;
 }
-
-export const AccountingPanel = ({ contractId, contractNumber }: AccountingPanelProps) => {
-  const { toast } = useToast();
+export const AccountingPanel = ({
+  contractId,
+  contractNumber
+}: AccountingPanelProps) => {
+  const {
+    toast
+  } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [invoiceType, setInvoiceType] = useState<'reservation' | 'main_payment' | 'final'>('reservation');
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
-  
   const addInvoice = useAddContractInvoice();
-  const { data: invoices } = useContractInvoices(contractId);
-
+  const {
+    data: invoices
+  } = useContractInvoices(contractId);
   const invoiceTypeLabels = {
     reservation: 'Kwota rezerwacyjna',
     main_payment: 'Kwota zasadnicza',
-    final: 'Faktura końcowa',
+    final: 'Faktura końcowa'
   };
-
   const statusLabels = {
     pending: 'Oczekuje',
     submitted: 'Wysłano do księgowości',
     invoice_uploaded: 'Faktura wgrana',
-    completed: 'Zakończono',
+    completed: 'Zakończono'
   };
-
   const handleSubmitToAccounting = async () => {
     if (!amount || parseFloat(amount) <= 0) {
       toast({
         title: "Błąd",
         description: "Podaj poprawną kwotę",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     try {
       const result = await addInvoice.mutateAsync({
         contract_id: contractId,
@@ -59,23 +59,20 @@ export const AccountingPanel = ({ contractId, contractNumber }: AccountingPanelP
         invoice_file_url: null,
         invoice_uploaded_at: null,
         notes: notes || null,
-        files: [],
+        files: []
       });
-      
       const accountingLink = `${window.location.origin}/accounting-upload/${result.id}`;
-      
       toast({
         title: "Sukces",
-        description: "Wysłano do księgowości",
+        description: "Wysłano do księgowości"
       });
 
       // Copy link to clipboard
       navigator.clipboard.writeText(accountingLink);
       toast({
         title: "Link skopiowany",
-        description: "Link dla księgowości został skopiowany do schowka",
+        description: "Link dla księgowości został skopiowany do schowka"
       });
-
       setAmount('');
       setNotes('');
       setIsOpen(false);
@@ -83,22 +80,19 @@ export const AccountingPanel = ({ contractId, contractNumber }: AccountingPanelP
       toast({
         title: "Błąd",
         description: "Nie udało się wysłać do księgowości",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const copyAccountingLink = (invoiceId: string) => {
     const link = `${window.location.origin}/accounting-upload/${invoiceId}`;
     navigator.clipboard.writeText(link);
     toast({
       title: "Link skopiowany",
-      description: "Link dla księgowości został skopiowany do schowka",
+      description: "Link dla księgowości został skopiowany do schowka"
     });
   };
-
-  return (
-    <Card>
+  return <Card>
       <CardHeader>
         <CardTitle>Panel księgowości</CardTitle>
         <CardDescription>Nr umowy: {contractNumber}</CardDescription>
@@ -134,80 +128,20 @@ export const AccountingPanel = ({ contractId, contractNumber }: AccountingPanelP
               </div>
               <div className="space-y-2">
                 <Label>Kwota (PLN)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0.00"
-                />
+                <Input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" />
               </div>
               <div className="space-y-2">
                 <Label>Notatki</Label>
-                <Textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Dodatkowe informacje..."
-                  rows={3}
-                />
+                <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Dodatkowe informacje..." rows={3} />
               </div>
-              <Button 
-                onClick={handleSubmitToAccounting}
-                disabled={addInvoice.isPending}
-                className="w-full"
-              >
+              <Button onClick={handleSubmitToAccounting} disabled={addInvoice.isPending} className="w-full">
                 Wyślij
               </Button>
             </div>
           </DialogContent>
         </Dialog>
 
-        {invoices && invoices.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium">Historia faktur</h4>
-            {invoices.map((invoice) => (
-              <Card key={invoice.id}>
-                <CardContent className="pt-4 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium">{invoiceTypeLabels[invoice.invoice_type]}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Kwota: {invoice.amount} PLN
-                      </p>
-                      {invoice.notes && (
-                        <p className="text-sm text-muted-foreground mt-1">{invoice.notes}</p>
-                      )}
-                    </div>
-                    <Badge variant={invoice.status === 'completed' ? 'default' : 'secondary'}>
-                      {statusLabels[invoice.status]}
-                    </Badge>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => copyAccountingLink(invoice.id)}
-                    >
-                      <ExternalLink className="h-3 w-3 mr-1" />
-                      Link dla księgowości
-                    </Button>
-                    {invoice.invoice_file_url && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => window.open(invoice.invoice_file_url!, '_blank')}
-                      >
-                        <FileCheck className="h-3 w-3 mr-1" />
-                        Pobierz fakturę
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        {invoices && invoices.length > 0}
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
