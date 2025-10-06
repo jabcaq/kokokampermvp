@@ -61,6 +61,9 @@ export const Layout = () => {
       ]
     : [];
 
+  // Debug: log user roles to help troubleshoot
+  console.log("User roles:", userRoles);
+
   // Filter nav items based on user role
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly) {
