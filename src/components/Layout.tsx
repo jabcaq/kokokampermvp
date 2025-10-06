@@ -130,9 +130,9 @@ export const Layout = () => {
   );
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-white border-r border-sidebar-border shadow-sm">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-white border-r border-sidebar-border shadow-sm overflow-y-auto">
         <NavContent />
       </aside>
 
@@ -155,14 +155,16 @@ export const Layout = () => {
       </Sheet>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <div className="z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b flex-shrink-0">
           <div className="container mx-auto px-6 lg:px-8 max-w-7xl py-4 flex justify-end">
             <NotificationBell />
           </div>
         </div>
-        <div className="container mx-auto p-6 lg:p-8 max-w-7xl">
-          <Outlet />
+        <div className="flex-1 overflow-y-auto">
+          <div className="container mx-auto p-6 lg:p-8 max-w-7xl">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>

@@ -101,10 +101,10 @@ const Inquiries = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-16rem)] lg:h-auto">
         {/* Lista zapytań */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
+        <Card className="lg:col-span-1 flex flex-col overflow-hidden">
+          <CardHeader className="flex-shrink-0">
             <CardTitle className="flex items-center gap-2">
               <Inbox className="h-5 w-5" />
               Przychodzące zapytania
@@ -113,13 +113,13 @@ const Inquiries = () => {
               {inquiries.filter(i => i.status === "new").length} nowych zapytań
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 overflow-hidden">
             {isLoading ? (
               <div className="flex justify-center items-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
-              <ScrollArea className="h-[600px] pr-4">
+              <ScrollArea className="h-full pr-4">
                 <div className="space-y-3">
                   {inquiries.map((inquiry) => (
                     <Card
@@ -156,8 +156,8 @@ const Inquiries = () => {
         </Card>
 
         {/* Edytor odpowiedzi */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
+        <Card className="lg:col-span-2 flex flex-col overflow-hidden">
+          <CardHeader className="flex-shrink-0">
             <CardTitle className="flex items-center gap-2">
               <Reply className="h-5 w-5" />
               Edytor odpowiedzi
@@ -171,7 +171,7 @@ const Inquiries = () => {
               ) : "Wybierz zapytanie"}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 overflow-y-auto">
             {selectedInquiry ? (
               <div className="space-y-4">
                 <div className="bg-muted p-4 rounded-lg space-y-2">
@@ -198,7 +198,7 @@ const Inquiries = () => {
                 {messages.length > 0 && (
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Historia konwersacji</label>
-                    <ScrollArea className="h-[300px] border rounded-lg p-4">
+                    <ScrollArea className="max-h-[250px] border rounded-lg p-4">
                       <div className="space-y-3">
                         {messages.map((msg) => (
                           <div
