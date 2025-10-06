@@ -10,6 +10,7 @@ import { useInquiries, useUpdateInquiryStatus } from "@/hooks/useInquiries";
 import { useCreateNotification } from "@/hooks/useNotifications";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useInquiryMessages, useAddInquiryMessage } from "@/hooks/useInquiryMessages";
 
 const Inquiries = () => {
   const { data: inquiries = [], isLoading } = useInquiries();
@@ -18,6 +19,8 @@ const Inquiries = () => {
   const { toast } = useToast();
   const updateStatusMutation = useUpdateInquiryStatus();
   const createNotificationMutation = useCreateNotification();
+  const { data: messages = [] } = useInquiryMessages(selectedInquiry?.id);
+  const addMessageMutation = useAddInquiryMessage();
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
@@ -31,12 +34,20 @@ const Inquiries = () => {
   };
 
   const handleSendReply = async () => {
-    if (!selectedInquiry) return;
+    if (!selectedInquiry || !replyMessage.trim()) return;
     
     try {
+      // Save message to inquiry_messages
+      await addMessageMutation.mutateAsync({
+        inquiryId: selectedInquiry.id,
+        message: replyMessage,
+        senderType: 'admin',
+      });
+      
+      // Update inquiry status
       await updateStatusMutation.mutateAsync({
         id: selectedInquiry.id,
-        status: 'completed',
+        status: 'in_progress',
       });
       
       // Create notification for inquiry response
@@ -45,11 +56,6 @@ const Inquiries = () => {
         title: 'Udzielono odpowiedzi na zapytanie',
         message: `Odpowiedziano na zapytanie od ${selectedInquiry.name}: ${selectedInquiry.subject || 'Bez tematu'}`,
         link: `/inquiries`,
-      });
-      
-      toast({
-        title: "Odpowiedź wysłana",
-        description: "Wiadomość została wysłana pomyślnie.",
       });
       
       setReplyMessage("");
@@ -154,6 +160,37 @@ const Inquiries = () => {
                       <p className="text-sm whitespace-pre-wrap">{selectedInquiry.message}</p>
                     </div>
                 </div>
+
+                {/* Historia konwersacji */}
+                {messages.length > 0 && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Historia konwersacji</label>
+                    <ScrollArea className="h-[300px] border rounded-lg p-4">
+                      <div className="space-y-3">
+                        {messages.map((msg) => (
+                          <div
+                            key={msg.id}
+                            className={`p-3 rounded-lg ${
+                              msg.sender_type === 'admin' 
+                                ? 'bg-primary/10 ml-8' 
+                                : 'bg-muted mr-8'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between mb-1">
+                              <p className="text-xs font-medium">
+                                {msg.sender_type === 'admin' ? 'Administrator' : selectedInquiry.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(msg.created_at), 'dd.MM.yyyy HH:mm')}
+                              </p>
+                            </div>
+                            <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Twoja odpowiedź</label>
