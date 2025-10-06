@@ -564,6 +564,7 @@ export type Database = {
           created_at: string
           id: string
           inquiry_id: string
+          inquiry_number: string | null
           message: string
           sender_type: string
           updated_at: string
@@ -572,6 +573,7 @@ export type Database = {
           created_at?: string
           id?: string
           inquiry_id: string
+          inquiry_number?: string | null
           message: string
           sender_type: string
           updated_at?: string
@@ -580,6 +582,7 @@ export type Database = {
           created_at?: string
           id?: string
           inquiry_id?: string
+          inquiry_number?: string | null
           message?: string
           sender_type?: string
           updated_at?: string

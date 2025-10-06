@@ -42,6 +42,7 @@ const Inquiries = () => {
         inquiryId: selectedInquiry.id,
         message: replyMessage,
         senderType: 'admin',
+        inquiryNumber: selectedInquiry.inquiry_number,
       });
       
       // Update inquiry status

@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 export interface InquiryMessage {
   id: string;
   inquiry_id: string;
+  inquiry_number?: string;
   sender_type: 'customer' | 'admin';
   message: string;
   created_at: string;
@@ -35,10 +36,11 @@ export const useAddInquiryMessage = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ inquiryId, message, senderType }: { 
+    mutationFn: async ({ inquiryId, message, senderType, inquiryNumber }: { 
       inquiryId: string; 
       message: string; 
       senderType: 'customer' | 'admin';
+      inquiryNumber?: string;
     }) => {
       const { data, error } = await supabase
         .from('inquiry_messages')
@@ -46,6 +48,7 @@ export const useAddInquiryMessage = () => {
           inquiry_id: inquiryId,
           message,
           sender_type: senderType,
+          inquiry_number: inquiryNumber,
         })
         .select()
         .single();
