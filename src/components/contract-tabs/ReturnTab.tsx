@@ -51,6 +51,51 @@ export const ReturnTab = ({ contractId, contractNumber, tenantName, startDate, e
 
   return (
     <div className="space-y-6">
+      {/* Booking link card */}
+      <Card className="shadow-md border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CalendarCheck className="h-5 w-5" />
+            Rezerwacja terminu zwrotu
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">
+            Wyślij klientowi link do rezerwacji terminu zwrotu kampera. Klient wybierze dogodny termin w kalendarzu.
+          </p>
+          {scheduledReturn && (
+            <div className="p-4 bg-muted rounded-lg space-y-2">
+              <Label className="text-sm font-semibold">Zarezerwowany termin:</Label>
+              <div className="flex items-center gap-2">
+                <CalendarCheck className="h-4 w-4 text-primary" />
+                <span className="font-medium">
+                  {format(new Date(scheduledReturn.scheduled_return_date), "dd.MM.yyyy")} o {scheduledReturn.scheduled_return_time}
+                </span>
+              </div>
+              {scheduledReturn.booking_notes && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Uwagi: {scheduledReturn.booking_notes}
+                </p>
+              )}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button onClick={copyBookingLink} variant="outline" className="gap-2 flex-1">
+              <Copy className="h-4 w-4" />
+              Skopiuj link do rezerwacji
+            </Button>
+            <Button 
+              onClick={() => window.open(returnBookingLink, '_blank')} 
+              variant="outline"
+              className="gap-2"
+            >
+              <LinkIcon className="h-4 w-4" />
+              Otwórz
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Button to open return form */}
       <Card className="shadow-md">
         <CardHeader>
