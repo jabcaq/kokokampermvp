@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useAddClient } from "@/hooks/useClients";
+import { useAddClient, Client } from "@/hooks/useClients";
 import { useAddContract } from "@/hooks/useContracts";
 import { useVehicles } from "@/hooks/useVehicles";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, Info } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -37,12 +39,15 @@ export const CreateContractFromInquiryDialog = ({
   onSuccess,
 }: CreateContractFromInquiryDialogProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const addClient = useAddClient();
   const addContract = useAddContract();
   const { data: vehicles = [] } = useVehicles();
   const [isCreating, setIsCreating] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [vehicleSearchOpen, setVehicleSearchOpen] = useState(false);
+  const [existingClient, setExistingClient] = useState<Client | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   const [formData, setFormData] = useState({
     name: inquiry?.name || "",
@@ -79,12 +84,19 @@ export const CreateContractFromInquiryDialog = ({
 
     setIsCreating(true);
     try {
-      // Utwórz klienta
-      const client = await addClient.mutateAsync({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone || null,
-      });
+      // Użyj istniejącego klienta lub utwórz nowego
+      let clientId: string;
+      
+      if (existingClient) {
+        clientId = existingClient.id;
+      } else {
+        const newClient = await addClient.mutateAsync({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || null,
+        });
+        clientId = newClient.id;
+      }
 
       // Znajdź wybrany pojazd
       const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
@@ -124,9 +136,9 @@ export const CreateContractFromInquiryDialog = ({
       const contractNumber = `${typePrefix}/${nextNumber}/${year}`;
 
       // Utwórz umowę
-      await addContract.mutateAsync({
+      const newContract = await addContract.mutateAsync({
         contract_number: contractNumber,
-        client_id: client.id,
+        client_id: clientId,
         tenant_name: formData.name,
         tenant_email: formData.email,
         tenant_phone: formData.phone || null,
@@ -146,11 +158,16 @@ export const CreateContractFromInquiryDialog = ({
 
       toast({
         title: "Sukces",
-        description: "Klient i umowa zostały utworzone.",
+        description: existingClient 
+          ? "Umowa została utworzona dla istniejącego klienta." 
+          : "Klient i umowa zostały utworzone.",
       });
 
       onOpenChange(false);
       onSuccess?.();
+      
+      // Przekieruj do szczegółów utworzonej umowy
+      navigate(`/contracts/${newContract.id}`);
     } catch (error) {
       console.error('Error creating client and contract:', error);
       toast({
@@ -163,6 +180,35 @@ export const CreateContractFromInquiryDialog = ({
     }
   };
 
+  // Check for existing client by email
+  useEffect(() => {
+    const checkExistingClient = async () => {
+      if (!formData.email || formData.email.length < 5) {
+        setExistingClient(null);
+        return;
+      }
+
+      setCheckingEmail(true);
+      try {
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('email', formData.email.toLowerCase())
+          .maybeSingle();
+
+        if (error) throw error;
+        setExistingClient(data);
+      } catch (error) {
+        console.error('Error checking existing client:', error);
+      } finally {
+        setCheckingEmail(false);
+      }
+    };
+
+    const timeoutId = setTimeout(checkExistingClient, 500);
+    return () => clearTimeout(timeoutId);
+  }, [formData.email]);
+
   // Reset form when inquiry changes
   useEffect(() => {
     if (inquiry && open) {
@@ -174,6 +220,7 @@ export const CreateContractFromInquiryDialog = ({
         returnDate: inquiry.return_date || "",
       });
       setSelectedVehicleId("");
+      setExistingClient(null);
     }
   }, [inquiry, open]);
 
@@ -209,7 +256,30 @@ export const CreateContractFromInquiryDialog = ({
               onChange={(e) => updateFormData('email', e.target.value)}
               placeholder="jan@example.com"
             />
+            {checkingEmail && (
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Sprawdzanie...
+              </p>
+            )}
           </div>
+
+          {existingClient && (
+            <Alert className="border-primary/50 bg-primary/5">
+              <Info className="h-4 w-4 text-primary" />
+              <AlertDescription className="text-sm">
+                <strong>Klient już istnieje w bazie:</strong>
+                <div className="mt-1">
+                  <div><strong>Imię i nazwisko:</strong> {existingClient.name}</div>
+                  <div><strong>Email:</strong> {existingClient.email}</div>
+                  {existingClient.phone && <div><strong>Telefon:</strong> {existingClient.phone}</div>}
+                  <div className="mt-2 text-muted-foreground">
+                    Zostanie utworzona tylko nowa umowa dla tego klienta.
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="phone">Telefon</Label>
