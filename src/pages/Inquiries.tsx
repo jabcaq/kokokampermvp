@@ -268,14 +268,14 @@ const Inquiries = () => {
               {inquiries.filter(i => i.status === "new").length} nowych zapytań
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 overflow-hidden">
+          <CardContent className="flex-1 overflow-hidden min-h-0">
             {isLoading ? (
               <div className="flex justify-center items-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
-              <ScrollArea className="h-full pr-4">
-                <div className="space-y-3">
+              <ScrollArea className="h-full">
+                <div className="space-y-3 pr-4">
                   {inquiries.map((inquiry) => (
                     <Card
                       key={inquiry.id}
