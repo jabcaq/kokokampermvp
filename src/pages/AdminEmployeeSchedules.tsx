@@ -152,8 +152,8 @@ export default function AdminEmployeeSchedules() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 h-full flex flex-col">
+      <div className="flex items-center justify-between flex-shrink-0">
         <div>
           <h1 className="text-3xl font-bold">Harmonogramy pracowników</h1>
           <p className="text-muted-foreground">
@@ -179,7 +179,7 @@ export default function AdminEmployeeSchedules() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-shrink-0">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -252,21 +252,21 @@ export default function AdminEmployeeSchedules() {
         </Card>
       )}
 
-      <Tabs defaultValue="calendar" className="space-y-4">
-        <TabsList>
+      <Tabs defaultValue="calendar" className="space-y-4 flex flex-col flex-1 min-h-0">
+        <TabsList className="flex-shrink-0">
           <TabsTrigger value="calendar">Widok kalendarza</TabsTrigger>
           <TabsTrigger value="list">Lista dyżurów</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="calendar">
-          <Card className="shadow-sm">
-            <CardContent className="p-4">
+        <TabsContent value="calendar" className="flex-1 min-h-0">
+          <Card className="shadow-sm h-full flex flex-col">
+            <CardContent className="p-4 flex-1 min-h-0">
               <Calendar
                 localizer={localizer}
                 events={events}
                 startAccessor="start"
                 endAccessor="end"
-                style={{ height: 800 }}
+                style={{ height: "100%" }}
                 messages={messages}
                 eventPropGetter={eventStyleGetter}
                 defaultView="week"
