@@ -22,7 +22,7 @@ const navItems = [
   { path: "/invoices", label: "Faktury i Paragony", icon: Receipt },
   { path: "/inquiries", label: "Zapytania", icon: Mail },
   { path: "/users", label: "Użytkownicy", icon: UserCog },
-  { path: "/admin/employee-schedules", label: "Harmonogramy pracowników", icon: CalendarClock, adminOnly: true },
+  { path: "/admin/employee-schedules", label: "Harmonogramy\npracowników", icon: CalendarClock, adminOnly: true },
 ];
 
 export const Layout = () => {
@@ -105,7 +105,7 @@ export const Layout = () => {
                 }`}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
-                <span className="text-left leading-tight">{item.label}</span>
+                <span className="text-left leading-tight whitespace-pre-line">{item.label}</span>
               </Button>
             </Link>
           );
