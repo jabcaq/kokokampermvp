@@ -164,6 +164,7 @@ const Users = () => {
                       <SelectContent>
                         <SelectItem value="user">Użytkownik</SelectItem>
                         <SelectItem value="admin">Administrator</SelectItem>
+                        <SelectItem value="return_handler">Pracownik obsługi zwrotów</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -248,7 +249,7 @@ const Users = () => {
                   </TableCell>
                   <TableCell>
                     <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-                      {user.role === "admin" ? "Administrator" : "Użytkownik"}
+                      {user.role === "admin" ? "Administrator" : user.role === "return_handler" ? "Pracownik zwrotów" : "Użytkownik"}
                     </Badge>
                   </TableCell>
                   <TableCell>

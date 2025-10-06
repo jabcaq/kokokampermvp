@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateReturnBooking } from "@/hooks/useReturnBookings";
-import { Clock, MapPin, Globe, CheckCircle2, AlertCircle } from "lucide-react";
+import { useAvailableEmployees } from "@/hooks/useEmployeeRouting";
+import { Clock, MapPin, Globe, CheckCircle2, AlertCircle, UserCheck } from "lucide-react";
 import { format, isAfter, startOfDay } from "date-fns";
 import { pl } from "date-fns/locale";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -34,6 +35,14 @@ export default function ReturnBooking() {
 
   const createBooking = useCreateReturnBooking();
 
+  // Get available employees for selected date and time
+  const { data: availableEmployees } = useAvailableEmployees(
+    selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
+    selectedTime || ""
+  );
+
+  const hasAvailableStaff = availableEmployees && availableEmployees.length > 0;
+
   // Calculate minimum date (contract end date)
   const minDate = endDate ? startOfDay(new Date(endDate)) : new Date();
   
@@ -43,11 +52,14 @@ export default function ReturnBooking() {
     : false;
 
   const handleConfirm = () => {
-    if (!selectedDate || !selectedTime || !contractId) return;
+    if (!selectedDate || !selectedTime || !contractId || !hasAvailableStaff) return;
 
     const bookingDateTime = new Date(selectedDate);
     const [hours, minutes] = selectedTime.split(":");
     bookingDateTime.setHours(parseInt(hours), parseInt(minutes));
+
+    // Assign to employee with least workload
+    const assignedEmployee = availableEmployees![0];
 
     createBooking.mutate({
       contract_id: contractId,
@@ -56,7 +68,8 @@ export default function ReturnBooking() {
       booking_notes: notes || null,
       mileage: 0,
       fuel_level: 0,
-      employee_name: tenantName,
+      employee_name: assignedEmployee.employee_name,
+      assigned_employee_id: assignedEmployee.employee_id,
     }, {
       onSuccess: () => {
         setIsBooked(true);
@@ -195,6 +208,25 @@ export default function ReturnBooking() {
                       </div>
                     </div>
 
+                    {selectedTime && !hasAvailableStaff && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          Niestety, w wybranym terminie nie ma dostępnych pracowników. 
+                          Wybierz inną godzinę lub datę.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {selectedTime && hasAvailableStaff && (
+                      <Alert>
+                        <UserCheck className="h-4 w-4" />
+                        <AlertDescription>
+                          Zwrot będzie obsługiwany przez: <strong>{availableEmployees![0].employee_name}</strong>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
                     {selectedTime && (
                       <>
                         <div className="space-y-2">
@@ -212,7 +244,7 @@ export default function ReturnBooking() {
                           onClick={handleConfirm} 
                           className="w-full"
                           size="lg"
-                          disabled={createBooking.isPending}
+                          disabled={createBooking.isPending || !hasAvailableStaff}
                         >
                           Potwierdź rezerwację
                         </Button>

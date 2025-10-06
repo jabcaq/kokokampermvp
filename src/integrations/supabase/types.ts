@@ -350,6 +350,77 @@ export type Database = {
           },
         ]
       }
+      employee_availability_settings: {
+        Row: {
+          advance_booking_days: number
+          created_at: string | null
+          id: string
+          max_concurrent_returns: number
+          return_duration_minutes: number
+          updated_at: string | null
+        }
+        Insert: {
+          advance_booking_days?: number
+          created_at?: string | null
+          id?: string
+          max_concurrent_returns?: number
+          return_duration_minutes?: number
+          updated_at?: string | null
+        }
+        Update: {
+          advance_booking_days?: number
+          created_at?: string | null
+          id?: string
+          max_concurrent_returns?: number
+          return_duration_minutes?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      employee_schedules: {
+        Row: {
+          created_at: string | null
+          employee_id: string
+          end_time: string
+          id: string
+          is_available: boolean
+          notes: string | null
+          start_time: string
+          updated_at: string | null
+          work_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          employee_id: string
+          end_time: string
+          id?: string
+          is_available?: boolean
+          notes?: string | null
+          start_time: string
+          updated_at?: string | null
+          work_date: string
+        }
+        Update: {
+          created_at?: string | null
+          employee_id?: string
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          notes?: string | null
+          start_time?: string
+          updated_at?: string | null
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_schedules_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inquiries: {
         Row: {
           budget_from: number | null
@@ -612,6 +683,7 @@ export type Database = {
       }
       vehicle_returns: {
         Row: {
+          assigned_employee_id: string | null
           booking_notes: string | null
           can_refund_deposit: boolean | null
           contract_id: string
@@ -632,6 +704,7 @@ export type Database = {
           vehicle_issue: boolean | null
         }
         Insert: {
+          assigned_employee_id?: string | null
           booking_notes?: string | null
           can_refund_deposit?: boolean | null
           contract_id: string
@@ -652,6 +725,7 @@ export type Database = {
           vehicle_issue?: boolean | null
         }
         Update: {
+          assigned_employee_id?: string | null
           booking_notes?: string | null
           can_refund_deposit?: boolean | null
           contract_id?: string
@@ -672,6 +746,13 @@ export type Database = {
           vehicle_issue?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "vehicle_returns_assigned_employee_id_fkey"
+            columns: ["assigned_employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vehicle_returns_contract_id_fkey"
             columns: ["contract_id"]
@@ -756,7 +837,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "staff" | "user"
+      app_role: "admin" | "staff" | "user" | "return_handler"
       contract_status: "active" | "completed" | "cancelled" | "pending"
       inquiry_status: "new" | "in_progress" | "completed" | "archived"
     }
@@ -886,7 +967,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff", "user"],
+      app_role: ["admin", "staff", "user", "return_handler"],
       contract_status: ["active", "completed", "cancelled", "pending"],
       inquiry_status: ["new", "in_progress", "completed", "archived"],
     },

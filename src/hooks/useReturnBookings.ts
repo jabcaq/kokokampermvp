@@ -13,6 +13,7 @@ export interface ReturnBooking {
   mileage: number;
   fuel_level: number;
   employee_name: string;
+  assigned_employee_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -46,6 +47,7 @@ export const useCreateReturnBooking = () => {
       mileage: number;
       fuel_level: number;
       employee_name: string;
+      assigned_employee_id?: string;
     }) => {
       const { data, error } = await supabase
         .from("vehicle_returns")

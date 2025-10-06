@@ -28,6 +28,8 @@ import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
 import ReturnCalendar from "./pages/ReturnCalendar";
 import ReturnBooking from "./pages/ReturnBooking";
+import EmployeeSchedule from "./pages/EmployeeSchedule";
+import MyReturns from "./pages/MyReturns";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +67,8 @@ const App = () => (
               <Route path="/invoices" element={<InvoicesManagement />} />
               <Route path="/users" element={<Users />} />
               <Route path="/return-calendar" element={<ReturnCalendar />} />
+              <Route path="/employee-schedule" element={<EmployeeSchedule />} />
+              <Route path="/my-returns" element={<MyReturns />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

@@ -4,9 +4,12 @@ import "moment/locale/pl";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { useState } from "react";
 import { useReturnBookings } from "@/hooks/useReturnBookings";
-import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -35,7 +38,25 @@ export default function ReturnCalendar() {
   const { data: bookings, isLoading } = useReturnBookings();
   const [view, setView] = useState<View>("week");
   const [date, setDate] = useState(new Date());
+  const [selectedEmployee, setSelectedEmployee] = useState<string>("all");
   const navigate = useNavigate();
+
+  // Get list of employees who handle returns
+  const { data: employees } = useQuery({
+    queryKey: ["return_handlers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("user_id, profiles(id, full_name)")
+        .eq("role", "return_handler");
+      
+      if (error) throw error;
+      return data.map((ur: any) => ({
+        id: ur.user_id,
+        name: ur.profiles?.full_name || "Nieznany",
+      }));
+    },
+  });
 
   if (isLoading) {
     return (
@@ -45,7 +66,12 @@ export default function ReturnCalendar() {
     );
   }
 
-  const events = bookings?.map((booking) => {
+  // Filter bookings by selected employee
+  const filteredBookings = selectedEmployee === "all" 
+    ? bookings 
+    : bookings?.filter(b => b.assigned_employee_id === selectedEmployee);
+
+  const events = filteredBookings?.map((booking) => {
     const [hours, minutes] = booking.scheduled_return_time.split(":");
     const startDate = new Date(booking.scheduled_return_date);
     startDate.setHours(parseInt(hours), parseInt(minutes));
@@ -163,6 +189,23 @@ export default function ReturnCalendar() {
           <p className="text-muted-foreground">
             Przegląd wszystkich zaplanowanych zwrotów kamperów
           </p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Wszyscy pracownicy" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Wszyscy pracownicy</SelectItem>
+              {employees?.map((emp) => (
+                <SelectItem key={emp.id} value={emp.id}>
+                  {emp.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import { Link, useLocation, Outlet } from "react-router-dom";
-import { Home, Users, FileText, UserPlus, Truck, Menu, Mail, ClipboardCheck, LogOut, FolderOpen, UserCog, Receipt, Calendar } from "lucide-react";
+import { Home, Users, FileText, UserPlus, Truck, Menu, Mail, ClipboardCheck, LogOut, FolderOpen, UserCog, Receipt, Calendar, CalendarClock, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
@@ -7,6 +7,8 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { useCheckExpiringDocuments } from "@/hooks/useNotifications";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import logoImage from "@/assets/koko-logo.jpeg";
 
 const navItems = [
@@ -29,6 +31,33 @@ export const Layout = () => {
   const { signOut, user } = useAuth();
   const { toast } = useToast();
 
+  // Check if user is a return handler
+  const { data: isReturnHandler } = useQuery({
+    queryKey: ["user_role", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "return_handler")
+        .maybeSingle();
+      
+      return !!data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Add employee-specific nav items if user is a return handler
+  const employeeNavItems = isReturnHandler
+    ? [
+        { path: "/employee-schedule", label: "Mój harmonogram", icon: CalendarClock },
+        { path: "/my-returns", label: "Moje zwroty", icon: CalendarCheck },
+      ]
+    : [];
+
+  const allNavItems = [...navItems, ...employeeNavItems];
+
   const handleSignOut = async () => {
     await signOut();
     toast({
@@ -48,7 +77,7 @@ export const Layout = () => {
         <img src={logoImage} alt="Koko Kamper" className="h-16 w-auto" />
       </div>
       <nav className="flex-1 p-4 space-y-2">
-        {navItems.map((item) => {
+        {allNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
           return (
