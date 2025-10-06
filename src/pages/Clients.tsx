@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Loader2, Trash2, ArrowUpDown, Eye, AlertTriangle } from "lucide-react";
+import { format } from "date-fns";
+import { pl } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,7 +29,7 @@ const Clients = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
-  const [sortField, setSortField] = useState<"name" | "email" | "contracts_count">("name");
+  const [sortField, setSortField] = useState<"name" | "email" | "contracts_count" | "created_at">("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
@@ -108,7 +110,7 @@ const Clients = () => {
     }
   };
 
-  const handleSort = (field: "name" | "email" | "contracts_count") => {
+  const handleSort = (field: "name" | "email" | "contracts_count" | "created_at") => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -323,6 +325,15 @@ const Clients = () => {
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
                 </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => handleSort("created_at")}
+                >
+                  <div className="flex items-center gap-2">
+                    Data utworzenia
+                    <ArrowUpDown className="h-4 w-4" />
+                  </div>
+                </TableHead>
                 <TableHead className="text-right">Akcje</TableHead>
               </TableRow>
             </TableHeader>
@@ -377,6 +388,12 @@ const Clients = () => {
                       <span className="inline-flex items-center justify-center bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
                         {client.contracts_count}
                       </span>
+                    </TableCell>
+                    <TableCell 
+                      className="text-muted-foreground cursor-pointer"
+                      onClick={() => navigate(`/clients/${client.id}`)}
+                    >
+                      {client.created_at ? format(new Date(client.created_at), 'dd.MM.yyyy HH:mm', { locale: pl }) : '—'}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
