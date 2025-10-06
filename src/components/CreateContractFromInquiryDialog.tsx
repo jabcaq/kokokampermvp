@@ -92,15 +92,23 @@ export const CreateContractFromInquiryDialog = ({
         throw new Error("Nie znaleziono wybranego pojazdu");
       }
 
-      // Generuj numer umowy na podstawie typu pojazdu
-      const vehicleType = selectedVehicle.type || 'UNK';
+      // Określ skrót typu pojazdu (K dla kamperów, P dla przyczep)
+      const vehicleType = selectedVehicle.type || '';
+      let typePrefix = 'K'; // domyślnie kamper
+      
+      if (vehicleType.toLowerCase().includes('przyczepa') || vehicleType.toLowerCase().includes('trailer')) {
+        typePrefix = 'P';
+      } else if (vehicleType.toLowerCase().includes('kamper') || vehicleType.toLowerCase().includes('van')) {
+        typePrefix = 'K';
+      }
+      
       const year = new Date().getFullYear();
       
-      // Pobierz ostatni numer dla tego typu pojazdu w tym roku
+      // Pobierz ostatni numer dla tego typu w tym roku
       const { data: existingContracts } = await supabase
         .from('contracts')
         .select('contract_number')
-        .like('contract_number', `${year}/${vehicleType}/%`)
+        .like('contract_number', `${typePrefix}/%/${year}`)
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -109,11 +117,11 @@ export const CreateContractFromInquiryDialog = ({
         const lastNumber = existingContracts[0].contract_number;
         const parts = lastNumber.split('/');
         if (parts.length === 3) {
-          nextNumber = parseInt(parts[2]) + 1;
+          nextNumber = parseInt(parts[1]) + 1;
         }
       }
 
-      const contractNumber = `${year}/${vehicleType}/${nextNumber.toString().padStart(3, '0')}`;
+      const contractNumber = `${typePrefix}/${nextNumber}/${year}`;
 
       // Utwórz umowę
       await addContract.mutateAsync({
