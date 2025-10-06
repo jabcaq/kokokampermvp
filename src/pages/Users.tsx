@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { UserPlus, Archive, ArchiveRestore, Key, Edit, Check, X } from "lucide-react";
+import { UserPlus, Archive, ArchiveRestore, Key, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,7 @@ const Users = () => {
   } = useUsers();
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [resetUserId, setResetUserId] = useState<string | null>(null);
   const [archiveUserId, setArchiveUserId] = useState<string | null>(null);
@@ -71,8 +72,12 @@ const Users = () => {
     setNewUser({ email: "", password: "", full_name: "", role: "user" });
   };
 
-  const handleUpdateUser = async (id: string, field: string, value: string) => {
-    await updateUserMutation.mutateAsync({ id, [field]: value });
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    
+    await updateUserMutation.mutateAsync(editingUser);
+    setEditDialogOpen(false);
     setEditingUser(null);
   };
 
@@ -177,6 +182,66 @@ const Users = () => {
               </form>
             </DialogContent>
           </Dialog>
+          
+          <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+            <DialogContent>
+              <form onSubmit={handleUpdateUser}>
+                <DialogHeader>
+                  <DialogTitle>Edytuj użytkownika</DialogTitle>
+                  <DialogDescription>
+                    Zaktualizuj dane użytkownika
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-email">Email</Label>
+                    <Input
+                      id="edit-email"
+                      type="email"
+                      value={editingUser?.email || ""}
+                      onChange={(e) =>
+                        setEditingUser(editingUser ? { ...editingUser, email: e.target.value } : null)
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-full_name">Imię i nazwisko</Label>
+                    <Input
+                      id="edit-full_name"
+                      value={editingUser?.full_name || ""}
+                      onChange={(e) =>
+                        setEditingUser(editingUser ? { ...editingUser, full_name: e.target.value } : null)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-role">Rola</Label>
+                    <Select
+                      value={editingUser?.role || "user"}
+                      onValueChange={(value) =>
+                        setEditingUser(editingUser ? { ...editingUser, role: value } : null)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="user">Użytkownik</SelectItem>
+                        <SelectItem value="admin">Administrator</SelectItem>
+                        <SelectItem value="return_handler">Pracownik obsługi zwrotów</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit" disabled={updateUserMutation.isPending}>
+                    {updateUserMutation.isPending ? "Zapisywanie..." : "Zapisz zmiany"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -202,51 +267,7 @@ const Users = () => {
               {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.email}</TableCell>
-                  <TableCell>
-                    {editingUser?.id === user.id ? (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={editingUser.full_name || ""}
-                          onChange={(e) =>
-                            setEditingUser({ ...editingUser, full_name: e.target.value })
-                          }
-                          className="h-8"
-                        />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={() =>
-                            handleUpdateUser(user.id, "full_name", editingUser.full_name || "")
-                          }
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={() => setEditingUser(null)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        {user.full_name || "Nie podano"}
-                        {!showArchived && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            onClick={() => setEditingUser(user)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </TableCell>
+                  <TableCell>{user.full_name || "Nie podano"}</TableCell>
                   <TableCell>
                     <Badge variant={user.role === "admin" ? "default" : "secondary"}>
                       {user.role === "admin" ? "Administrator" : user.role === "return_handler" ? "Pracownik zwrotów" : "Użytkownik"}
@@ -258,14 +279,27 @@ const Users = () => {
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       {!showArchived && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setResetUserId(user.id)}
-                        >
-                          <Key className="mr-2 h-4 w-4" />
-                          Resetuj hasło
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingUser(user);
+                              setEditDialogOpen(true);
+                            }}
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edytuj
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setResetUserId(user.id)}
+                          >
+                            <Key className="mr-2 h-4 w-4" />
+                            Resetuj hasło
+                          </Button>
+                        </>
                       )}
                       <Button
                         size="sm"

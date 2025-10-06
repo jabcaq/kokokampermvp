@@ -93,14 +93,20 @@ export const useUsers = () => {
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ id, role, ...updates }: Partial<Profile> & { id: string }) => {
-      // Update profile (excluding role)
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update(updates)
-        .eq("id", id);
+    mutationFn: async ({ id, role, email, full_name }: Partial<Profile> & { id: string }) => {
+      // Update profile (email and full_name)
+      const profileUpdates: any = {};
+      if (email !== undefined) profileUpdates.email = email;
+      if (full_name !== undefined) profileUpdates.full_name = full_name;
+      
+      if (Object.keys(profileUpdates).length > 0) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update(profileUpdates)
+          .eq("id", id);
 
-      if (profileError) throw profileError;
+        if (profileError) throw profileError;
+      }
 
       // Update role in user_roles table if role is provided
       if (role) {
@@ -110,10 +116,10 @@ export const useUsers = () => {
           .delete()
           .eq("user_id", id);
 
-        // Insert new role (types will update after migration)
+        // Insert new role
         const { error: roleError } = await (supabase as any)
           .from("user_roles")
-          .insert({ user_id: id, role: role as 'admin' | 'staff' | 'user' });
+          .insert({ user_id: id, role: role });
 
         if (roleError) throw roleError;
       }
