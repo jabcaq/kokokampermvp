@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Mail, Send, Inbox, Trash2, Reply, Clock, Loader2, Plus } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { useInquiries, useUpdateInquiryStatus } from "@/hooks/useInquiries";
 import { useCreateNotification } from "@/hooks/useNotifications";
@@ -101,9 +102,10 @@ const Inquiries = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-16rem)] lg:h-auto">
+      <ResizablePanelGroup direction="horizontal" className="gap-6">
         {/* Lista zapytań */}
-        <Card className="lg:col-span-1 flex flex-col overflow-hidden">
+        <ResizablePanel defaultSize={25} minSize={20}>
+        <Card className="flex flex-col overflow-hidden h-[calc(100vh-16rem)]">
           <CardHeader className="flex-shrink-0">
             <CardTitle className="flex items-center gap-2">
               <Inbox className="h-5 w-5" />
@@ -154,9 +156,13 @@ const Inquiries = () => {
             )}
           </CardContent>
         </Card>
+        </ResizablePanel>
+
+        <ResizableHandle withHandle />
 
         {/* Edytor odpowiedzi */}
-        <Card className="lg:col-span-2 flex flex-col overflow-hidden">
+        <ResizablePanel defaultSize={40} minSize={30}>
+        <Card className="flex flex-col overflow-hidden h-[calc(100vh-16rem)]">
           <CardHeader className="flex-shrink-0">
             <CardTitle className="flex items-center gap-2">
               <Reply className="h-5 w-5" />
@@ -193,37 +199,6 @@ const Inquiries = () => {
                       <p className="text-sm whitespace-pre-wrap">{selectedInquiry.message}</p>
                     </div>
                 </div>
-
-                {/* Historia konwersacji */}
-                {messages.length > 0 && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Historia konwersacji</label>
-                    <ScrollArea className="max-h-[250px] border rounded-lg p-4">
-                      <div className="space-y-3">
-                        {messages.map((msg) => (
-                          <div
-                            key={msg.id}
-                            className={`p-3 rounded-lg ${
-                              msg.sender_type === 'admin' 
-                                ? 'bg-primary/10 ml-8' 
-                                : 'bg-muted mr-8'
-                            }`}
-                          >
-                            <div className="flex items-start justify-between mb-1">
-                              <p className="text-xs font-medium">
-                                {msg.sender_type === 'admin' ? 'Administrator' : selectedInquiry.name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {format(new Date(msg.created_at), 'dd.MM.yyyy HH:mm')}
-                              </p>
-                            </div>
-                            <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </div>
-                )}
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Twoja odpowiedź</label>
@@ -263,7 +238,60 @@ const Inquiries = () => {
             )}
           </CardContent>
         </Card>
-      </div>
+        </ResizablePanel>
+
+        <ResizableHandle withHandle />
+
+        {/* Historia konwersacji */}
+        <ResizablePanel defaultSize={35} minSize={25}>
+        <Card className="flex flex-col overflow-hidden h-[calc(100vh-16rem)]">
+          <CardHeader className="flex-shrink-0">
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Historia konwersacji
+            </CardTitle>
+            <CardDescription>
+              {selectedInquiry ? `${messages.length} wiadomości` : "Wybierz zapytanie"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-hidden">
+            {selectedInquiry && messages.length > 0 ? (
+              <ScrollArea className="h-full pr-4">
+                <div className="space-y-3">
+                  {messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`p-3 rounded-lg ${
+                        msg.sender_type === 'admin' 
+                          ? 'bg-primary/10 ml-8' 
+                          : 'bg-muted mr-8'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-1">
+                        <p className="text-xs font-medium">
+                          {msg.sender_type === 'admin' ? 'Administrator' : selectedInquiry.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(msg.created_at), 'dd.MM.yyyy HH:mm')}
+                        </p>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <div className="text-center">
+                  <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Brak historii konwersacji</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        </ResizablePanel>
+      </ResizablePanelGroup>
 
       <CreateContractFromInquiryDialog
         inquiry={selectedInquiry}
