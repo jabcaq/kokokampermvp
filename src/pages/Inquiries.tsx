@@ -151,7 +151,7 @@ const Inquiries = () => {
                     <Separator className="my-2" />
                     <div>
                       <p className="font-medium text-sm mb-1">{selectedInquiry.subject || 'Bez tematu'}</p>
-                      <p className="text-sm">{selectedInquiry.message}</p>
+                      <p className="text-sm whitespace-pre-wrap">{selectedInquiry.message}</p>
                     </div>
                 </div>
 
