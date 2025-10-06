@@ -92,18 +92,15 @@ const Inquiries = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-          Zapytania
-        </h1>
-        <p className="text-muted-foreground mt-2">
+    <div className="h-full flex flex-col gap-3">
+      <div className="flex-shrink-0">
+        <p className="text-sm text-muted-foreground">
           Zarządzaj zapytaniami z formularzy kontaktowych
         </p>
       </div>
 
       {/* Mobile Layout */}
-      <div className="flex flex-col lg:hidden gap-4 h-[calc(100vh-12rem)]">
+      <div className="flex flex-col lg:hidden gap-4 flex-1 min-h-0">
         <Card className="flex flex-col overflow-hidden max-h-[40vh]">
           <CardHeader className="flex-shrink-0">
             <CardTitle className="flex items-center gap-2">
@@ -255,7 +252,7 @@ const Inquiries = () => {
       </div>
 
       {/* Desktop Layout */}
-      <ResizablePanelGroup direction="horizontal" className="hidden lg:flex gap-6 h-[calc(100vh-12rem)]">
+      <ResizablePanelGroup direction="horizontal" className="hidden lg:flex gap-6 flex-1 min-h-0">
         {/* Lista zapytań */}
         <ResizablePanel defaultSize={25} minSize={20}>
         <Card className="flex flex-col overflow-hidden h-full">
@@ -330,9 +327,9 @@ const Inquiries = () => {
               ) : "Wybierz zapytanie"}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col overflow-hidden min-h-0 p-6">
+          <CardContent className="flex-1 flex flex-col overflow-hidden min-h-0 p-4">
             {selectedInquiry ? (
-              <div className="flex flex-col h-full gap-4">
+              <div className="flex flex-col h-full gap-3">
                 <div className="bg-muted p-4 rounded-lg space-y-2 flex-shrink-0">
                     <div className="flex items-start justify-between">
                       <div>
