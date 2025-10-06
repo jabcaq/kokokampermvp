@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Send, Inbox, Trash2, Reply, Clock, Loader2 } from "lucide-react";
+import { Mail, Send, Inbox, Trash2, Reply, Clock, Loader2, Plus } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { RichTextEditor } from "@/components/RichTextEditor";
@@ -11,11 +11,13 @@ import { useCreateNotification } from "@/hooks/useNotifications";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useInquiryMessages, useAddInquiryMessage } from "@/hooks/useInquiryMessages";
+import { CreateContractFromInquiryDialog } from "@/components/CreateContractFromInquiryDialog";
 
 const Inquiries = () => {
   const { data: inquiries = [], isLoading } = useInquiries();
   const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
   const [replyMessage, setReplyMessage] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const updateStatusMutation = useUpdateInquiryStatus();
   const createNotificationMutation = useCreateNotification();
@@ -234,6 +236,13 @@ const Inquiries = () => {
                 </div>
 
                 <div className="flex gap-2 justify-end">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setIsDialogOpen(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Utwórz klienta i umowę
+                  </Button>
                   <Button variant="outline" onClick={() => setReplyMessage("")}>
                     <Trash2 className="h-4 w-4 mr-2" />
                     Wyczyść
@@ -255,6 +264,16 @@ const Inquiries = () => {
           </CardContent>
         </Card>
       </div>
+
+      <CreateContractFromInquiryDialog
+        inquiry={selectedInquiry}
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onSuccess={() => {
+          setSelectedInquiry(null);
+          setReplyMessage("");
+        }}
+      />
     </div>
   );
 };

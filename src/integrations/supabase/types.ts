@@ -154,6 +154,8 @@ export type Database = {
           end_date: string
           handover_link: string | null
           id: string
+          inquiry_id: string | null
+          inquiry_number: string | null
           invoice_type: string | null
           lessor_address: string | null
           lessor_email: string | null
@@ -198,6 +200,8 @@ export type Database = {
           end_date: string
           handover_link?: string | null
           id?: string
+          inquiry_id?: string | null
+          inquiry_number?: string | null
           invoice_type?: string | null
           lessor_address?: string | null
           lessor_email?: string | null
@@ -242,6 +246,8 @@ export type Database = {
           end_date?: string
           handover_link?: string | null
           id?: string
+          inquiry_id?: string | null
+          inquiry_number?: string | null
           invoice_type?: string | null
           lessor_address?: string | null
           lessor_email?: string | null
@@ -283,6 +289,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
             referencedColumns: ["id"]
           },
         ]

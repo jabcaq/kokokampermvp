@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, FileText, User, Car, CreditCard, Edit2, Save, X, Link2, Loader2, Users, Truck, Package } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, User, Car, CreditCard, Edit2, Save, X, Link2, Loader2, Users, Truck, Package, MessageCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +20,7 @@ import { DriversTab } from "@/components/contract-tabs/DriversTab";
 import { HandoverTab } from "@/components/contract-tabs/HandoverTab";
 import { ReturnTab } from "@/components/contract-tabs/ReturnTab";
 import { InvoicesReceiptsTab } from "@/components/contract-tabs/InvoicesReceiptsTab";
+import { ConversationTab } from "@/components/contract-tabs/ConversationTab";
 import { ContractActionsPanel } from "@/components/contract-actions/ContractActionsPanel";
 import { AccountingPanel } from "@/components/contract-actions/AccountingPanel";
 
@@ -277,7 +278,7 @@ const ContractDetails = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 mb-8">
+        <TabsList className={`grid w-full mb-8 ${contract.inquiry_id ? 'grid-cols-6' : 'grid-cols-5'}`}>
           <TabsTrigger value="contract" className="gap-2">
             <FileText className="h-4 w-4" />
             Umowa
@@ -298,6 +299,12 @@ const ContractDetails = () => {
             <Package className="h-4 w-4" />
             Zdanie
           </TabsTrigger>
+          {contract.inquiry_id && (
+            <TabsTrigger value="conversation" className="gap-2">
+              <MessageCircle className="h-4 w-4" />
+              Konwersacja
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="contract" className="space-y-8">
@@ -1013,6 +1020,12 @@ const ContractDetails = () => {
             returns={returns}
           />
         </TabsContent>
+
+        {contract.inquiry_id && (
+          <TabsContent value="conversation">
+            <ConversationTab inquiryId={contract.inquiry_id} />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

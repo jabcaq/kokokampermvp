@@ -41,6 +41,8 @@ export interface Contract {
   return_link?: string;
   driver_submission_link?: string;
   invoice_type?: 'receipt' | 'invoice';
+  inquiry_id?: string | null;
+  inquiry_number?: string | null;
   created_at?: string;
   updated_at?: string;
 }
