@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmployeeSchedules } from "@/hooks/useEmployeeSchedules";
@@ -40,19 +41,31 @@ export default function AdminEmployeeSchedules() {
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
 
-  // Get all return handlers
+  // Get all return handlers with their profiles
   const { data: employees, isLoading: employeesLoading } = useQuery({
     queryKey: ["return_handlers"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: userRoles, error: rolesError } = await supabase
         .from("user_roles")
-        .select("user_id, profiles(id, full_name)")
+        .select("user_id")
         .eq("role", "return_handler");
       
-      if (error) throw error;
-      return data.map((ur: any) => ({
-        id: ur.user_id,
-        name: ur.profiles?.full_name || "Nieznany",
+      if (rolesError) throw rolesError;
+      
+      const userIds = userRoles.map(ur => ur.user_id);
+      
+      if (userIds.length === 0) return [];
+      
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+      
+      if (profilesError) throw profilesError;
+      
+      return profiles.map(profile => ({
+        id: profile.id,
+        name: profile.full_name || "Nieznany",
       }));
     },
   });
@@ -239,69 +252,81 @@ export default function AdminEmployeeSchedules() {
         </Card>
       )}
 
-      <Card className="shadow-sm">
-        <CardContent className="p-4">
-          <Calendar
-            localizer={localizer}
-            events={events}
-            startAccessor="start"
-            endAccessor="end"
-            style={{ height: 800 }}
-            messages={messages}
-            eventPropGetter={eventStyleGetter}
-            defaultView="week"
-            views={['month', 'week', 'day']}
-            step={60}
-            timeslots={1}
-            min={new Date(2024, 0, 1, 8, 0, 0)}
-            max={new Date(2024, 0, 1, 20, 0, 0)}
-            onNavigate={setCurrentDate}
-            date={currentDate}
-          />
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="calendar" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="calendar">Widok kalendarza</TabsTrigger>
+          <TabsTrigger value="list">Lista dyżurów</TabsTrigger>
+        </TabsList>
 
-      {schedules && schedules.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Lista dyżurów</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {schedules.slice(0, 10).map((schedule) => {
-                const employee = employees?.find(e => e.id === schedule.employee_id);
-                return (
-                  <div
-                    key={schedule.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium">{employee?.name || "Nieznany pracownik"}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(schedule.work_date), "EEEE, d MMMM yyyy", { locale: pl })}
-                      </p>
-                      <p className="text-sm">
-                        {schedule.start_time} - {schedule.end_time}
-                      </p>
-                      {schedule.notes && (
-                        <p className="text-xs text-muted-foreground mt-1">{schedule.notes}</p>
-                      )}
-                    </div>
-                    <Badge variant={schedule.is_available ? "default" : "secondary"}>
-                      {schedule.is_available ? "Dostępny" : "Niedostępny"}
-                    </Badge>
-                  </div>
-                );
-              })}
-              {schedules.length > 10 && (
-                <p className="text-sm text-muted-foreground text-center pt-2">
-                  ...i {schedules.length - 10} więcej dyżurów
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="calendar">
+          <Card className="shadow-sm">
+            <CardContent className="p-4">
+              <Calendar
+                localizer={localizer}
+                events={events}
+                startAccessor="start"
+                endAccessor="end"
+                style={{ height: 800 }}
+                messages={messages}
+                eventPropGetter={eventStyleGetter}
+                defaultView="week"
+                views={['month', 'week', 'day']}
+                step={60}
+                timeslots={1}
+                min={new Date(2024, 0, 1, 8, 0, 0)}
+                max={new Date(2024, 0, 1, 20, 0, 0)}
+                onNavigate={setCurrentDate}
+                date={currentDate}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="list">
+          {schedules && schedules.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Lista dyżurów</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {schedules.map((schedule) => {
+                    const employee = employees?.find(e => e.id === schedule.employee_id);
+                    return (
+                      <div
+                        key={schedule.id}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                      >
+                        <div>
+                          <p className="font-medium">{employee?.name || "Nieznany pracownik"}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {format(new Date(schedule.work_date), "EEEE, d MMMM yyyy", { locale: pl })}
+                          </p>
+                          <p className="text-sm">
+                            {schedule.start_time} - {schedule.end_time}
+                          </p>
+                          {schedule.notes && (
+                            <p className="text-xs text-muted-foreground mt-1">{schedule.notes}</p>
+                          )}
+                        </div>
+                        <Badge variant={schedule.is_available ? "default" : "secondary"}>
+                          {schedule.is_available ? "Dostępny" : "Niedostępny"}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                Brak zaplanowanych dyżurów
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
