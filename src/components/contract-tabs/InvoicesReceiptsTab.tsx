@@ -269,21 +269,11 @@ export const InvoicesReceiptsTab = ({
     }
   };
   const copyLinkForNewInvoice = async () => {
-    if (!newInvoice.amount || parseFloat(newInvoice.amount) <= 0) {
-      toast({
-        title: "Błąd",
-        description: "Najpierw wypełnij formularz i zapisz dokument",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Create invoice first to get ID for link
     try {
       const invoiceData = {
         contract_id: contractId,
         invoice_type: newInvoice.type,
-        amount: parseFloat(newInvoice.amount),
+        amount: newInvoice.amount && parseFloat(newInvoice.amount) > 0 ? parseFloat(newInvoice.amount) : 0.01,
         status: 'pending' as 'pending' | 'submitted' | 'invoice_uploaded' | 'completed',
         submitted_at: null,
         invoice_file_url: null,
