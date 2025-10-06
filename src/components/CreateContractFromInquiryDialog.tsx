@@ -6,7 +6,12 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAddClient } from "@/hooks/useClients";
 import { useAddContract } from "@/hooks/useContracts";
-import { Loader2 } from "lucide-react";
+import { useVehicles } from "@/hooks/useVehicles";
+import { Loader2, Search } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Inquiry {
   id: string;
@@ -34,7 +39,10 @@ export const CreateContractFromInquiryDialog = ({
   const { toast } = useToast();
   const addClient = useAddClient();
   const addContract = useAddContract();
+  const { data: vehicles = [] } = useVehicles();
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
+  const [vehicleSearchOpen, setVehicleSearchOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: inquiry?.name || "",
@@ -60,6 +68,15 @@ export const CreateContractFromInquiryDialog = ({
       return;
     }
 
+    if (!selectedVehicleId) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz pojazd dla umowy.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsCreating(true);
     try {
       // Utwórz klienta
@@ -69,9 +86,38 @@ export const CreateContractFromInquiryDialog = ({
         phone: formData.phone || null,
       });
 
+      // Znajdź wybrany pojazd
+      const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
+      if (!selectedVehicle) {
+        throw new Error("Nie znaleziono wybranego pojazdu");
+      }
+
+      // Generuj numer umowy na podstawie typu pojazdu
+      const vehicleType = selectedVehicle.type || 'UNK';
+      const year = new Date().getFullYear();
+      
+      // Pobierz ostatni numer dla tego typu pojazdu w tym roku
+      const { data: existingContracts } = await supabase
+        .from('contracts')
+        .select('contract_number')
+        .like('contract_number', `${year}/${vehicleType}/%`)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      let nextNumber = 1;
+      if (existingContracts && existingContracts.length > 0) {
+        const lastNumber = existingContracts[0].contract_number;
+        const parts = lastNumber.split('/');
+        if (parts.length === 3) {
+          nextNumber = parseInt(parts[2]) + 1;
+        }
+      }
+
+      const contractNumber = `${year}/${vehicleType}/${nextNumber.toString().padStart(3, '0')}`;
+
       // Utwórz umowę
       await addContract.mutateAsync({
-        contract_number: `TMP-${Date.now()}`,
+        contract_number: contractNumber,
         client_id: client.id,
         tenant_name: formData.name,
         tenant_email: formData.email,
@@ -80,8 +126,12 @@ export const CreateContractFromInquiryDialog = ({
         end_date: formData.returnDate || new Date().toISOString().split('T')[0],
         status: 'pending',
         value: null,
-        vehicle_model: "Do uzupełnienia",
-        registration_number: "Do uzupełnienia",
+        vehicle_model: selectedVehicle.model,
+        registration_number: selectedVehicle.registration_number,
+        vehicle_vin: selectedVehicle.vin,
+        vehicle_next_inspection: selectedVehicle.next_inspection_date,
+        vehicle_insurance_number: selectedVehicle.insurance_policy_number,
+        vehicle_insurance_valid_until: selectedVehicle.insurance_valid_until,
         inquiry_id: inquiry.id,
         inquiry_number: inquiry.inquiry_number,
       });
@@ -115,8 +165,11 @@ export const CreateContractFromInquiryDialog = ({
         departureDate: inquiry.departure_date || "",
         returnDate: inquiry.return_date || "",
       });
+      setSelectedVehicleId("");
     }
   }, [inquiry, open]);
+
+  const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -180,6 +233,68 @@ export const CreateContractFromInquiryDialog = ({
                 onChange={(e) => updateFormData('returnDate', e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="vehicle">Pojazd *</Label>
+            <Popover open={vehicleSearchOpen} onOpenChange={setVehicleSearchOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={vehicleSearchOpen}
+                  className="w-full justify-between"
+                >
+                  {selectedVehicle ? (
+                    <span className="flex items-center gap-2">
+                      <span className="font-medium">{selectedVehicle.registration_number}</span>
+                      <span className="text-muted-foreground">-</span>
+                      <span>{selectedVehicle.model}</span>
+                      {selectedVehicle.type && (
+                        <span className="text-xs text-muted-foreground">({selectedVehicle.type})</span>
+                      )}
+                    </span>
+                  ) : (
+                    "Wybierz pojazd..."
+                  )}
+                  <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[500px] p-0 bg-popover" align="start">
+                <Command className="bg-popover">
+                  <CommandInput placeholder="Szukaj po rejestracji, modelu lub typie..." />
+                  <CommandList>
+                    <CommandEmpty>Nie znaleziono pojazdu.</CommandEmpty>
+                    <CommandGroup>
+                      {vehicles.map((vehicle) => (
+                        <CommandItem
+                          key={vehicle.id}
+                          value={`${vehicle.registration_number} ${vehicle.model} ${vehicle.type || ''}`}
+                          onSelect={() => {
+                            setSelectedVehicleId(vehicle.id);
+                            setVehicleSearchOpen(false);
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{vehicle.registration_number}</span>
+                              <span className="text-muted-foreground">-</span>
+                              <span>{vehicle.model}</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {vehicle.type && <span>Typ: {vehicle.type}</span>}
+                              {vehicle.type && vehicle.vin && <span> • </span>}
+                              {vehicle.vin && <span>VIN: {vehicle.vin}</span>}
+                            </div>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
