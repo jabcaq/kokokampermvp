@@ -130,6 +130,16 @@ export const ContractActionsPanel = ({
     }
 
     try {
+      await fetch('https://hook.eu2.make.com/bkpo70mwa6qk4n6bbsrrnwo492p9ds5w', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contract_id: contractId,
+        }),
+      });
+
       await addDocument.mutateAsync({
         contract_id: contractId,
         document_type: 'contract',
