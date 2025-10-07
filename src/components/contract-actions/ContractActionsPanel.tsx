@@ -181,13 +181,33 @@ export const ContractActionsPanel = ({
     }
   };
 
-  const handleCopyDriverForm = () => {
+  const handleCopyDriverForm = async () => {
     const driverFormLink = `${window.location.origin}/driver-form/${encodeURIComponent(contractNumber)}`;
     navigator.clipboard.writeText(driverFormLink);
-    toast({
-      title: "Link skopiowany",
-      description: "Link do formularza kierowcy został skopiowany do schowka",
-    });
+    
+    try {
+      await fetch('https://hook.eu2.make.com/u73t37l3xvdm4dkwrxfftl8yxvuku7op', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contract_id: contractId,
+          driver_form_link: driverFormLink,
+        }),
+      });
+      
+      toast({
+        title: "Link skopiowany i wysłany",
+        description: "Link do formularza kierowcy został skopiowany i wysłany",
+      });
+    } catch (error) {
+      toast({
+        title: "Link skopiowany",
+        description: "Link został skopiowany, ale nie udało się wysłać do systemu",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
