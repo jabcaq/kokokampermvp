@@ -443,11 +443,11 @@ const Contracts = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="okres_od">Data rozpoczęcia</Label>
-                    <Input id="okres_od" name="okres_od" type="datetime-local" required />
+                    <Input id="okres_od" name="okres_od" type="date" required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="okres_do">Data zakończenia</Label>
-                    <Input id="okres_do" name="okres_do" type="datetime-local" required />
+                    <Input id="okres_do" name="okres_do" type="date" required />
                   </div>
                 </div>
               </div>
