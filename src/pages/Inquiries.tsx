@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Send, Inbox, Trash2, Reply, Clock, Loader2, Plus } from "lucide-react";
+import { Mail, Send, Inbox, Trash2, Reply, Clock, Loader2, Plus, Filter } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -10,20 +10,53 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { useInquiries, useUpdateInquiryStatus } from "@/hooks/useInquiries";
 import { useCreateNotification } from "@/hooks/useNotifications";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, startOfDay, endOfDay } from "date-fns";
 import { useInquiryMessages, useAddInquiryMessage } from "@/hooks/useInquiryMessages";
 import { CreateContractFromInquiryDialog } from "@/components/CreateContractFromInquiryDialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
 
 const Inquiries = () => {
   const { data: inquiries = [], isLoading } = useInquiries();
   const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
   const [replyMessage, setReplyMessage] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
   const { toast } = useToast();
   const updateStatusMutation = useUpdateInquiryStatus();
   const createNotificationMutation = useCreateNotification();
   const { data: messages = [] } = useInquiryMessages(selectedInquiry?.id);
   const addMessageMutation = useAddInquiryMessage();
+
+  // Filtered inquiries based on status and date
+  const filteredInquiries = useMemo(() => {
+    return inquiries.filter((inquiry) => {
+      // Status filter
+      if (statusFilter !== "all" && inquiry.status !== statusFilter) {
+        return false;
+      }
+
+      // Date filter
+      if (dateFrom || dateTo) {
+        const inquiryDate = inquiry.created_at ? new Date(inquiry.created_at) : null;
+        if (!inquiryDate) return false;
+
+        if (dateFrom && inquiryDate < startOfDay(dateFrom)) {
+          return false;
+        }
+        if (dateTo && inquiryDate > endOfDay(dateTo)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [inquiries, statusFilter, dateFrom, dateTo]);
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
@@ -93,10 +126,96 @@ const Inquiries = () => {
 
   return (
     <div className="h-full flex flex-col gap-3">
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 space-y-3">
         <p className="text-sm text-muted-foreground">
           Zarządzaj zapytaniami z formularzy kontaktowych
         </p>
+        
+        {/* Filters */}
+        <div className="flex flex-wrap gap-3 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="text-sm font-medium mb-2 block">Status</label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Wszystkie statusy" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Wszystkie</SelectItem>
+                <SelectItem value="new">Nowe</SelectItem>
+                <SelectItem value="in_progress">W trakcie</SelectItem>
+                <SelectItem value="completed">Zakończone</SelectItem>
+                <SelectItem value="archived">Zarchiwizowane</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex-1 min-w-[200px]">
+            <label className="text-sm font-medium mb-2 block">Data od</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !dateFrom && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateFrom ? format(dateFrom, "dd.MM.yyyy") : "Wybierz datę"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFrom}
+                  onSelect={setDateFrom}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="flex-1 min-w-[200px]">
+            <label className="text-sm font-medium mb-2 block">Data do</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !dateTo && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateTo ? format(dateTo, "dd.MM.yyyy") : "Wybierz datę"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateTo}
+                  onSelect={setDateTo}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {(statusFilter !== "all" || dateFrom || dateTo) && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setStatusFilter("all");
+                setDateFrom(undefined);
+                setDateTo(undefined);
+              }}
+            >
+              Wyczyść filtry
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Mobile Layout */}
@@ -108,7 +227,7 @@ const Inquiries = () => {
               Przychodzące zapytania
             </CardTitle>
             <CardDescription>
-              {inquiries.filter(i => i.status === "new").length} nowych zapytań
+              {filteredInquiries.filter(i => i.status === "new").length} nowych zapytań ({filteredInquiries.length} po filtrach)
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden">
@@ -119,7 +238,7 @@ const Inquiries = () => {
             ) : (
               <ScrollArea className="h-full pr-4">
                 <div className="space-y-3">
-                  {inquiries.map((inquiry) => (
+                  {filteredInquiries.map((inquiry) => (
                     <Card
                       key={inquiry.id}
                       className={`cursor-pointer transition-all hover:shadow-md ${
@@ -262,7 +381,7 @@ const Inquiries = () => {
               Przychodzące zapytania
             </CardTitle>
             <CardDescription>
-              {inquiries.filter(i => i.status === "new").length} nowych zapytań
+              {filteredInquiries.filter(i => i.status === "new").length} nowych zapytań ({filteredInquiries.length} po filtrach)
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden min-h-0">
@@ -273,7 +392,7 @@ const Inquiries = () => {
             ) : (
               <ScrollArea className="h-full">
                 <div className="space-y-3 pr-4">
-                  {inquiries.map((inquiry) => (
+                  {filteredInquiries.map((inquiry) => (
                     <Card
                       key={inquiry.id}
                       className={`cursor-pointer transition-all hover:shadow-md ${
