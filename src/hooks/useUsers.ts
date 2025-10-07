@@ -94,35 +94,32 @@ export const useUsers = () => {
 
   const updateUserMutation = useMutation({
     mutationFn: async ({ id, role, email, full_name }: Partial<Profile> & { id: string }) => {
-      // Update profile (email and full_name)
-      const profileUpdates: any = {};
-      if (email !== undefined) profileUpdates.email = email;
-      if (full_name !== undefined) profileUpdates.full_name = full_name;
-      
-      if (Object.keys(profileUpdates).length > 0) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update(profileUpdates)
-          .eq("id", id);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
 
-        if (profileError) throw profileError;
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            user_id: id,
+            email,
+            full_name,
+            role
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update user");
       }
 
-      // Update role in user_roles table if role is provided
-      if (role) {
-        // Delete existing roles for this user
-        await (supabase as any)
-          .from("user_roles")
-          .delete()
-          .eq("user_id", id);
-
-        // Insert new role
-        const { error: roleError } = await (supabase as any)
-          .from("user_roles")
-          .insert({ user_id: id, role: role });
-
-        if (roleError) throw roleError;
-      }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
