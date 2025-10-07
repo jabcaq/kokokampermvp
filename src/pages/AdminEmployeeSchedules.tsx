@@ -125,8 +125,9 @@ export default function AdminEmployeeSchedules() {
       { bg: "hsl(340 75% 45%)", border: "hsl(340 75% 35%)" },
     ];
 
-    const employeeIndex = employees?.findIndex(e => e.id === event.resource.employee_id) || 0;
-    const color = colors[employeeIndex % colors.length];
+    const employeeIndex = employees?.findIndex(e => e.id === event.resource.employee_id) ?? -1;
+    const colorIndex = employeeIndex >= 0 ? employeeIndex % colors.length : 0;
+    const color = colors[colorIndex];
 
     return {
       style: {
