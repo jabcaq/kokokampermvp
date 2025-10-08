@@ -153,6 +153,7 @@ export type Database = {
           driver_submission_link: string | null
           end_date: string
           handover_link: string | null
+          has_trailer: boolean | null
           id: string
           inquiry_id: string | null
           inquiry_number: string | null
@@ -181,14 +182,18 @@ export type Database = {
           tenant_nip: string | null
           tenant_pesel: string | null
           tenant_phone: string | null
+          tenant_trailer_license_category: string | null
+          trailer_mass: number | null
           umowa_text: string | null
           updated_at: string | null
           value: number | null
           vehicle_additional_info: string | null
+          vehicle_f1_mass: number | null
           vehicle_insurance_number: string | null
           vehicle_insurance_valid_until: string | null
           vehicle_model: string
           vehicle_next_inspection: string | null
+          vehicle_o1_mass: number | null
           vehicle_vin: string | null
         }
         Insert: {
@@ -199,6 +204,7 @@ export type Database = {
           driver_submission_link?: string | null
           end_date: string
           handover_link?: string | null
+          has_trailer?: boolean | null
           id?: string
           inquiry_id?: string | null
           inquiry_number?: string | null
@@ -227,14 +233,18 @@ export type Database = {
           tenant_nip?: string | null
           tenant_pesel?: string | null
           tenant_phone?: string | null
+          tenant_trailer_license_category?: string | null
+          trailer_mass?: number | null
           umowa_text?: string | null
           updated_at?: string | null
           value?: number | null
           vehicle_additional_info?: string | null
+          vehicle_f1_mass?: number | null
           vehicle_insurance_number?: string | null
           vehicle_insurance_valid_until?: string | null
           vehicle_model: string
           vehicle_next_inspection?: string | null
+          vehicle_o1_mass?: number | null
           vehicle_vin?: string | null
         }
         Update: {
@@ -245,6 +255,7 @@ export type Database = {
           driver_submission_link?: string | null
           end_date?: string
           handover_link?: string | null
+          has_trailer?: boolean | null
           id?: string
           inquiry_id?: string | null
           inquiry_number?: string | null
@@ -273,14 +284,18 @@ export type Database = {
           tenant_nip?: string | null
           tenant_pesel?: string | null
           tenant_phone?: string | null
+          tenant_trailer_license_category?: string | null
+          trailer_mass?: number | null
           umowa_text?: string | null
           updated_at?: string | null
           value?: number | null
           vehicle_additional_info?: string | null
+          vehicle_f1_mass?: number | null
           vehicle_insurance_number?: string | null
           vehicle_insurance_valid_until?: string | null
           vehicle_model?: string
           vehicle_next_inspection?: string | null
+          vehicle_o1_mass?: number | null
           vehicle_vin?: string | null
         }
         Relationships: [

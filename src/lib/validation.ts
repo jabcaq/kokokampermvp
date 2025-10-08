@@ -40,6 +40,11 @@ export const contractSchema = z.object({
   vehicle_model: z.string().min(1, "Model pojazdu jest wymagany").max(200),
   registration_number: z.string().min(1, "Numer rejestracyjny jest wymagany").max(50),
   notes: z.string().max(5000, "Uwagi nie mogą przekraczać 5000 znaków").optional(),
+  has_trailer: z.boolean().optional(),
+  trailer_mass: z.number().positive("Masa przyczepy musi być większa od 0").optional(),
+  vehicle_f1_mass: z.number().positive("Masa F1 musi być większa od 0").optional(),
+  vehicle_o1_mass: z.number().positive("Masa O1 musi być większa od 0").optional(),
+  tenant_trailer_license_category: z.enum(['B', 'B96', 'B+E']).optional(),
 })
 .refine(
   (data) => {
@@ -75,6 +80,45 @@ export const contractSchema = z.object({
   { 
     message: "Data zakończenia musi być późniejsza niż data rozpoczęcia",
     path: ["end_date"]
+  }
+)
+.refine(
+  (data) => {
+    // If has_trailer is true, validate trailer license category and masses
+    if (data.has_trailer) {
+      if (!data.tenant_trailer_license_category) {
+        return false;
+      }
+      if (!data.trailer_mass || !data.vehicle_f1_mass || !data.vehicle_o1_mass) {
+        return false;
+      }
+      
+      const category = data.tenant_trailer_license_category;
+      const f1 = data.vehicle_f1_mass;
+      const trailerMass = data.trailer_mass;
+      const o1 = data.vehicle_o1_mass;
+      
+      // Check if trailer mass exceeds O1 value
+      if (trailerMass > o1) {
+        return false;
+      }
+      
+      // Check category-specific limits
+      if (category === 'B' || category === 'B+E') {
+        if (f1 + trailerMass > 3500) {
+          return false;
+        }
+      } else if (category === 'B96') {
+        if (f1 + trailerMass > 4250) {
+          return false;
+        }
+      }
+    }
+    return true;
+  },
+  {
+    message: "Nieprawidłowa konfiguracja przyczepy - sprawdź kategorię prawa jazdy i masy pojazdu",
+    path: ["tenant_trailer_license_category"]
   }
 );
 

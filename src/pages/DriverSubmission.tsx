@@ -34,6 +34,7 @@ const DriverSubmission = () => {
     documentType: "dowod",
     documentNumber: "",
     documentIssuedBy: "",
+    trailerLicenseCategory: "" as "" | "B" | "B96" | "B+E",
   });
 
   // Pre-fill form with contract tenant data when contract loads
@@ -54,6 +55,7 @@ const DriverSubmission = () => {
         documentType: contract.tenant_id_type || "dowod",
         documentNumber: contract.tenant_id_number || "",
         documentIssuedBy: contract.tenant_id_issuer || "",
+        trailerLicenseCategory: (contract.tenant_trailer_license_category as "" | "B" | "B96" | "B+E") || "",
       });
     }
   }, [contract]);
@@ -117,6 +119,7 @@ const DriverSubmission = () => {
           tenant_id_type: formData.documentType,
           tenant_id_number: formData.documentNumber,
           tenant_id_issuer: formData.documentIssuedBy,
+          tenant_trailer_license_category: formData.trailerLicenseCategory || null,
         } as any,
       });
 
@@ -421,6 +424,63 @@ const DriverSubmission = () => {
                 </div>
               </div>
 
+              {contract?.has_trailer && (
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                  <h4 className="font-semibold text-sm">Dane dla przyczepy</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Ta umowa obejmuje przyczepę. Wymagane są dodatkowe informacje o prawie jazdy.
+                  </p>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="trailerLicenseCategory">Kategoria prawa jazdy dla przyczepy *</Label>
+                    <Select
+                      value={formData.trailerLicenseCategory}
+                      onValueChange={(value: "" | "B" | "B96" | "B+E") =>
+                        setFormData({ ...formData, trailerLicenseCategory: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Wybierz kategorię" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="B">Kat. B</SelectItem>
+                        <SelectItem value="B96">Kat. B96</SelectItem>
+                        <SelectItem value="B+E">Kat. B+E</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {formData.trailerLicenseCategory && (
+                    <div className="p-3 bg-background rounded border text-xs space-y-2">
+                      <p className="font-semibold">Wymagania dla kategorii {formData.trailerLicenseCategory}:</p>
+                      <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                        {(formData.trailerLicenseCategory === 'B' || formData.trailerLicenseCategory === 'B+E') && (
+                          <>
+                            <li>F1 + masa przyczepy nie może być wyższa niż 3500 kg</li>
+                            <li>Masa wynajmowanej przyczepy nie może być wyższa niż wartość O1 z dowodu rejestracyjnego holownika</li>
+                          </>
+                        )}
+                        {formData.trailerLicenseCategory === 'B96' && (
+                          <>
+                            <li>F1 + masa przyczepy nie może być wyższa niż 4250 kg</li>
+                            <li>Masa wynajmowanej przyczepy nie może być wyższa niż wartość O1 z dowodu rejestracyjnego holownika</li>
+                          </>
+                        )}
+                      </ul>
+                      {contract?.vehicle_f1_mass && contract?.trailer_mass && contract?.vehicle_o1_mass && (
+                        <div className="mt-2 pt-2 border-t space-y-1">
+                          <p className="font-semibold">Dane z umowy:</p>
+                          <p>F1 (masa pojazdu): {contract.vehicle_f1_mass} kg</p>
+                          <p>Masa przyczepy: {contract.trailer_mass} kg</p>
+                          <p>O1 (maks. masa przyczepy z hamulcem): {contract.vehicle_o1_mass} kg</p>
+                          <p className="font-semibold mt-1">Suma: {Number(contract.vehicle_f1_mass) + Number(contract.trailer_mass)} kg</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="documentType">Rodzaj dokumentu tożsamości *</Label>
                 <Select 
@@ -613,10 +673,23 @@ const DriverSubmission = () => {
             <div className="space-y-2 text-sm">
               <p className="font-medium text-foreground">Wymagania:</p>
               <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                <li>Prawo jazdy kategorii B</li>
+                <li>Prawo jazdy kategorii B{contract?.has_trailer ? ' (lub B96/B+E dla przyczepy)' : ''}</li>
                 <li>Dokument tożsamości</li>
                 <li>Minimum 2 lata doświadczenia w prowadzeniu pojazdów</li>
               </ul>
+              {contract?.has_trailer && (
+                <div className="mt-3 pt-3 border-t">
+                  <p className="font-medium text-foreground">Dodatkowe wymagania dla przyczepy:</p>
+                  <ul className="list-disc list-inside text-muted-foreground space-y-1 mt-2">
+                    <li><strong>Kat. B:</strong> F1 + masa przyczepy ≤ 3500 kg, masa przyczepy ≤ O1</li>
+                    <li><strong>Kat. B96:</strong> F1 + masa przyczepy ≤ 4250 kg, masa przyczepy ≤ O1</li>
+                    <li><strong>Kat. B+E:</strong> F1 + masa przyczepy ≤ 3500 kg, masa przyczepy ≤ O1</li>
+                  </ul>
+                  <p className="text-xs mt-2 text-muted-foreground italic">
+                    F1 = maksymalna masa całkowita pojazdu | O1 = maksymalna masa przyczepy z hamulcem
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
