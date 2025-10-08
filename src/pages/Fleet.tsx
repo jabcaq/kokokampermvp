@@ -46,6 +46,7 @@ const Fleet = () => {
     registrationNumber: "",
     vin: "",
     location: "",
+    trailerWeight: null as number | null,
   });
 
   const handleAddVehicle = async (e: React.FormEvent) => {
@@ -65,7 +66,8 @@ const Fleet = () => {
         insurance_policy_number: null,
         insurance_valid_until: null,
         additional_info: null,
-      });
+        trailer_weight: newVehicle.trailerWeight,
+      } as any);
       setIsDialogOpen(false);
       toast.success("Pojazd dodany do floty!", {
         description: `${newVehicle.brand} ${newVehicle.model}`,
@@ -79,6 +81,7 @@ const Fleet = () => {
         registrationNumber: "",
         vin: "",
         location: "",
+        trailerWeight: null,
       });
     } catch (error) {
       toast.error("Błąd podczas dodawania pojazdu");
@@ -287,6 +290,18 @@ const Fleet = () => {
                   required
                 />
               </div>
+              {newVehicle.type === "Przyczepa" && (
+                <div className="space-y-2">
+                  <Label htmlFor="trailerWeight">Waga przyczepy (kg)</Label>
+                  <Input
+                    id="trailerWeight"
+                    type="number"
+                    value={newVehicle.trailerWeight || ''}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, trailerWeight: e.target.value ? parseFloat(e.target.value) : null })}
+                    placeholder="np. 750"
+                  />
+                </div>
+              )}
               <Button type="submit" className="w-full">
                 Dodaj pojazd do floty
               </Button>

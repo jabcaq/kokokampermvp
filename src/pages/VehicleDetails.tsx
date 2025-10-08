@@ -38,6 +38,7 @@ const VehicleDetails = () => {
       insurance_valid_until: vehicle?.insurance_valid_until || '',
       next_inspection_date: vehicle?.next_inspection_date || '',
       additional_info: vehicle?.additional_info || '',
+      trailer_weight: (vehicle as any)?.trailer_weight || null,
     });
     setIsEditing(true);
   };
@@ -292,6 +293,17 @@ const VehicleDetails = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                {displayData.type === "Przyczepa" && (
+                  <div className="space-y-2">
+                    <Label>Waga przyczepy (kg)</Label>
+                    <Input
+                      type="number"
+                      value={displayData.trailer_weight || ''}
+                      onChange={(e) => updateField('trailer_weight', e.target.value ? parseFloat(e.target.value) : null)}
+                      placeholder="np. 750"
+                    />
+                  </div>
+                )}
               </>
             ) : (
               <>
@@ -329,6 +341,12 @@ const VehicleDetails = () => {
                       : "Zarchiwizowany"}
                   </Badge>
                 </div>
+                {displayData.type === "Przyczepa" && displayData.trailer_weight && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Waga przyczepy:</span>
+                    <span className="font-medium text-foreground">{displayData.trailer_weight} kg</span>
+                  </div>
+                )}
               </>
             )}
           </CardContent>

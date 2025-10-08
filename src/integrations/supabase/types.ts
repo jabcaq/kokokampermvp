@@ -845,6 +845,7 @@ export type Database = {
           next_inspection_date: string | null
           registration_number: string
           status: string | null
+          trailer_weight: number | null
           type: string | null
           updated_at: string | null
           vin: string
@@ -863,6 +864,7 @@ export type Database = {
           next_inspection_date?: string | null
           registration_number: string
           status?: string | null
+          trailer_weight?: number | null
           type?: string | null
           updated_at?: string | null
           vin: string
@@ -881,6 +883,7 @@ export type Database = {
           next_inspection_date?: string | null
           registration_number?: string
           status?: string | null
+          trailer_weight?: number | null
           type?: string | null
           updated_at?: string | null
           vin?: string
