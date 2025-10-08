@@ -65,6 +65,47 @@ const DriverSubmission = () => {
     
     if (!contract?.id) return;
 
+    // Validate trailer license if contract has trailer
+    if (contract.has_trailer) {
+      if (!formData.trailerLicenseCategory) {
+        toast.error("Błąd walidacji", {
+          description: "Musisz wybrać kategorię prawa jazdy dla przyczepy"
+        });
+        return;
+      }
+
+      const f1 = Number(contract.vehicle_f1_mass);
+      const trailerMass = Number(contract.trailer_mass);
+      const o1 = Number(contract.vehicle_o1_mass);
+
+      // Check if trailer mass exceeds O1
+      if (trailerMass > o1) {
+        toast.error("Błąd walidacji", {
+          description: `Masa przyczepy (${trailerMass} kg) przekracza maksymalną wartość O1 (${o1} kg)`
+        });
+        return;
+      }
+
+      // Check category-specific limits
+      const totalMass = f1 + trailerMass;
+      
+      if (formData.trailerLicenseCategory === 'B' || formData.trailerLicenseCategory === 'B+E') {
+        if (totalMass > 3500) {
+          toast.error("Błąd walidacji", {
+            description: `Dla kategorii ${formData.trailerLicenseCategory}: F1 + masa przyczepy (${totalMass} kg) przekracza limit 3500 kg`
+          });
+          return;
+        }
+      } else if (formData.trailerLicenseCategory === 'B96') {
+        if (totalMass > 4250) {
+          toast.error("Błąd walidacji", {
+            description: `Dla kategorii B96: F1 + masa przyczepy (${totalMass} kg) przekracza limit 4250 kg`
+          });
+          return;
+        }
+      }
+    }
+
     try {
       const form = e.target as HTMLFormElement;
       
@@ -431,13 +472,14 @@ const DriverSubmission = () => {
                     Ta umowa obejmuje przyczepę. Wymagane są dodatkowe informacje o prawie jazdy.
                   </p>
                   
-                  <div className="space-y-2">
+                   <div className="space-y-2">
                     <Label htmlFor="trailerLicenseCategory">Kategoria prawa jazdy dla przyczepy *</Label>
                     <Select
                       value={formData.trailerLicenseCategory}
                       onValueChange={(value: "" | "B" | "B96" | "B+E") =>
                         setFormData({ ...formData, trailerLicenseCategory: value })
                       }
+                      required
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Wybierz kategorię" />
@@ -448,6 +490,9 @@ const DriverSubmission = () => {
                         <SelectItem value="B+E">Kat. B+E</SelectItem>
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Wybierz odpowiednią kategorię zgodnie z wymaganiami poniżej
+                    </p>
                   </div>
 
                   {formData.trailerLicenseCategory && (
