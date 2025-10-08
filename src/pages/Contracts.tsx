@@ -47,6 +47,8 @@ const Contracts = () => {
   const [vehicleSearchOpen, setVehicleSearchOpen] = useState(false);
   const [generatedContractNumber, setGeneratedContractNumber] = useState<string>("");
   const [totalAmount, setTotalAmount] = useState<string>("");
+  const [isFullPaymentAsReservation, setIsFullPaymentAsReservation] = useState(false);
+  const [insuranceWarning, setInsuranceWarning] = useState("");
   const [vehicleData, setVehicleData] = useState({
     model: "",
     vin: "",
@@ -132,8 +134,8 @@ const Contracts = () => {
     
     // Calculate payment amounts
     const total = parseFloat(totalAmount) || 0;
-    const reservationAmount = (total * 0.30).toFixed(2);
-    const mainAmount = (total * 0.70).toFixed(2);
+    const reservationAmount = isFullPaymentAsReservation ? total.toFixed(2) : (total * 0.30).toFixed(2);
+    const mainAmount = isFullPaymentAsReservation ? "0.00" : (total * 0.70).toFixed(2);
     
     console.log('Total amount:', total, 'from totalAmount:', totalAmount);
 
@@ -163,15 +165,10 @@ const Contracts = () => {
     }
     
     // Przygotuj dane płatności z automatycznymi kwotami i datami
-    const paymentsData = {
+    const paymentsData: any = {
       rezerwacyjna: {
         data: reservationDateStr,
         wysokosc: parseFloat(reservationAmount),
-        rachunek: "mBank: 34 1140 2004...",
-      },
-      zasadnicza: {
-        data: mainPaymentDateStr,
-        wysokosc: parseFloat(mainAmount),
         rachunek: "mBank: 34 1140 2004...",
       },
       kaucja: {
@@ -180,6 +177,15 @@ const Contracts = () => {
         rachunek: "mBank: 08 1140 2004...",
       },
     };
+
+    // Only add main payment if not full payment as reservation
+    if (!isFullPaymentAsReservation) {
+      paymentsData.zasadnicza = {
+        data: mainPaymentDateStr,
+        wysokosc: parseFloat(mainAmount),
+        rachunek: "mBank: 34 1140 2004...",
+      };
+    }
     
     try {
       await addContractMutation.mutateAsync({
@@ -220,7 +226,9 @@ const Contracts = () => {
           if (vehicleData.extra_equipment) options.push(`Wyposażenie dodatkowo: ${vehicleData.extra_equipment}`);
           const additionalText = vehicleData.additional_info || (formData.get('przedmiot_dodatkowe_info') as string) || "";
           const optionsText = options.join(', ');
-          return additionalText ? `${optionsText}${optionsText ? ' | ' : ''}${additionalText}` : optionsText;
+          const insuranceNote = insuranceWarning ? `UWAGA: ${insuranceWarning}` : "";
+          const combined = [optionsText, additionalText, insuranceNote].filter(Boolean).join(' | ');
+          return combined;
         })(),
         additional_drivers: [],
         payments: paymentsData,
@@ -237,6 +245,8 @@ const Contracts = () => {
       setSelectedClientId("");
       setGeneratedContractNumber("");
       setTotalAmount("");
+      setIsFullPaymentAsReservation(false);
+      setInsuranceWarning("");
       setVehicleData({
         model: "",
         vin: "",
@@ -293,6 +303,8 @@ const Contracts = () => {
       setVehicleSearchOpen(false);
       setGeneratedContractNumber("");
       setTotalAmount("");
+      setIsFullPaymentAsReservation(false);
+      setInsuranceWarning("");
       setVehicleData({
         model: "",
         vin: "",
@@ -442,14 +454,64 @@ const Contracts = () => {
                 <h3 className="text-lg font-semibold text-foreground">Okres najmu</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="okres_od">Data rozpoczęcia</Label>
-                    <Input id="okres_od" name="okres_od" type="date" required />
+                    <Label htmlFor="okres_od">Data i godzina rozpoczęcia</Label>
+                    <Input 
+                      id="okres_od" 
+                      name="okres_od" 
+                      type="datetime-local" 
+                      min={`${new Date().toISOString().split('T')[0]}T08:00`}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const date = new Date(e.target.value);
+                          const hours = date.getHours();
+                          if (hours < 8 || hours > 17) {
+                            e.target.setCustomValidity('Godzina musi być w przedziale 8:00-17:00');
+                          } else {
+                            e.target.setCustomValidity('');
+                          }
+                          
+                          // Check insurance expiry
+                          if (vehicleData.insurance_valid_until) {
+                            const insuranceDate = new Date(vehicleData.insurance_valid_until);
+                            if (date > insuranceDate) {
+                              setInsuranceWarning(`Okres najmu rozpoczyna się po dacie ważności polisy (${new Date(vehicleData.insurance_valid_until).toLocaleDateString('pl-PL')}). Wymagany aneks przy odbiorze.`);
+                            } else {
+                              setInsuranceWarning("");
+                            }
+                          }
+                        }
+                      }}
+                      required 
+                    />
+                    <p className="text-xs text-muted-foreground">Godzina: 8:00-17:00</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="okres_do">Data zakończenia</Label>
-                    <Input id="okres_do" name="okres_do" type="date" required />
+                    <Label htmlFor="okres_do">Data i godzina zakończenia</Label>
+                    <Input 
+                      id="okres_do" 
+                      name="okres_do" 
+                      type="datetime-local"
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const date = new Date(e.target.value);
+                          const hours = date.getHours();
+                          if (hours < 8 || hours > 17) {
+                            e.target.setCustomValidity('Godzina musi być w przedziale 8:00-17:00');
+                          } else {
+                            e.target.setCustomValidity('');
+                          }
+                        }
+                      }}
+                      required 
+                    />
+                    <p className="text-xs text-muted-foreground">Godzina: 8:00-17:00</p>
                   </div>
                 </div>
+                {insuranceWarning && (
+                  <div className="bg-destructive/10 border border-destructive/20 text-destructive p-3 rounded-md text-sm">
+                    ⚠️ {insuranceWarning}
+                  </div>
+                )}
               </div>
 
               {/* Przedmiot najmu */}
@@ -656,13 +718,36 @@ const Contracts = () => {
                     onChange={(e) => setTotalAmount(e.target.value)}
                     required 
                   />
-                  {totalAmount && (
-                    <div className="text-xs text-muted-foreground space-y-1 mt-2">
-                      <p>• Opłata rezerwacyjna (30%): {(parseFloat(totalAmount) * 0.30).toFixed(2)} zł</p>
-                      <p>• Opłata zasadnicza (70%): {(parseFloat(totalAmount) * 0.70).toFixed(2)} zł</p>
-                    </div>
-                  )}
                 </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="full_payment_as_reservation"
+                    checked={isFullPaymentAsReservation}
+                    onChange={(e) => setIsFullPaymentAsReservation(e.target.checked)}
+                    className="h-4 w-4 rounded border-primary"
+                  />
+                  <Label htmlFor="full_payment_as_reservation" className="cursor-pointer">
+                    Cała kwota jako opłata rezerwacyjna (bez opłaty zasadniczej)
+                  </Label>
+                </div>
+
+                {totalAmount && (
+                  <div className="text-xs text-muted-foreground space-y-1 mt-2">
+                    {isFullPaymentAsReservation ? (
+                      <>
+                        <p>• Opłata rezerwacyjna (100%): {parseFloat(totalAmount).toFixed(2)} zł</p>
+                        <p>• Opłata zasadnicza: brak (cała kwota w rezerwacji)</p>
+                      </>
+                    ) : (
+                      <>
+                        <p>• Opłata rezerwacyjna (30%): {(parseFloat(totalAmount) * 0.30).toFixed(2)} zł</p>
+                        <p>• Opłata zasadnicza (70%): {(parseFloat(totalAmount) * 0.70).toFixed(2)} zł</p>
+                      </>
+                    )}
+                  </div>
+                )}
 
                 <p className="text-xs text-muted-foreground space-y-1">
                   <span className="block font-medium">Daty płatności (automatyczne):</span>
@@ -671,7 +756,7 @@ const Contracts = () => {
                     today.setDate(today.getDate() + 2);
                     return today.toLocaleDateString('pl-PL');
                   })()}</span>
-                  {(() => {
+                  {!isFullPaymentAsReservation && (() => {
                     const startDateInput = (document.getElementById('okres_od') as HTMLInputElement)?.value;
                     if (startDateInput) {
                       const startDate = new Date(startDateInput);
