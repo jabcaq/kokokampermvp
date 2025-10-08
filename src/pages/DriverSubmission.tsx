@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { UserPlus, Send, CheckCircle2, FileText, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useContractByNumber, useUpdateContract } from "@/hooks/useContracts";
@@ -30,16 +31,22 @@ const DriverSubmission = () => {
     driverPesel: "",
     licenseNumber: "",
     licenseIssueDate: "",
-    licenseCategory: "",
+    licenseCategory: [] as string[],
     documentType: "dowod",
     documentNumber: "",
     documentIssuedBy: "",
     trailerLicenseCategory: "" as "" | "B" | "B96" | "B+E",
   });
 
+  const [additionalDriversLicenseCategories, setAdditionalDriversLicenseCategories] = useState<Record<number, string[]>>({});
+
   // Pre-fill form with contract tenant data when contract loads
   useEffect(() => {
     if (contract) {
+      const existingCategories = contract.tenant_license_category 
+        ? contract.tenant_license_category.split(',').map(c => c.trim()).filter(Boolean)
+        : [];
+      
       setFormData({
         invoiceType: (contract.invoice_type as "receipt" | "invoice") || "receipt",
         companyName: contract.tenant_company_name || "",
@@ -51,7 +58,7 @@ const DriverSubmission = () => {
         driverPesel: contract.tenant_pesel || "",
         licenseNumber: contract.tenant_license_number || "",
         licenseIssueDate: contract.tenant_license_date || "",
-        licenseCategory: contract.tenant_license_category || "",
+        licenseCategory: existingCategories,
         documentType: contract.tenant_id_type || "dowod",
         documentNumber: contract.tenant_id_number || "",
         documentIssuedBy: contract.tenant_id_issuer || "",
@@ -117,7 +124,7 @@ const DriverSubmission = () => {
         pesel: formData.driverPesel,
         prawo_jazdy_numer: formData.licenseNumber,
         prawo_jazdy_data: formData.licenseIssueDate,
-        prawo_jazdy_kategoria: formData.licenseCategory,
+        prawo_jazdy_kategoria: formData.licenseCategory.join(', '),
         dokument_rodzaj: formData.documentType,
         dokument_numer: formData.documentNumber,
         dokument_organ: formData.documentIssuedBy,
@@ -131,7 +138,7 @@ const DriverSubmission = () => {
         tel: form[`add_driver_${driverIndex}_phone`].value,
         prawo_jazdy_numer: form[`add_driver_${driverIndex}_license`].value,
         prawo_jazdy_data: form[`add_driver_${driverIndex}_license_date`].value,
-        prawo_jazdy_kategoria: form[`add_driver_${driverIndex}_license_category`].value,
+        prawo_jazdy_kategoria: (additionalDriversLicenseCategories[driverIndex] || []).join(', '),
         dokument_rodzaj: form[`add_driver_${driverIndex}_doc_type`].value,
         dokument_numer: form[`add_driver_${driverIndex}_doc_number`].value,
         dokument_organ: form[`add_driver_${driverIndex}_doc_issued`].value,
@@ -156,7 +163,7 @@ const DriverSubmission = () => {
           tenant_pesel: formData.driverPesel,
           tenant_license_number: formData.licenseNumber,
           tenant_license_date: formData.licenseIssueDate,
-          tenant_license_category: formData.licenseCategory,
+          tenant_license_category: formData.licenseCategory.join(', '),
           tenant_id_type: formData.documentType,
           tenant_id_number: formData.documentNumber,
           tenant_id_issuer: formData.documentIssuedBy,
@@ -451,17 +458,42 @@ const DriverSubmission = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="licenseCategory">Kategoria prawa jazdy *</Label>
-                  <Input
-                    id="licenseCategory"
-                    value={formData.licenseCategory}
-                    onChange={(e) =>
-                      setFormData({ ...formData, licenseCategory: e.target.value })
-                    }
-                    placeholder="np. B, C, D"
-                    required
-                  />
+                <div className="space-y-3">
+                  <Label>Kategoria prawa jazdy *</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 border rounded-lg bg-muted/30">
+                    {['AM', 'A1', 'A2', 'A', 'B', 'B+E', 'C1', 'C', 'C+E', 'D1', 'D', 'D+E', 'T'].map((category) => (
+                      <div key={category} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`category-${category}`}
+                          checked={formData.licenseCategory.includes(category)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFormData({
+                                ...formData,
+                                licenseCategory: [...formData.licenseCategory, category]
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                licenseCategory: formData.licenseCategory.filter(c => c !== category)
+                              });
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`category-${category}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {category}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  {formData.licenseCategory.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Wybrano: {formData.licenseCategory.join(', ')}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -655,14 +687,43 @@ const DriverSubmission = () => {
                           />
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor={`add_driver_${driverIndex}_license_category`}>Kategoria prawa jazdy *</Label>
-                          <Input 
-                            id={`add_driver_${driverIndex}_license_category`} 
-                            name={`add_driver_${driverIndex}_license_category`} 
-                            placeholder="np. B, C, D"
-                            required 
-                          />
+                        <div className="space-y-3 sm:col-span-2">
+                          <Label>Kategoria prawa jazdy *</Label>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 border rounded-lg bg-background">
+                            {['AM', 'A1', 'A2', 'A', 'B', 'B+E', 'C1', 'C', 'C+E', 'D1', 'D', 'D+E', 'T'].map((category) => (
+                              <div key={category} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`add-driver-${driverIndex}-category-${category}`}
+                                  checked={(additionalDriversLicenseCategories[driverIndex] || []).includes(category)}
+                                  onCheckedChange={(checked) => {
+                                    const currentCategories = additionalDriversLicenseCategories[driverIndex] || [];
+                                    if (checked) {
+                                      setAdditionalDriversLicenseCategories({
+                                        ...additionalDriversLicenseCategories,
+                                        [driverIndex]: [...currentCategories, category]
+                                      });
+                                    } else {
+                                      setAdditionalDriversLicenseCategories({
+                                        ...additionalDriversLicenseCategories,
+                                        [driverIndex]: currentCategories.filter(c => c !== category)
+                                      });
+                                    }
+                                  }}
+                                />
+                                <label
+                                  htmlFor={`add-driver-${driverIndex}-category-${category}`}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                >
+                                  {category}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                          {(additionalDriversLicenseCategories[driverIndex] || []).length > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              Wybrano: {(additionalDriversLicenseCategories[driverIndex] || []).join(', ')}
+                            </p>
+                          )}
                         </div>
                       </div>
 
