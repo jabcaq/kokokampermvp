@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, FileText, User, Car, CreditCard, Edit2, Save, X, Link2, Loader2, Users, Truck, Package, MessageCircle } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, User, Car, CreditCard, Edit2, Save, X, Link2, Loader2, Users, Truck, Package, MessageCircle, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,12 +38,28 @@ const ContractDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState<any>({});
   const [activeTab, setActiveTab] = useState("contract");
+  const [vehicleFilter, setVehicleFilter] = useState("");
   
   const { data: contract, isLoading } = useContract(id);
   const { data: vehicles } = useVehicles();
   const { data: handovers } = useVehicleHandovers(id);
   const { data: returns } = useVehicleReturns(id);
   const updateContractMutation = useUpdateContract();
+
+  const filteredVehicles = useMemo(() => {
+    if (!vehicles) return [];
+    
+    const activeVehicles = vehicles.filter(v => v.status !== 'archived');
+    
+    if (!vehicleFilter.trim()) return activeVehicles;
+    
+    const searchLower = vehicleFilter.toLowerCase();
+    return activeVehicles.filter(vehicle => 
+      (vehicle.type?.toLowerCase().includes(searchLower)) ||
+      (vehicle.model?.toLowerCase().includes(searchLower)) ||
+      (vehicle.registration_number?.toLowerCase().includes(searchLower))
+    );
+  }, [vehicles, vehicleFilter]);
 
   const sanitizeContractUpdates = (data: any) => {
     const sanitized: any = { ...data };
@@ -722,18 +738,38 @@ const ContractDetails = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           {isEditing && (
-            <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
+            <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
               <Label>Wybierz pojazd z bazy</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Filtruj po typie, modelu lub numerze rejestracyjnym..."
+                  value={vehicleFilter}
+                  onChange={(e) => setVehicleFilter(e.target.value)}
+                  className="pl-9 bg-background"
+                />
+              </div>
               <Select onValueChange={handleVehicleSelect}>
                 <SelectTrigger className="bg-background">
                   <SelectValue placeholder="Wybierz pojazd aby automatycznie wypełnić dane" />
                 </SelectTrigger>
                 <SelectContent className="bg-background z-50">
-                  {vehicles?.filter(v => v.status !== 'archived').map((vehicle) => (
-                    <SelectItem key={vehicle.id} value={vehicle.id}>
-                      {vehicle.model} - {vehicle.registration_number}
-                    </SelectItem>
-                  ))}
+                  {filteredVehicles.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      Nie znaleziono pojazdów
+                    </div>
+                  ) : (
+                    filteredVehicles.map((vehicle) => (
+                      <SelectItem key={vehicle.id} value={vehicle.id}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{vehicle.type}</span>
+                          <span>{vehicle.model}</span>
+                          <span className="text-xs">-</span>
+                          <span className="font-mono">{vehicle.registration_number}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
