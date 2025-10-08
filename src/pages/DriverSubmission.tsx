@@ -461,7 +461,7 @@ const DriverSubmission = () => {
                 <div className="space-y-3">
                   <Label>Kategoria prawa jazdy *</Label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 border rounded-lg bg-muted/30">
-                    {['AM', 'A1', 'A2', 'A', 'B', 'B+E', 'C1', 'C', 'C+E', 'D1', 'D', 'D+E', 'T'].map((category) => (
+                    {['AM', 'A1', 'A2', 'A', 'B', 'B96', 'B+E', 'C1', 'C', 'C+E', 'D1', 'D', 'D+E', 'T'].map((category) => (
                       <div key={category} className="flex items-center space-x-2">
                         <Checkbox
                           id={`category-${category}`}
