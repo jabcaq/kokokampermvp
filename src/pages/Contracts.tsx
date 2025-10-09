@@ -169,12 +169,12 @@ const Contracts = () => {
       rezerwacyjna: {
         data: reservationDateStr,
         wysokosc: parseFloat(reservationAmount),
-        rachunek: "mBank: 34 1140 2004...",
+        rachunek: "34 1140 2004 0000 3802 8192 4912",
       },
       kaucja: {
         data: startDate || "",
         wysokosc: 1000,
-        rachunek: "mBank: 08 1140 2004...",
+        rachunek: "34 1140 2004 0000 3802 8192 4912",
       },
     };
 
@@ -183,7 +183,7 @@ const Contracts = () => {
       paymentsData.zasadnicza = {
         data: mainPaymentDateStr,
         wysokosc: parseFloat(mainAmount),
-        rachunek: "mBank: 34 1140 2004...",
+        rachunek: "34 1140 2004 0000 3802 8192 4912",
       };
     }
     
