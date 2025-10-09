@@ -166,24 +166,90 @@ const ContractDetails = () => {
       // Auto-update payment amounts when value changes
       if (field === 'value') {
         const numValue = parseFloat(value) || 0;
-        const reservationAmount = numValue * 0.30;
-        const mainAmount = numValue * 0.70;
+        const isFullPayment = prev.is_full_payment_as_reservation;
         
-        updated.payments = {
-          ...prev.payments,
-          rezerwacyjna: {
-            ...prev.payments?.rezerwacyjna,
-            wysokosc: reservationAmount > 0 ? reservationAmount : null,
-          },
-          zasadnicza: {
-            ...prev.payments?.zasadnicza,
-            wysokosc: mainAmount > 0 ? mainAmount : null,
-          },
-          kaucja: {
-            ...prev.payments?.kaucja,
-            wysokosc: 1000,
-          },
-        };
+        if (isFullPayment) {
+          // Full payment as reservation
+          updated.payments = {
+            ...prev.payments,
+            rezerwacyjna: {
+              ...prev.payments?.rezerwacyjna,
+              wysokosc: numValue > 0 ? numValue : null,
+            },
+            zasadnicza: {
+              ...prev.payments?.zasadnicza,
+              wysokosc: 0,
+            },
+            kaucja: {
+              ...prev.payments?.kaucja,
+              wysokosc: 1000,
+            },
+          };
+        } else {
+          // Standard split: 30% reservation, 70% main
+          const reservationAmount = numValue * 0.30;
+          const mainAmount = numValue * 0.70;
+          
+          updated.payments = {
+            ...prev.payments,
+            rezerwacyjna: {
+              ...prev.payments?.rezerwacyjna,
+              wysokosc: reservationAmount > 0 ? reservationAmount : null,
+            },
+            zasadnicza: {
+              ...prev.payments?.zasadnicza,
+              wysokosc: mainAmount > 0 ? mainAmount : null,
+            },
+            kaucja: {
+              ...prev.payments?.kaucja,
+              wysokosc: 1000,
+            },
+          };
+        }
+      }
+      
+      // Auto-update payment amounts when is_full_payment_as_reservation changes
+      if (field === 'is_full_payment_as_reservation') {
+        const numValue = parseFloat(prev.value) || 0;
+        
+        if (value) {
+          // Full payment as reservation
+          updated.payments = {
+            ...prev.payments,
+            rezerwacyjna: {
+              ...prev.payments?.rezerwacyjna,
+              wysokosc: numValue > 0 ? numValue : null,
+            },
+            zasadnicza: {
+              ...prev.payments?.zasadnicza,
+              wysokosc: 0,
+            },
+            kaucja: {
+              ...prev.payments?.kaucja,
+              wysokosc: prev.payments?.kaucja?.wysokosc || 1000,
+            },
+          };
+        } else {
+          // Standard split: 30% reservation, 70% main
+          const reservationAmount = numValue * 0.30;
+          const mainAmount = numValue * 0.70;
+          
+          updated.payments = {
+            ...prev.payments,
+            rezerwacyjna: {
+              ...prev.payments?.rezerwacyjna,
+              wysokosc: reservationAmount > 0 ? reservationAmount : null,
+            },
+            zasadnicza: {
+              ...prev.payments?.zasadnicza,
+              wysokosc: mainAmount > 0 ? mainAmount : null,
+            },
+            kaucja: {
+              ...prev.payments?.kaucja,
+              wysokosc: prev.payments?.kaucja?.wysokosc || 1000,
+            },
+          };
+        }
       }
       
       console.log('Updated editedData:', updated);
