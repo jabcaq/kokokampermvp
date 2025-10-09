@@ -105,6 +105,7 @@ const Documents = () => {
         umowa_id: formData.get("umowa_id") as string || null,
         client_id: formData.get("client_id") as string || null,
         folder: formData.get("folder") as string || null,
+        folder_link: formData.get("folder_link") as string || null,
         nazwa_pliku: formData.get("nazwa_pliku") as string,
         link: formData.get("link") as string || null,
         path: formData.get("path") as string || null,
@@ -163,6 +164,7 @@ const Documents = () => {
           umowa_id: formData.get("umowa_id") as string || null,
           client_id: clientId === "none" ? null : clientId || null,
           folder: formData.get("folder") as string || null,
+          folder_link: formData.get("folder_link") as string || null,
           nazwa_pliku: formData.get("nazwa_pliku") as string,
           link: formData.get("link") as string || null,
           path: formData.get("path") as string || null,
@@ -263,14 +265,20 @@ const Documents = () => {
                   <Input id="folder" name="folder" placeholder="Ścieżka folderu" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="path">Path</Label>
-                  <Input id="path" name="path" placeholder="Pełna ścieżka" />
+                  <Label htmlFor="folder_link">Folder Link</Label>
+                  <Input id="folder_link" name="folder_link" type="url" placeholder="https://..." />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="link">Link</Label>
-                <Input id="link" name="link" type="url" placeholder="https://..." />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="path">Path</Label>
+                  <Input id="path" name="path" placeholder="Pełna ścieżka" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="link">Link</Label>
+                  <Input id="link" name="link" type="url" placeholder="https://..." />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -601,6 +609,19 @@ const Documents = () => {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="edit-folder_link">Folder Link</Label>
+                  <Input 
+                    id="edit-folder_link" 
+                    name="folder_link" 
+                    type="url"
+                    defaultValue={editingDocument.folder_link || ""}
+                    placeholder="https://..." 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <Label htmlFor="edit-path">Path</Label>
                   <Input 
                     id="edit-path" 
@@ -609,17 +630,16 @@ const Documents = () => {
                     placeholder="Pełna ścieżka" 
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-link">Link</Label>
-                <Input 
-                  id="edit-link" 
-                  name="link" 
-                  type="url" 
-                  defaultValue={editingDocument.link || ""}
-                  placeholder="https://..." 
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="edit-link">Link</Label>
+                  <Input 
+                    id="edit-link" 
+                    name="link" 
+                    type="url" 
+                    defaultValue={editingDocument.link || ""}
+                    placeholder="https://..." 
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

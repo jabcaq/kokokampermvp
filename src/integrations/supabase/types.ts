@@ -325,6 +325,7 @@ export type Database = {
           created_at: string
           data: string | null
           folder: string | null
+          folder_link: string | null
           id: string
           link: string | null
           nazwa_pliku: string
@@ -340,6 +341,7 @@ export type Database = {
           created_at?: string
           data?: string | null
           folder?: string | null
+          folder_link?: string | null
           id?: string
           link?: string | null
           nazwa_pliku: string
@@ -355,6 +357,7 @@ export type Database = {
           created_at?: string
           data?: string | null
           folder?: string | null
+          folder_link?: string | null
           id?: string
           link?: string | null
           nazwa_pliku?: string

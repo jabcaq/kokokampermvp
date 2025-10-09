@@ -8,6 +8,7 @@ export interface Document {
   umowa_id: string | null;
   client_id: string | null;
   folder: string | null;
+  folder_link: string | null;
   nazwa_pliku: string;
   link: string | null;
   path: string | null;
