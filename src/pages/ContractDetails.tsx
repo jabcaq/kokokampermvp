@@ -502,9 +502,9 @@ const ContractDetails = () => {
               <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data rozpoczęcia</Label>
               {isEditing ? (
                 <Input 
-                  type="date" 
-                  value={displayData?.start_date || ''} 
-                  onChange={(e) => updateField('start_date', e.target.value)} 
+                  type="datetime-local" 
+                  value={displayData?.start_date?.replace(' ', 'T') || ''} 
+                  onChange={(e) => updateField('start_date', e.target.value.replace('T', ' '))} 
                 />
               ) : (
                 <p className="text-base font-semibold text-foreground pt-1">
