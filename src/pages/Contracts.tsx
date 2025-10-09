@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useContracts, useDeleteContract, useAddContract } from "@/hooks/useContracts";
 import { useClients } from "@/hooks/useClients";
@@ -48,6 +49,8 @@ const Contracts = () => {
   const [generatedContractNumber, setGeneratedContractNumber] = useState<string>("");
   const [totalAmount, setTotalAmount] = useState<string>("");
   const [isFullPaymentAsReservation, setIsFullPaymentAsReservation] = useState(false);
+  const [customDepositAmount, setCustomDepositAmount] = useState(false);
+  const [depositAmount, setDepositAmount] = useState<string>("1000");
   const [insuranceWarning, setInsuranceWarning] = useState("");
   const [vehicleData, setVehicleData] = useState({
     model: "",
@@ -165,6 +168,8 @@ const Contracts = () => {
     }
     
     // Przygotuj dane płatności z automatycznymi kwotami i datami
+    const finalDepositAmount = customDepositAmount ? parseFloat(depositAmount) : 1000;
+    
     const paymentsData: any = {
       rezerwacyjna: {
         data: reservationDateStr,
@@ -173,7 +178,7 @@ const Contracts = () => {
       },
       kaucja: {
         data: startDate || "",
-        wysokosc: 1000,
+        wysokosc: finalDepositAmount,
         rachunek: "34 1140 2004 0000 3802 8192 4912",
       },
     };
@@ -246,6 +251,8 @@ const Contracts = () => {
       setGeneratedContractNumber("");
       setTotalAmount("");
       setIsFullPaymentAsReservation(false);
+      setCustomDepositAmount(false);
+      setDepositAmount("1000");
       setInsuranceWarning("");
       setVehicleData({
         model: "",
@@ -304,6 +311,8 @@ const Contracts = () => {
       setGeneratedContractNumber("");
       setTotalAmount("");
       setIsFullPaymentAsReservation(false);
+      setCustomDepositAmount(false);
+      setDepositAmount("1000");
       setInsuranceWarning("");
       setVehicleData({
         model: "",
@@ -721,17 +730,42 @@ const Contracts = () => {
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="full_payment_as_reservation"
                     checked={isFullPaymentAsReservation}
-                    onChange={(e) => setIsFullPaymentAsReservation(e.target.checked)}
-                    className="h-4 w-4 rounded border-primary"
+                    onCheckedChange={(checked) => setIsFullPaymentAsReservation(checked === true)}
                   />
                   <Label htmlFor="full_payment_as_reservation" className="cursor-pointer">
                     Cała kwota jako opłata rezerwacyjna (bez opłaty zasadniczej)
                   </Label>
                 </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="custom_deposit_amount"
+                    checked={customDepositAmount}
+                    onCheckedChange={(checked) => setCustomDepositAmount(checked === true)}
+                  />
+                  <Label htmlFor="custom_deposit_amount" className="cursor-pointer">
+                    Niestandardowa kwota kaucji
+                  </Label>
+                </div>
+
+                {customDepositAmount && (
+                  <div className="space-y-2">
+                    <Label htmlFor="deposit_amount">Kwota kaucji *</Label>
+                    <Input 
+                      id="deposit_amount" 
+                      name="deposit_amount" 
+                      type="number"
+                      step="0.01"
+                      placeholder="1000.00"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value)}
+                      required 
+                    />
+                  </div>
+                )}
 
                 {totalAmount && (
                   <div className="text-xs text-muted-foreground space-y-1 mt-2">
@@ -767,7 +801,7 @@ const Contracts = () => {
                     return <span className="block">• Data opłaty zasadniczej: zostanie obliczona po wybraniu daty rozpoczęcia</span>;
                   })()}
                   <span className="block">• Data kaucji: dzień rozpoczęcia wynajmu</span>
-                  <span className="block">• Kwota kaucji: 1000 zł</span>
+                  <span className="block">• Kwota kaucji: {customDepositAmount ? `${depositAmount} zł (niestandardowa)` : '1000 zł'}</span>
                   <span className="block">• Rachunki bankowe są automatycznie przypisywane</span>
                 </p>
               </div>
