@@ -50,7 +50,8 @@ const Contracts = () => {
   const [totalAmount, setTotalAmount] = useState<string>("");
   const [isFullPaymentAsReservation, setIsFullPaymentAsReservation] = useState(false);
   const [customDepositAmount, setCustomDepositAmount] = useState(false);
-  const [depositAmount, setDepositAmount] = useState<string>("1000");
+  const [isPremiumCamper, setIsPremiumCamper] = useState(false);
+  const [depositAmount, setDepositAmount] = useState<string>("5000");
   const [insuranceWarning, setInsuranceWarning] = useState("");
   const [vehicleData, setVehicleData] = useState({
     model: "",
@@ -102,8 +103,11 @@ const Contracts = () => {
       
       // Set default deposit amount based on vehicle type
       if (!customDepositAmount) {
-        const defaultDeposit = selectedVehicle.type === "Przyczepa" ? "3000" : "1000";
-        setDepositAmount(defaultDeposit);
+        if (selectedVehicle.type === "Przyczepa") {
+          setDepositAmount("3000");
+        } else if (selectedVehicle.type === "Kamper") {
+          setDepositAmount(isPremiumCamper ? "8000" : "5000");
+        }
       }
       
       // Generate contract number based on vehicle type
@@ -174,8 +178,12 @@ const Contracts = () => {
     }
     
     // Przygotuj dane płatności z automatycznymi kwotami i datami
-    const defaultDeposit = vehicleData.type === "Przyczepa" ? 3000 : 1000;
-    const finalDepositAmount = customDepositAmount ? parseFloat(depositAmount) : defaultDeposit;
+    const getDefaultDeposit = () => {
+      if (vehicleData.type === "Przyczepa") return 3000;
+      if (vehicleData.type === "Kamper") return isPremiumCamper ? 8000 : 5000;
+      return 5000;
+    };
+    const finalDepositAmount = customDepositAmount ? parseFloat(depositAmount) : getDefaultDeposit();
     
     const paymentsData: any = {
       rezerwacyjna: {
@@ -259,7 +267,8 @@ const Contracts = () => {
       setTotalAmount("");
       setIsFullPaymentAsReservation(false);
       setCustomDepositAmount(false);
-      setDepositAmount("1000");
+      setIsPremiumCamper(false);
+      setDepositAmount("5000");
       setInsuranceWarning("");
       setVehicleData({
         model: "",
@@ -319,7 +328,8 @@ const Contracts = () => {
       setTotalAmount("");
       setIsFullPaymentAsReservation(false);
       setCustomDepositAmount(false);
-      setDepositAmount("1000");
+      setIsPremiumCamper(false);
+      setDepositAmount("5000");
       setInsuranceWarning("");
       setVehicleData({
         model: "",
@@ -747,6 +757,25 @@ const Contracts = () => {
                   </Label>
                 </div>
 
+                {vehicleData.type === "Kamper" && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="premium_camper"
+                      checked={isPremiumCamper}
+                      onCheckedChange={(checked) => {
+                        const isPremium = checked === true;
+                        setIsPremiumCamper(isPremium);
+                        if (!customDepositAmount) {
+                          setDepositAmount(isPremium ? "8000" : "5000");
+                        }
+                      }}
+                    />
+                    <Label htmlFor="premium_camper" className="cursor-pointer">
+                      Kamper Premium+/Prestige+ (kaucja 8000 zł)
+                    </Label>
+                  </div>
+                )}
+
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="custom_deposit_amount"
@@ -766,7 +795,7 @@ const Contracts = () => {
                       name="deposit_amount" 
                       type="number"
                       step="0.01"
-                      placeholder="1000.00"
+                      placeholder="5000.00"
                       value={depositAmount}
                       onChange={(e) => setDepositAmount(e.target.value)}
                       required 
@@ -810,7 +839,11 @@ const Contracts = () => {
                   <span className="block">• Data kaucji: dzień rozpoczęcia wynajmu</span>
                   <span className="block">• Kwota kaucji: {customDepositAmount 
                     ? `${depositAmount} zł (niestandardowa)` 
-                    : `${vehicleData.type === "Przyczepa" ? "3000" : "1000"} zł`}</span>
+                    : vehicleData.type === "Przyczepa" 
+                      ? "3000 zł" 
+                      : isPremiumCamper 
+                        ? "8000 zł (Premium+/Prestige+)" 
+                        : "5000 zł"}</span>
                   <span className="block">• Rachunki bankowe są automatycznie przypisywane</span>
                 </p>
               </div>
