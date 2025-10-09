@@ -897,18 +897,18 @@ const ContractDetails = () => {
                 )}
               </div>
             </div>
-            {isEditing && (
-              <>
-                <Separator className="my-6" />
-                <div className="space-y-3">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wider">Rachunek</Label>
-                  <Input value={displayData?.payments?.rezerwacyjna?.rachunek || ''} onChange={(e) => {
-                    const newPayments = { ...displayData.payments, rezerwacyjna: { ...displayData.payments?.rezerwacyjna, rachunek: e.target.value } };
-                    updateField('payments', newPayments);
-                  }} />
-                </div>
-              </>
-            )}
+            <Separator className="my-6" />
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Rachunek</Label>
+              {isEditing ? (
+                <Input value={displayData?.payments?.rezerwacyjna?.rachunek || ''} onChange={(e) => {
+                  const newPayments = { ...displayData.payments, rezerwacyjna: { ...displayData.payments?.rezerwacyjna, rachunek: e.target.value } };
+                  updateField('payments', newPayments);
+                }} />
+              ) : (
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.rezerwacyjna?.rachunek || 'Nie podano'}</p>
+              )}
+            </div>
           </div>
           
           <Separator />
@@ -941,18 +941,18 @@ const ContractDetails = () => {
                 )}
               </div>
             </div>
-            {isEditing && (
-              <>
-                <Separator className="my-6" />
-                <div className="space-y-3">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wider">Rachunek</Label>
-                  <Input value={displayData?.payments?.zasadnicza?.rachunek || ''} onChange={(e) => {
-                    const newPayments = { ...displayData.payments, zasadnicza: { ...displayData.payments?.zasadnicza, rachunek: e.target.value } };
-                    updateField('payments', newPayments);
-                  }} />
-                </div>
-              </>
-            )}
+            <Separator className="my-6" />
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Rachunek</Label>
+              {isEditing ? (
+                <Input value={displayData?.payments?.zasadnicza?.rachunek || ''} onChange={(e) => {
+                  const newPayments = { ...displayData.payments, zasadnicza: { ...displayData.payments?.zasadnicza, rachunek: e.target.value } };
+                  updateField('payments', newPayments);
+                }} />
+              ) : (
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.zasadnicza?.rachunek || 'Nie podano'}</p>
+              )}
+            </div>
           </div>
           
           <Separator />
@@ -985,18 +985,18 @@ const ContractDetails = () => {
                 )}
               </div>
             </div>
-            {isEditing && (
-              <>
-                <Separator className="my-6" />
-                <div className="space-y-3">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wider">Rachunek</Label>
-                  <Input value={displayData?.payments?.kaucja?.rachunek || ''} onChange={(e) => {
-                    const newPayments = { ...displayData.payments, kaucja: { ...displayData.payments?.kaucja, rachunek: e.target.value } };
-                    updateField('payments', newPayments);
-                  }} />
-                </div>
-              </>
-            )}
+            <Separator className="my-6" />
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Rachunek</Label>
+              {isEditing ? (
+                <Input value={displayData?.payments?.kaucja?.rachunek || ''} onChange={(e) => {
+                  const newPayments = { ...displayData.payments, kaucja: { ...displayData.payments?.kaucja, rachunek: e.target.value } };
+                  updateField('payments', newPayments);
+                }} />
+              ) : (
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.kaucja?.rachunek || 'Nie podano'}</p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
