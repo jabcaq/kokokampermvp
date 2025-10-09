@@ -852,9 +852,30 @@ const ContractDetails = () => {
           <div className="space-y-3">
             <Label className="text-xs text-muted-foreground uppercase tracking-wider">Wartość umowy</Label>
             {isEditing ? (
-              <Input type="number" step="0.01" value={displayData?.value ?? ''} onChange={(e) => updateField('value', e.target.value)} className="max-w-xs" />
+              <div className="space-y-4">
+                <Input type="number" step="0.01" value={displayData?.value ?? ''} onChange={(e) => updateField('value', e.target.value)} className="max-w-xs" />
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is_full_payment"
+                    checked={displayData?.is_full_payment_as_reservation || false}
+                    onChange={(e) => updateField('is_full_payment_as_reservation', e.target.checked)}
+                    className="h-4 w-4 rounded border-input"
+                  />
+                  <Label htmlFor="is_full_payment" className="text-sm font-normal cursor-pointer">
+                    Pełna płatność jako rezerwacja
+                  </Label>
+                </div>
+              </div>
             ) : (
-              <p className="text-base font-semibold text-foreground pt-1">{displayData?.value ? `${displayData.value} PLN` : 'Nie podano'}</p>
+              <div className="space-y-2">
+                <p className="text-base font-semibold text-foreground pt-1">{displayData?.value ? `${displayData.value} PLN` : 'Nie podano'}</p>
+                {displayData?.is_full_payment_as_reservation && (
+                  <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                    Pełna płatność jako rezerwacja
+                  </Badge>
+                )}
+              </div>
             )}
           </div>
         </CardContent>
