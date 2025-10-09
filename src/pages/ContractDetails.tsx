@@ -77,9 +77,7 @@ const ContractDetails = () => {
       }
     };
 
-    // Normalize date-only fields stored as DATE in DB
-    normalizeDate('start_date');
-    normalizeDate('end_date');
+    // Normalize date-only fields stored as DATE in DB (not start_date/end_date - they are timestamps)
     normalizeDate('tenant_license_date');
     normalizeDate('vehicle_next_inspection');
     normalizeDate('vehicle_insurance_valid_until');
