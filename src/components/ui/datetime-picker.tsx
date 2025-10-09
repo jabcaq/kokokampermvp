@@ -28,7 +28,7 @@ export function DateTimePicker({
   const [selectedDateTime, setSelectedDateTime] = React.useState<Date | undefined>(date);
   const [isOpen, setIsOpen] = React.useState(false);
 
-  const hours = Array.from({ length: 24 }, (_, i) => i);
+  const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8-20
   const minutes = Array.from({ length: 60 }, (_, i) => i);
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
