@@ -569,8 +569,8 @@ const ContractDetails = () => {
               {isEditing ? (
                 <Input 
                   type="datetime-local" 
-                  value={displayData?.start_date?.replace(' ', 'T') || ''} 
-                  onChange={(e) => updateField('start_date', e.target.value.replace('T', ' '))} 
+                  value={displayData?.start_date ? new Date(displayData.start_date).toISOString().slice(0, 16) : ''} 
+                  onChange={(e) => updateField('start_date', e.target.value)} 
                 />
               ) : (
                 <p className="text-base font-semibold text-foreground pt-1">
@@ -583,7 +583,7 @@ const ContractDetails = () => {
               {isEditing ? (
                 <Input 
                   type="datetime-local" 
-                  value={displayData?.end_date?.replace(' ', 'T') || ''} 
+                  value={displayData?.end_date ? new Date(displayData.end_date).toISOString().slice(0, 16) : ''} 
                   onChange={(e) => updateField('end_date', e.target.value)} 
                 />
               ) : (
