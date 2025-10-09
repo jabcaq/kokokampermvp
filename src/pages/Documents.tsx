@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Loader2, Trash2, ArrowUpDown, FileText, Eye, ChevronLeft, ChevronRight } from "lucide-react";
@@ -32,6 +32,20 @@ const Documents = () => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [columnWidths, setColumnWidths] = useState({
+    rodzaj: 150,
+    umowa: 160,
+    folder: 150,
+    folder_link: 120,
+    nazwa_pliku: 200,
+    link: 100,
+    path: 150,
+    rok: 80,
+    akcje: 120
+  });
+  const [resizing, setResizing] = useState<string | null>(null);
+  const resizeRef = useRef<{ startX: number; startWidth: number; column: string } | null>(null);
+  
   const { toast } = useToast();
   
   const { data: documents = [], isLoading } = useDocuments();
@@ -93,6 +107,44 @@ const Documents = () => {
       setSortDirection("asc");
     }
   };
+
+  const handleMouseDown = (e: React.MouseEvent, column: string) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = columnWidths[column as keyof typeof columnWidths];
+    resizeRef.current = { startX, startWidth, column };
+    setResizing(column);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!resizeRef.current || !resizing) return;
+      
+      const { startX, startWidth, column } = resizeRef.current;
+      const diff = e.clientX - startX;
+      const newWidth = Math.max(50, startWidth + diff);
+      
+      setColumnWidths(prev => ({
+        ...prev,
+        [column]: newWidth
+      }));
+    };
+
+    const handleMouseUp = () => {
+      resizeRef.current = null;
+      setResizing(null);
+    };
+
+    if (resizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizing]);
 
   const handleAddDocument = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -361,43 +413,116 @@ const Documents = () => {
             <TableHeader>
               <TableRow>
                 <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors min-w-[120px]"
+                  className="cursor-pointer hover:bg-muted/50 transition-colors relative"
+                  style={{ width: columnWidths.rodzaj }}
                   onClick={() => handleSort("rodzaj")}
                 >
                   <div className="flex items-center gap-2">
                     Rodzaj
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
+                  <div 
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 active:bg-primary"
+                    onMouseDown={(e) => handleMouseDown(e, 'rodzaj')}
+                  />
                 </TableHead>
-                <TableHead className="min-w-[140px]">Umowa (system)</TableHead>
-                <TableHead>Folder</TableHead>
-                <TableHead className="w-[100px]">Folder Link</TableHead>
                 <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors min-w-[150px]"
+                  className="relative"
+                  style={{ width: columnWidths.umowa }}
+                >
+                  Umowa (system)
+                  <div 
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 active:bg-primary"
+                    onMouseDown={(e) => handleMouseDown(e, 'umowa')}
+                  />
+                </TableHead>
+                <TableHead 
+                  className="relative"
+                  style={{ width: columnWidths.folder }}
+                >
+                  Folder
+                  <div 
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 active:bg-primary"
+                    onMouseDown={(e) => handleMouseDown(e, 'folder')}
+                  />
+                </TableHead>
+                <TableHead 
+                  className="relative"
+                  style={{ width: columnWidths.folder_link }}
+                >
+                  Folder Link
+                  <div 
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 active:bg-primary"
+                    onMouseDown={(e) => handleMouseDown(e, 'folder_link')}
+                  />
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 transition-colors relative"
+                  style={{ width: columnWidths.nazwa_pliku }}
                   onClick={() => handleSort("nazwa_pliku")}
                 >
                   <div className="flex items-center gap-2">
                     Nazwa pliku
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
+                  <div 
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 active:bg-primary"
+                    onMouseDown={(e) => handleMouseDown(e, 'nazwa_pliku')}
+                  />
                 </TableHead>
-                <TableHead className="w-[80px]">Link</TableHead>
-                <TableHead className="min-w-[120px]">Path</TableHead>
-                <TableHead className="w-[70px]">Rok</TableHead>
-                <TableHead className="text-right w-[100px]">Akcje</TableHead>
+                <TableHead 
+                  className="relative"
+                  style={{ width: columnWidths.link }}
+                >
+                  Link
+                  <div 
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 active:bg-primary"
+                    onMouseDown={(e) => handleMouseDown(e, 'link')}
+                  />
+                </TableHead>
+                <TableHead 
+                  className="relative"
+                  style={{ width: columnWidths.path }}
+                >
+                  Path
+                  <div 
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 active:bg-primary"
+                    onMouseDown={(e) => handleMouseDown(e, 'path')}
+                  />
+                </TableHead>
+                <TableHead 
+                  className="relative"
+                  style={{ width: columnWidths.rok }}
+                >
+                  Rok
+                  <div 
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 active:bg-primary"
+                    onMouseDown={(e) => handleMouseDown(e, 'rok')}
+                  />
+                </TableHead>
+                <TableHead 
+                  className="text-right relative"
+                  style={{ width: columnWidths.akcje }}
+                >
+                  Akcje
+                  <div 
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 active:bg-primary"
+                    onMouseDown={(e) => handleMouseDown(e, 'akcje')}
+                  />
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedDocuments.map((doc) => (
                 <TableRow key={doc.id}>
-                  <TableCell className="font-medium">{doc.rodzaj}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  <TableCell className="font-medium" style={{ width: columnWidths.rodzaj }}>{doc.rodzaj}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm" style={{ width: columnWidths.umowa }}>
                     {doc.contract?.contract_number || "—"}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm max-w-[120px] truncate">
+                  <TableCell className="text-muted-foreground text-sm truncate" style={{ width: columnWidths.folder }}>
                     {doc.folder || "—"}
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={{ width: columnWidths.folder_link }}>
                     {doc.folder_link ? (
                       <a 
                         href={doc.folder_link} 
@@ -409,10 +534,10 @@ const Documents = () => {
                       </a>
                     ) : "—"}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm max-w-[150px] truncate">
+                  <TableCell className="text-muted-foreground text-sm truncate" style={{ width: columnWidths.nazwa_pliku }}>
                     {doc.nazwa_pliku}
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={{ width: columnWidths.link }}>
                     {doc.link ? (
                       <a 
                         href={doc.link} 
@@ -424,13 +549,13 @@ const Documents = () => {
                       </a>
                     ) : "—"}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-xs max-w-[120px] truncate" title={doc.path || ""}>
+                  <TableCell className="text-muted-foreground text-xs truncate" style={{ width: columnWidths.path }} title={doc.path || ""}>
                     {doc.path || "—"}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  <TableCell className="text-muted-foreground text-sm" style={{ width: columnWidths.rok }}>
                     {doc.rok || "—"}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right" style={{ width: columnWidths.akcje }}>
                     <div className="flex justify-end gap-2">
                       <Button
                         variant="outline"
