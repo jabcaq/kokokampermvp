@@ -100,6 +100,12 @@ const Contracts = () => {
         extra_equipment: ""
       });
       
+      // Set default deposit amount based on vehicle type
+      if (!customDepositAmount) {
+        const defaultDeposit = selectedVehicle.type === "Przyczepa" ? "3000" : "1000";
+        setDepositAmount(defaultDeposit);
+      }
+      
       // Generate contract number based on vehicle type
       if (selectedVehicle.type) {
         const prefix = selectedVehicle.type === "Kamper" ? "K" : "P";
@@ -168,7 +174,8 @@ const Contracts = () => {
     }
     
     // Przygotuj dane płatności z automatycznymi kwotami i datami
-    const finalDepositAmount = customDepositAmount ? parseFloat(depositAmount) : 1000;
+    const defaultDeposit = vehicleData.type === "Przyczepa" ? 3000 : 1000;
+    const finalDepositAmount = customDepositAmount ? parseFloat(depositAmount) : defaultDeposit;
     
     const paymentsData: any = {
       rezerwacyjna: {
@@ -801,7 +808,9 @@ const Contracts = () => {
                     return <span className="block">• Data opłaty zasadniczej: zostanie obliczona po wybraniu daty rozpoczęcia</span>;
                   })()}
                   <span className="block">• Data kaucji: dzień rozpoczęcia wynajmu</span>
-                  <span className="block">• Kwota kaucji: {customDepositAmount ? `${depositAmount} zł (niestandardowa)` : '1000 zł'}</span>
+                  <span className="block">• Kwota kaucji: {customDepositAmount 
+                    ? `${depositAmount} zł (niestandardowa)` 
+                    : `${vehicleData.type === "Przyczepa" ? "3000" : "1000"} zł`}</span>
                   <span className="block">• Rachunki bankowe są automatycznie przypisywane</span>
                 </p>
               </div>
