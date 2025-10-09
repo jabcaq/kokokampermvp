@@ -11,6 +11,7 @@ export interface Contract {
   end_date: string;
   status: 'active' | 'pending' | 'completed' | 'cancelled';
   value: number | null;
+  is_full_payment_as_reservation?: boolean;
   tenant_company_name?: string;
   lessor_name?: string;
   lessor_address?: string;

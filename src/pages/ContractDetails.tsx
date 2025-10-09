@@ -870,7 +870,12 @@ const ContractDetails = () => {
         </CardHeader>
         <CardContent className="space-y-8">
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">Opłata rezerwacyjna</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">
+              Opłata rezerwacyjna
+              {displayData?.is_full_payment_as_reservation && (
+                <span className="ml-2 text-xs font-normal text-muted-foreground">(Pełna płatność)</span>
+              )}
+            </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
               <div className="space-y-3">
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data</Label>

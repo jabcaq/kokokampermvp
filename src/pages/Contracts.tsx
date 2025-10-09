@@ -218,6 +218,7 @@ const Contracts = () => {
         end_date: endDate as string,
         status: 'pending',
         value: total > 0 ? total : null,
+        is_full_payment_as_reservation: isFullPaymentAsReservation,
         tenant_company_name: formData.get('tenant_company_name') as string || "",
         lessor_name: "Koko Group Sp. z o.o.",
         lessor_address: "ul. Lazurowa 85a/53, 01-479 Warszawa",
