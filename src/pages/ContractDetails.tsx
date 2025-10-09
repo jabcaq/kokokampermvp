@@ -16,6 +16,7 @@ import { useVehicles } from "@/hooks/useVehicles";
 import { useVehicleHandovers, useAddVehicleHandover } from "@/hooks/useVehicleHandovers";
 import { useVehicleReturns, useAddVehicleReturn } from "@/hooks/useVehicleReturns";
 import { format } from "date-fns";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { DriversTab } from "@/components/contract-tabs/DriversTab";
 import { HandoverTab } from "@/components/contract-tabs/HandoverTab";
 import { ReturnTab } from "@/components/contract-tabs/ReturnTab";
@@ -567,10 +568,10 @@ const ContractDetails = () => {
             <div className="space-y-3">
               <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data rozpoczęcia</Label>
               {isEditing ? (
-                <Input 
-                  type="datetime-local" 
-                  value={displayData?.start_date ? new Date(displayData.start_date).toISOString().slice(0, 16) : ''} 
-                  onChange={(e) => updateField('start_date', e.target.value)} 
+                <DateTimePicker
+                  date={displayData?.start_date ? new Date(displayData.start_date) : undefined}
+                  setDate={(date) => updateField('start_date', date?.toISOString())}
+                  placeholder="Wybierz datę i godzinę rozpoczęcia"
                 />
               ) : (
                 <p className="text-base font-semibold text-foreground pt-1">
@@ -581,10 +582,10 @@ const ContractDetails = () => {
             <div className="space-y-3">
               <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data zakończenia</Label>
               {isEditing ? (
-                <Input 
-                  type="datetime-local" 
-                  value={displayData?.end_date ? new Date(displayData.end_date).toISOString().slice(0, 16) : ''} 
-                  onChange={(e) => updateField('end_date', e.target.value)} 
+                <DateTimePicker
+                  date={displayData?.end_date ? new Date(displayData.end_date) : undefined}
+                  setDate={(date) => updateField('end_date', date?.toISOString())}
+                  placeholder="Wybierz datę i godzinę zakończenia"
                 />
               ) : (
                 <p className="text-base font-semibold text-foreground pt-1">
