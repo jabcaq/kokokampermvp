@@ -371,6 +371,7 @@ const Documents = () => {
                 </TableHead>
                 <TableHead className="min-w-[140px]">Umowa (system)</TableHead>
                 <TableHead>Folder</TableHead>
+                <TableHead className="w-[100px]">Folder Link</TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50 transition-colors min-w-[150px]"
                   onClick={() => handleSort("nazwa_pliku")}
@@ -395,6 +396,18 @@ const Documents = () => {
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm max-w-[120px] truncate">
                     {doc.folder || "—"}
+                  </TableCell>
+                  <TableCell>
+                    {doc.folder_link ? (
+                      <a 
+                        href={doc.folder_link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline text-sm"
+                      >
+                        Link
+                      </a>
+                    ) : "—"}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm max-w-[150px] truncate">
                     {doc.nazwa_pliku}
