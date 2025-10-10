@@ -98,10 +98,10 @@ const Inquiries = () => {
         inquiryNumber: selectedInquiry.inquiry_number,
       });
       
-      // Update inquiry status
+      // Update inquiry status to completed (answered)
       await updateStatusMutation.mutateAsync({
         id: selectedInquiry.id,
-        status: 'in_progress',
+        status: 'completed',
       });
       
       // Create notification for inquiry response
@@ -132,6 +132,12 @@ const Inquiries = () => {
       }
       
       setReplyMessage("");
+      
+      // Show success toast
+      toast({
+        title: "Odpowiedź wysłana",
+        description: "Odpowiedź została pomyślnie wysłana, a zapytanie oznaczono jako odpowiedziane.",
+      });
     } catch (error) {
       toast({
         title: "Błąd",
