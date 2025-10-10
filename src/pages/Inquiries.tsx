@@ -22,7 +22,7 @@ import { CalendarIcon } from "lucide-react";
 const Inquiries = () => {
   const { data: inquiries = [], isLoading } = useInquiries();
   const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
-  const [replyMessage, setReplyMessage] = useState("");
+  const [draftMessages, setDraftMessages] = useState<Map<string, string>>(new Map());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
@@ -32,6 +32,23 @@ const Inquiries = () => {
   const createNotificationMutation = useCreateNotification();
   const { data: messages = [] } = useInquiryMessages(selectedInquiry?.id);
   const addMessageMutation = useAddInquiryMessage();
+
+  // Get current reply message for selected inquiry
+  const replyMessage = selectedInquiry ? (draftMessages.get(selectedInquiry.id) || "") : "";
+
+  // Update reply message for current inquiry
+  const setReplyMessage = (message: string) => {
+    if (!selectedInquiry) return;
+    setDraftMessages(prev => {
+      const newMap = new Map(prev);
+      if (message) {
+        newMap.set(selectedInquiry.id, message);
+      } else {
+        newMap.delete(selectedInquiry.id);
+      }
+      return newMap;
+    });
+  };
 
   // Filtered inquiries based on status and date
   const filteredInquiries = useMemo(() => {
