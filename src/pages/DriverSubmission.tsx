@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UserPlus, Send, CheckCircle2, FileText, Plus } from "lucide-react";
+import { UserPlus, Send, CheckCircle2, FileText, Plus, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useContractByNumber, useUpdateContract } from "@/hooks/useContracts";
 import { useCreateNotification } from "@/hooks/useNotifications";
 import { useUpdateClient } from "@/hooks/useClients";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const DriverSubmission = () => {
   const { contractId } = useParams<{ contractId: string }>();
@@ -38,6 +39,8 @@ const DriverSubmission = () => {
     documentNumber: "",
     documentIssuedBy: "",
     trailerLicenseCategory: "" as "" | "B" | "B96" | "B+E",
+    trailerF1Mass: "",
+    trailerO1Mass: "",
   });
 
   const [additionalDriversLicenseCategories, setAdditionalDriversLicenseCategories] = useState<Record<number, string[]>>({});
@@ -65,6 +68,8 @@ const DriverSubmission = () => {
         documentNumber: contract.tenant_id_number || "",
         documentIssuedBy: contract.tenant_id_issuer || "",
         trailerLicenseCategory: (contract.tenant_trailer_license_category as "" | "B" | "B96" | "B+E") || "",
+        trailerF1Mass: contract.vehicle_f1_mass?.toString() || "",
+        trailerO1Mass: contract.vehicle_o1_mass?.toString() || "",
       });
     }
   }, [contract]);
@@ -83,9 +88,16 @@ const DriverSubmission = () => {
         return;
       }
 
-      const f1 = Number(contract.vehicle_f1_mass);
+      if (!formData.trailerF1Mass || !formData.trailerO1Mass) {
+        toast.error("Błąd walidacji", {
+          description: "Musisz podać wartości F1 i O1 z dowodu rejestracyjnego przyczepy"
+        });
+        return;
+      }
+
+      const f1 = Number(formData.trailerF1Mass);
       const trailerMass = Number(contract.trailer_mass);
-      const o1 = Number(contract.vehicle_o1_mass);
+      const o1 = Number(formData.trailerO1Mass);
 
       // Check if trailer mass exceeds O1
       if (trailerMass > o1) {
@@ -170,6 +182,8 @@ const DriverSubmission = () => {
           tenant_id_number: formData.documentNumber,
           tenant_id_issuer: formData.documentIssuedBy,
           tenant_trailer_license_category: formData.trailerLicenseCategory || null,
+          vehicle_f1_mass: formData.trailerF1Mass ? Number(formData.trailerF1Mass) : null,
+          vehicle_o1_mass: formData.trailerO1Mass ? Number(formData.trailerO1Mass) : null,
         } as any,
       });
 
@@ -522,6 +536,60 @@ const DriverSubmission = () => {
                   <p className="text-xs text-muted-foreground">
                     Ta umowa obejmuje przyczepę. Wymagane są dodatkowe informacje o prawie jazdy.
                   </p>
+
+                  <TooltipProvider>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="trailerF1Mass">F1 - Maksymalna masa całkowita *</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>Maksymalna masa całkowita pojazdu znajduje się w dowodzie rejestracyjnym w polu F1. Jest to maksymalna dopuszczalna masa całkowita pojazdu wraz z ładunkiem.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <Input
+                          id="trailerF1Mass"
+                          type="number"
+                          value={formData.trailerF1Mass}
+                          onChange={(e) =>
+                            setFormData({ ...formData, trailerF1Mass: e.target.value })
+                          }
+                          placeholder="np. 3500"
+                          required
+                        />
+                        <p className="text-xs text-muted-foreground">Podaj wartość w kg</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="trailerO1Mass">O1 - Maks. masa przyczepy z hamulcem *</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>Maksymalna masa przyczepy z hamulcem znajduje się w dowodzie rejestracyjnym w polu O1. Jest to maksymalna dopuszczalna masa przyczepy wyposażonej w hamulce, którą może holować dany pojazd.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <Input
+                          id="trailerO1Mass"
+                          type="number"
+                          value={formData.trailerO1Mass}
+                          onChange={(e) =>
+                            setFormData({ ...formData, trailerO1Mass: e.target.value })
+                          }
+                          placeholder="np. 750"
+                          required
+                        />
+                        <p className="text-xs text-muted-foreground">Podaj wartość w kg</p>
+                      </div>
+                    </div>
+                  </TooltipProvider>
                   
                    <div className="space-y-2">
                     <Label htmlFor="trailerLicenseCategory">Kategoria prawa jazdy dla przyczepy *</Label>
@@ -563,13 +631,13 @@ const DriverSubmission = () => {
                           </>
                         )}
                       </ul>
-                      {contract?.vehicle_f1_mass && contract?.trailer_mass && contract?.vehicle_o1_mass && (
+                      {formData.trailerF1Mass && contract?.trailer_mass && formData.trailerO1Mass && (
                         <div className="mt-2 pt-2 border-t space-y-1">
-                          <p className="font-semibold">Dane z umowy:</p>
-                          <p>F1 (masa pojazdu): {contract.vehicle_f1_mass} kg</p>
+                          <p className="font-semibold">Dane wprowadzone:</p>
+                          <p>F1 (masa pojazdu): {formData.trailerF1Mass} kg</p>
                           <p>Masa przyczepy: {contract.trailer_mass} kg</p>
-                          <p>O1 (maks. masa przyczepy z hamulcem): {contract.vehicle_o1_mass} kg</p>
-                          <p className="font-semibold mt-1">Suma: {Number(contract.vehicle_f1_mass) + Number(contract.trailer_mass)} kg</p>
+                          <p>O1 (maks. masa przyczepy z hamulcem): {formData.trailerO1Mass} kg</p>
+                          <p className="font-semibold mt-1">Suma F1 + masa przyczepy: {Number(formData.trailerF1Mass) + Number(contract.trailer_mass)} kg</p>
                         </div>
                       )}
                     </div>
