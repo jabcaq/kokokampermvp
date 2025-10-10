@@ -170,6 +170,7 @@ const Users = () => {
                         <SelectItem value="user">Użytkownik</SelectItem>
                         <SelectItem value="admin">Administrator</SelectItem>
                         <SelectItem value="return_handler">Pracownik obsługi zwrotów</SelectItem>
+                        <SelectItem value="admin_return_handler">Administrator i Pracownik zwrotów</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -230,6 +231,7 @@ const Users = () => {
                         <SelectItem value="user">Użytkownik</SelectItem>
                         <SelectItem value="admin">Administrator</SelectItem>
                         <SelectItem value="return_handler">Pracownik obsługi zwrotów</SelectItem>
+                        <SelectItem value="admin_return_handler">Administrator i Pracownik zwrotów</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -269,8 +271,14 @@ const Users = () => {
                   <TableCell className="font-medium">{user.email}</TableCell>
                   <TableCell>{user.full_name || "Nie podano"}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-                      {user.role === "admin" ? "Administrator" : user.role === "return_handler" ? "Pracownik zwrotów" : "Użytkownik"}
+                    <Badge variant={user.role === "admin" || user.role === "admin_return_handler" ? "default" : "secondary"}>
+                      {user.role === "admin" 
+                        ? "Administrator" 
+                        : user.role === "return_handler" 
+                        ? "Pracownik zwrotów" 
+                        : user.role === "admin_return_handler"
+                        ? "Administrator i Pracownik zwrotów"
+                        : "Użytkownik"}
                     </Badge>
                   </TableCell>
                   <TableCell>

@@ -46,8 +46,8 @@ export const Layout = () => {
       
       const roles = data?.map(r => r.role) || [];
       return {
-        isAdmin: roles.includes("admin"),
-        isReturnHandler: roles.includes("return_handler"),
+        isAdmin: roles.includes("admin") || roles.includes("admin_return_handler"),
+        isReturnHandler: roles.includes("return_handler") || roles.includes("admin_return_handler"),
       };
     },
     enabled: !!user?.id,
