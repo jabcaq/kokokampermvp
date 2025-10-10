@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useContract, useUpdateContract } from "@/hooks/useContracts";
+import { supabase } from "@/integrations/supabase/client";
 import { useVehicles } from "@/hooks/useVehicles";
 import { useVehicleHandovers, useAddVehicleHandover } from "@/hooks/useVehicleHandovers";
 import { useVehicleReturns, useAddVehicleReturn } from "@/hooks/useVehicleReturns";
@@ -40,6 +41,7 @@ const ContractDetails = () => {
   const [editedData, setEditedData] = useState<any>({});
   const [activeTab, setActiveTab] = useState("contract");
   const [vehicleFilter, setVehicleFilter] = useState("");
+  const [previousStatus, setPreviousStatus] = useState<string | null>(null);
   
   const { data: contract, isLoading } = useContract(id);
   const { data: vehicles } = useVehicles();
@@ -135,11 +137,40 @@ const ContractDetails = () => {
     const updates = sanitizeContractUpdates(editedData);
     console.log('Saving data (sanitized):', updates);
     
+    // Sprawdź czy status zmienia się na 'active'
+    const statusChangedToActive = updates.status === 'active' && contract?.status !== 'active';
+    
     try {
       await updateContractMutation.mutateAsync({
         id,
         updates,
       });
+      
+      // Wyślij webhook jeśli status zmienił się na 'active'
+      if (statusChangedToActive && contract) {
+        try {
+          console.log('Sending webhook notification for contract becoming active');
+          const { error: webhookError } = await supabase.functions.invoke('notify-contract-active', {
+            body: {
+              contractId: contract.id,
+              contractNumber: contract.contract_number,
+            },
+          });
+          
+          if (webhookError) {
+            console.error('Webhook error:', webhookError);
+            toast({
+              title: "Ostrzeżenie",
+              description: "Umowa zaktualizowana, ale nie udało się wysłać powiadomienia webhook.",
+              variant: "default",
+            });
+          } else {
+            console.log('Webhook sent successfully');
+          }
+        } catch (webhookErr) {
+          console.error('Failed to send webhook:', webhookErr);
+        }
+      }
       
       toast({
         title: "Umowa zaktualizowana",
