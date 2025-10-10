@@ -15,8 +15,6 @@ import { useContracts, useDeleteContract, useAddContract } from "@/hooks/useCont
 import { useClients } from "@/hooks/useClients";
 import { useVehicles } from "@/hooks/useVehicles";
 import { supabase } from "@/integrations/supabase/client";
-import { useContractDocuments } from "@/hooks/useContractDocuments";
-import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
   AlertDialog,
@@ -43,7 +41,6 @@ const Contracts = () => {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [systemDocFilter, setSystemDocFilter] = useState<"all" | "with" | "without">("all");
   const [deleteContractId, setDeleteContractId] = useState<string | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [selectedClientId, setSelectedClientId] = useState<string>("");
@@ -76,18 +73,6 @@ const Contracts = () => {
   const { data: clients = [] } = useClients();
   const deleteContractMutation = useDeleteContract();
   const addContractMutation = useAddContract();
-  
-  // Fetch all contract documents to check which contracts have "Umowa system"
-  const { data: allContractDocuments = [] } = useQuery({
-    queryKey: ['all-contract-documents'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('contract_documents')
-        .select('contract_id, document_type');
-      if (error) throw error;
-      return data;
-    },
-  });
   
   // Automatycznie otwórz dialog z wybranym klientem jeśli przekazano clientId
   useEffect(() => {
@@ -325,31 +310,12 @@ const Contracts = () => {
     }
   };
 
-  // Check which contracts have "Umowa system" document
-  const contractsWithSystemDoc = new Set(
-    allContractDocuments
-      .filter(doc => doc.document_type === 'Umowa system')
-      .map(doc => doc.contract_id)
+  const filteredContracts = contractsData.filter(
+    (contract) =>
+      contract.contract_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (contract.client?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contract.vehicle_model.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
-  const filteredContracts = contractsData
-    .filter((contract) => {
-      const matchesSearch = 
-        contract.contract_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (contract.client?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contract.vehicle_model.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      if (!matchesSearch) return false;
-      
-      // Filter based on system document status
-      if (systemDocFilter === "with") {
-        return contractsWithSystemDoc.has(contract.id);
-      } else if (systemDocFilter === "without") {
-        return !contractsWithSystemDoc.has(contract.id);
-      }
-      
-      return true; // "all" option
-    });
   
   const handleDialogChange = (open: boolean) => {
     setIsDialogOpen(open);
@@ -914,40 +880,14 @@ const Contracts = () => {
         </Dialog>
       </div>
 
-      <div className="space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Szukaj umów..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        
-        <div className="flex gap-2">
-          <Button
-            variant={systemDocFilter === "all" ? "default" : "outline"}
-            onClick={() => setSystemDocFilter("all")}
-            size="sm"
-          >
-            Wszystkie
-          </Button>
-          <Button
-            variant={systemDocFilter === "with" ? "default" : "outline"}
-            onClick={() => setSystemDocFilter("with")}
-            size="sm"
-          >
-            Z Umowa system
-          </Button>
-          <Button
-            variant={systemDocFilter === "without" ? "default" : "outline"}
-            onClick={() => setSystemDocFilter("without")}
-            size="sm"
-          >
-            Bez Umowa system
-          </Button>
-        </div>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Szukaj umów..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
       <Card className="shadow-md">
@@ -979,11 +919,6 @@ const Contracts = () => {
                       <Badge variant="outline" className={statusConfig[contract.status].className}>
                         {statusConfig[contract.status].label}
                       </Badge>
-                      {!contractsWithSystemDoc.has(contract.id) && (
-                        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20">
-                          Stara wiadomość
-                        </Badge>
-                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Klient: <span className="text-foreground font-medium">{contract.client?.name || 'Brak danych'}</span>
