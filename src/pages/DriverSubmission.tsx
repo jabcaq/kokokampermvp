@@ -492,6 +492,44 @@ const DriverSubmission = () => {
                   />
                 </div>
 
+                <div className="space-y-3">
+                  <Label>Kategoria prawa jazdy *</Label>
+                  <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/30">
+                    {['AM', 'A1', 'A2', 'A', 'B', 'B96', 'B+E', 'C1', 'C', 'C+E', 'D1', 'D', 'D+E', 'T'].map((category) => (
+                      <div key={category} className="flex items-center space-x-3">
+                        <Checkbox
+                          id={`category-${category}`}
+                          checked={formData.licenseCategory.includes(category)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFormData({
+                                ...formData,
+                                licenseCategory: [...formData.licenseCategory, category]
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                licenseCategory: formData.licenseCategory.filter(c => c !== category)
+                              });
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`category-${category}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
+                        >
+                          {category}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  {formData.licenseCategory.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Wybrano: {formData.licenseCategory.join(', ')}
+                    </p>
+                  )}
+                </div>
+
                 <TooltipProvider>
                   <div className="grid gap-4 lg:grid-cols-2">
                     <div className="space-y-2">
@@ -545,44 +583,6 @@ const DriverSubmission = () => {
                     </div>
                   </div>
                 </TooltipProvider>
-
-                <div className="space-y-3">
-                  <Label>Kategoria prawa jazdy *</Label>
-                  <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/30">
-                    {['AM', 'A1', 'A2', 'A', 'B', 'B96', 'B+E', 'C1', 'C', 'C+E', 'D1', 'D', 'D+E', 'T'].map((category) => (
-                      <div key={category} className="flex items-center space-x-3">
-                        <Checkbox
-                          id={`category-${category}`}
-                          checked={formData.licenseCategory.includes(category)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setFormData({
-                                ...formData,
-                                licenseCategory: [...formData.licenseCategory, category]
-                              });
-                            } else {
-                              setFormData({
-                                ...formData,
-                                licenseCategory: formData.licenseCategory.filter(c => c !== category)
-                              });
-                            }
-                          }}
-                        />
-                        <label
-                          htmlFor={`category-${category}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
-                        >
-                          {category}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                  {formData.licenseCategory.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Wybrano: {formData.licenseCategory.join(', ')}
-                    </p>
-                  )}
-                </div>
               </div>
 
               {contract?.has_trailer && (
