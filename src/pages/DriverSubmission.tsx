@@ -492,98 +492,96 @@ const DriverSubmission = () => {
                   />
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <div className="space-y-3">
-                    <Label>Kategoria prawa jazdy *</Label>
-                    <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/30">
-                      {['AM', 'A1', 'A2', 'A', 'B', 'B96', 'B+E', 'C1', 'C', 'C+E', 'D1', 'D', 'D+E', 'T'].map((category) => (
-                        <div key={category} className="flex items-center space-x-3">
-                          <Checkbox
-                            id={`category-${category}`}
-                            checked={formData.licenseCategory.includes(category)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setFormData({
-                                  ...formData,
-                                  licenseCategory: [...formData.licenseCategory, category]
-                                });
-                              } else {
-                                setFormData({
-                                  ...formData,
-                                  licenseCategory: formData.licenseCategory.filter(c => c !== category)
-                                });
-                              }
-                            }}
-                          />
-                          <label
-                            htmlFor={`category-${category}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
-                          >
-                            {category}
-                          </label>
-                        </div>
-                      ))}
+                <TooltipProvider>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="trailerF1Mass">F1 - Maksymalna masa całkowita *</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>Maksymalna masa całkowita pojazdu znajduje się w dowodzie rejestracyjnym w polu F1. Jest to maksymalna dopuszczalna masa całkowita pojazdu wraz z ładunkiem.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input
+                        id="trailerF1Mass"
+                        type="number"
+                        value={formData.trailerF1Mass}
+                        onChange={(e) =>
+                          setFormData({ ...formData, trailerF1Mass: e.target.value })
+                        }
+                        placeholder="np. 3500"
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">Podaj wartość w kg z dowodu rejestracyjnego</p>
                     </div>
-                    {formData.licenseCategory.length > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        Wybrano: {formData.licenseCategory.join(', ')}
-                      </p>
-                    )}
+
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="trailerO1Mass">O1 - Maks. masa przyczepy z hamulcem *</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>Maksymalna masa przyczepy z hamulcem znajduje się w dowodzie rejestracyjnym w polu O1. Jest to maksymalna dopuszczalna masa przyczepy wyposażonej w hamulce, którą może holować dany pojazd.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input
+                        id="trailerO1Mass"
+                        type="number"
+                        value={formData.trailerO1Mass}
+                        onChange={(e) =>
+                          setFormData({ ...formData, trailerO1Mass: e.target.value })
+                        }
+                        placeholder="np. 750"
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">Podaj wartość w kg z dowodu rejestracyjnego</p>
+                    </div>
                   </div>
+                </TooltipProvider>
 
-                  <TooltipProvider>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor="trailerF1Mass">F1 - Maksymalna masa całkowita *</Label>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
-                              <p>Maksymalna masa całkowita pojazdu znajduje się w dowodzie rejestracyjnym w polu F1. Jest to maksymalna dopuszczalna masa całkowita pojazdu wraz z ładunkiem.</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                        <Input
-                          id="trailerF1Mass"
-                          type="number"
-                          value={formData.trailerF1Mass}
-                          onChange={(e) =>
-                            setFormData({ ...formData, trailerF1Mass: e.target.value })
-                          }
-                          placeholder="np. 3500"
-                          required
+                <div className="space-y-3">
+                  <Label>Kategoria prawa jazdy *</Label>
+                  <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/30">
+                    {['AM', 'A1', 'A2', 'A', 'B', 'B96', 'B+E', 'C1', 'C', 'C+E', 'D1', 'D', 'D+E', 'T'].map((category) => (
+                      <div key={category} className="flex items-center space-x-3">
+                        <Checkbox
+                          id={`category-${category}`}
+                          checked={formData.licenseCategory.includes(category)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFormData({
+                                ...formData,
+                                licenseCategory: [...formData.licenseCategory, category]
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                licenseCategory: formData.licenseCategory.filter(c => c !== category)
+                              });
+                            }
+                          }}
                         />
-                        <p className="text-xs text-muted-foreground">Podaj wartość w kg z dowodu rejestracyjnego</p>
+                        <label
+                          htmlFor={`category-${category}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
+                        >
+                          {category}
+                        </label>
                       </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor="trailerO1Mass">O1 - Maks. masa przyczepy z hamulcem *</Label>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
-                              <p>Maksymalna masa przyczepy z hamulcem znajduje się w dowodzie rejestracyjnym w polu O1. Jest to maksymalna dopuszczalna masa przyczepy wyposażonej w hamulce, którą może holować dany pojazd.</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                        <Input
-                          id="trailerO1Mass"
-                          type="number"
-                          value={formData.trailerO1Mass}
-                          onChange={(e) =>
-                            setFormData({ ...formData, trailerO1Mass: e.target.value })
-                          }
-                          placeholder="np. 750"
-                          required
-                        />
-                        <p className="text-xs text-muted-foreground">Podaj wartość w kg z dowodu rejestracyjnego</p>
-                      </div>
-                    </div>
-                  </TooltipProvider>
+                    ))}
+                  </div>
+                  {formData.licenseCategory.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Wybrano: {formData.licenseCategory.join(', ')}
+                    </p>
+                  )}
                 </div>
               </div>
 
