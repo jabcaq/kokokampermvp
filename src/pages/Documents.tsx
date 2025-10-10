@@ -69,10 +69,10 @@ const Documents = () => {
       
       const matchesRodzaj = rodzajFilter === "all" || doc.rodzaj === rodzajFilter;
       
-      const hasUmowaSystem = doc.rodzaj === "Umowa system";
+      const hasContractId = doc.contract_id !== null && doc.contract_id !== undefined;
       const matchesUmowaSystem = umowaSystemFilter === "all" || 
-        (umowaSystemFilter === "with" && hasUmowaSystem) ||
-        (umowaSystemFilter === "without" && !hasUmowaSystem);
+        (umowaSystemFilter === "with" && hasContractId) ||
+        (umowaSystemFilter === "without" && !hasContractId);
       
       return matchesSearch && matchesRodzaj && matchesUmowaSystem;
     }
