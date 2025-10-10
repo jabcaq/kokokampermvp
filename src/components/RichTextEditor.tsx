@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useVehicles } from '@/hooks/useVehicles';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface RichTextEditorProps {
   content: string;
@@ -92,6 +92,13 @@ export const RichTextEditor = ({ content, onChange, placeholder, inquiryData }: 
       onChange(editor.getHTML());
     },
   });
+
+  // Update editor content when content prop changes
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content);
+    }
+  }, [content, editor]);
 
   if (!editor) {
     return null;
