@@ -41,14 +41,14 @@ export default function AdminEmployeeSchedules() {
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
 
-  // Get all return handlers with their profiles
+  // Get all return handlers and admin_return_handlers with their profiles
   const { data: employees, isLoading: employeesLoading } = useQuery({
     queryKey: ["return_handlers"],
     queryFn: async () => {
       const { data: userRoles, error: rolesError } = await supabase
         .from("user_roles")
         .select("user_id")
-        .eq("role", "return_handler");
+        .in("role", ["return_handler", "admin_return_handler"]);
       
       if (rolesError) throw rolesError;
       
@@ -65,7 +65,7 @@ export default function AdminEmployeeSchedules() {
       
       return profiles.map(profile => ({
         id: profile.id,
-        name: profile.full_name || "Nieznany",
+        name: profile.full_name || "Nieznany pracownik",
       }));
     },
   });
