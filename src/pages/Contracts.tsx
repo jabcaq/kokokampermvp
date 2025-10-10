@@ -934,18 +934,29 @@ const Contracts = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <div className="text-right flex-1 sm:flex-none">
-                      <p className="text-sm text-muted-foreground">Wartość</p>
-                      <p className="text-xl font-bold text-primary">
-                        {(() => {
-                          const payments = contract.payments as Record<string, any> || {};
-                          const total = Object.values(payments).reduce((sum, payment: any) => {
-                            const wysokosc = parseFloat(payment?.wysokosc || 0);
-                            return sum + wysokosc;
-                          }, 0);
-                          return total > 0 ? `${total.toFixed(2)} zł` : 'Brak danych';
-                        })()}
-                      </p>
+                    <div className="text-right flex-1 sm:flex-none space-y-1">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Opłata rezerwacyjna + zasadnicza</p>
+                        <p className="text-lg font-bold text-primary">
+                          {(() => {
+                            const payments = contract.payments as Record<string, any> || {};
+                            const rezerwacyjna = parseFloat(payments?.rezerwacyjna?.wysokosc || 0);
+                            const zasadnicza = parseFloat(payments?.zasadnicza?.wysokosc || 0);
+                            const total = rezerwacyjna + zasadnicza;
+                            return total > 0 ? `${total.toFixed(2)} zł` : 'Brak danych';
+                          })()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Kaucja</p>
+                        <p className="text-lg font-bold text-foreground">
+                          {(() => {
+                            const payments = contract.payments as Record<string, any> || {};
+                            const kaucja = parseFloat(payments?.kaucja?.wysokosc || 0);
+                            return kaucja > 0 ? `${kaucja.toFixed(2)} zł` : 'Brak danych';
+                          })()}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <Link to={`/contracts/${contract.id}`}>
