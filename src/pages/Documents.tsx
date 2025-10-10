@@ -24,6 +24,7 @@ import {
 const Documents = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [rodzajFilter, setRodzajFilter] = useState<string>("all");
+  const [umowaSystemFilter, setUmowaSystemFilter] = useState<"all" | "with" | "without">("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
@@ -68,7 +69,12 @@ const Documents = () => {
       
       const matchesRodzaj = rodzajFilter === "all" || doc.rodzaj === rodzajFilter;
       
-      return matchesSearch && matchesRodzaj;
+      const hasUmowaSystem = doc.rodzaj === "Umowa system";
+      const matchesUmowaSystem = umowaSystemFilter === "all" || 
+        (umowaSystemFilter === "with" && hasUmowaSystem) ||
+        (umowaSystemFilter === "without" && !hasUmowaSystem);
+      
+      return matchesSearch && matchesRodzaj && matchesUmowaSystem;
     }
   );
 
@@ -353,30 +359,56 @@ const Documents = () => {
         </Dialog>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Szukaj dokumentów..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={umowaSystemFilter === "all" ? "default" : "outline"}
+            onClick={() => setUmowaSystemFilter("all")}
+            size="sm"
+          >
+            Wszystkie
+          </Button>
+          <Button
+            variant={umowaSystemFilter === "with" ? "default" : "outline"}
+            onClick={() => setUmowaSystemFilter("with")}
+            size="sm"
+          >
+            Z Umowa system
+          </Button>
+          <Button
+            variant={umowaSystemFilter === "without" ? "default" : "outline"}
+            onClick={() => setUmowaSystemFilter("without")}
+            size="sm"
+          >
+            Bez Umowa system
+          </Button>
         </div>
-        <div className="w-full sm:w-48">
-          <Select value={rodzajFilter} onValueChange={setRodzajFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filtruj po rodzaju" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Wszystkie rodzaje</SelectItem>
-              {uniqueRodzaje.map((rodzaj) => (
-                <SelectItem key={rodzaj} value={rodzaj}>
-                  {rodzaj}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Szukaj dokumentów..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="w-full sm:w-48">
+            <Select value={rodzajFilter} onValueChange={setRodzajFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filtruj po rodzaju" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Wszystkie rodzaje</SelectItem>
+                {uniqueRodzaje.map((rodzaj) => (
+                  <SelectItem key={rodzaj} value={rodzaj}>
+                    {rodzaj}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
