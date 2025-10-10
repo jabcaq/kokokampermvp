@@ -28,7 +28,7 @@ const Documents = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [deleteDocumentId, setDeleteDocumentId] = useState<string | null>(null);
-  const [sortField, setSortField] = useState<"rodzaj" | "nazwa_pliku" | "data">("data");
+  const [sortField, setSortField] = useState<"rodzaj" | "nazwa_pliku" | "data" | "created_at">("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -79,6 +79,9 @@ const Documents = () => {
     if (sortField === "data") {
       aValue = a.data ? new Date(a.data).getTime() : 0;
       bValue = b.data ? new Date(b.data).getTime() : 0;
+    } else if (sortField === "created_at") {
+      aValue = a.created_at ? new Date(a.created_at).getTime() : 0;
+      bValue = b.created_at ? new Date(b.created_at).getTime() : 0;
     }
     
     if (sortDirection === "asc") {
@@ -99,7 +102,7 @@ const Documents = () => {
     setCurrentPage(1);
   };
 
-  const handleSort = (field: "rodzaj" | "nazwa_pliku" | "data") => {
+  const handleSort = (field: "rodzaj" | "nazwa_pliku" | "data" | "created_at") => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
