@@ -533,7 +533,7 @@ const DriverSubmission = () => {
                 <TooltipProvider>
                   <div className="grid gap-4 lg:grid-cols-2">
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 min-h-[24px]">
+                      <div className="flex items-center gap-2 min-h-[48px]">
                         <Label htmlFor="trailerF1Mass">F1 - Maksymalna masa całkowita *</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -558,7 +558,7 @@ const DriverSubmission = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 min-h-[24px]">
+                      <div className="flex items-center gap-2 min-h-[48px]">
                         <Label htmlFor="trailerO1Mass">O1 - Maks. masa przyczepy z hamulcem *</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
