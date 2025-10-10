@@ -79,18 +79,19 @@ const DriverSubmission = () => {
     
     if (!contract?.id) return;
 
+    // Validate F1 and O1 fields
+    if (!formData.trailerF1Mass || !formData.trailerO1Mass) {
+      toast.error("Błąd walidacji", {
+        description: "Musisz podać wartości F1 i O1 z dowodu rejestracyjnego"
+      });
+      return;
+    }
+
     // Validate trailer license if contract has trailer
     if (contract.has_trailer) {
       if (!formData.trailerLicenseCategory) {
         toast.error("Błąd walidacji", {
           description: "Musisz wybrać kategorię prawa jazdy dla przyczepy"
-        });
-        return;
-      }
-
-      if (!formData.trailerF1Mass || !formData.trailerO1Mass) {
-        toast.error("Błąd walidacji", {
-          description: "Musisz podać wartości F1 i O1 z dowodu rejestracyjnego przyczepy"
         });
         return;
       }
@@ -491,54 +492,47 @@ const DriverSubmission = () => {
                   />
                 </div>
 
-                <div className="space-y-3">
-                  <Label>Kategoria prawa jazdy *</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 border rounded-lg bg-muted/30">
-                    {['AM', 'A1', 'A2', 'A', 'B', 'B96', 'B+E', 'C1', 'C', 'C+E', 'D1', 'D', 'D+E', 'T'].map((category) => (
-                      <div key={category} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`category-${category}`}
-                          checked={formData.licenseCategory.includes(category)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setFormData({
-                                ...formData,
-                                licenseCategory: [...formData.licenseCategory, category]
-                              });
-                            } else {
-                              setFormData({
-                                ...formData,
-                                licenseCategory: formData.licenseCategory.filter(c => c !== category)
-                              });
-                            }
-                          }}
-                        />
-                        <label
-                          htmlFor={`category-${category}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                        >
-                          {category}
-                        </label>
-                      </div>
-                    ))}
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="space-y-3">
+                    <Label>Kategoria prawa jazdy *</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 border rounded-lg bg-muted/30">
+                      {['AM', 'A1', 'A2', 'A', 'B', 'B96', 'B+E', 'C1', 'C', 'C+E', 'D1', 'D', 'D+E', 'T'].map((category) => (
+                        <div key={category} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`category-${category}`}
+                            checked={formData.licenseCategory.includes(category)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setFormData({
+                                  ...formData,
+                                  licenseCategory: [...formData.licenseCategory, category]
+                                });
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  licenseCategory: formData.licenseCategory.filter(c => c !== category)
+                                });
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor={`category-${category}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {category}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    {formData.licenseCategory.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Wybrano: {formData.licenseCategory.join(', ')}
+                      </p>
+                    )}
                   </div>
-                  {formData.licenseCategory.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Wybrano: {formData.licenseCategory.join(', ')}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {contract?.has_trailer && (
-                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                  <h4 className="font-semibold text-sm">Dane dla przyczepy</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Ta umowa obejmuje przyczepę. Wymagane są dodatkowe informacje o prawie jazdy.
-                  </p>
 
                   <TooltipProvider>
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-4">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Label htmlFor="trailerF1Mass">F1 - Maksymalna masa całkowita *</Label>
@@ -561,7 +555,7 @@ const DriverSubmission = () => {
                           placeholder="np. 3500"
                           required
                         />
-                        <p className="text-xs text-muted-foreground">Podaj wartość w kg</p>
+                        <p className="text-xs text-muted-foreground">Podaj wartość w kg z dowodu rejestracyjnego</p>
                       </div>
 
                       <div className="space-y-2">
@@ -586,10 +580,19 @@ const DriverSubmission = () => {
                           placeholder="np. 750"
                           required
                         />
-                        <p className="text-xs text-muted-foreground">Podaj wartość w kg</p>
+                        <p className="text-xs text-muted-foreground">Podaj wartość w kg z dowodu rejestracyjnego</p>
                       </div>
                     </div>
                   </TooltipProvider>
+                </div>
+              </div>
+
+              {contract?.has_trailer && (
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                  <h4 className="font-semibold text-sm">Dane dla przyczepy</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Ta umowa obejmuje przyczepę. Wymagane są dodatkowe informacje o prawie jazdy.
+                  </p>
                   
                    <div className="space-y-2">
                     <Label htmlFor="trailerLicenseCategory">Kategoria prawa jazdy dla przyczepy *</Label>
