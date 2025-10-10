@@ -10,6 +10,7 @@ import { Upload, X, Edit, Eye, ArrowLeft, Trash2, CheckCircle, XCircle, ChevronL
 import { useToast } from "@/hooks/use-toast";
 import { useAddVehicleReturn, useUpdateVehicleReturn, useVehicleReturns, useDeleteVehicleReturn } from "@/hooks/useVehicleReturns";
 import { useCreateNotification } from "@/hooks/useNotifications";
+import { useUpdateContract } from "@/hooks/useContracts";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { format } from "date-fns";
@@ -23,6 +24,7 @@ const VehicleReturn = () => {
   const updateReturnMutation = useUpdateVehicleReturn();
   const deleteReturnMutation = useDeleteVehicleReturn();
   const createNotificationMutation = useCreateNotification();
+  const updateContract = useUpdateContract();
   
   
   const contractId = searchParams.get('contractId');
@@ -165,6 +167,16 @@ const VehicleReturn = () => {
             link: `/contracts/${contractId}`,
           });
         }
+      }
+
+      // Automatycznie zmień status umowy na "Zakończona" gdy kaucja została zwrócona gotówką
+      if (formData.depositRefundedCash && contractId) {
+        await updateContract.mutateAsync({
+          id: contractId,
+          updates: {
+            status: 'completed' as any,
+          },
+        });
       }
 
       // Reset new photos only
