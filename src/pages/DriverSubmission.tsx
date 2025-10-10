@@ -10,6 +10,7 @@ import { UserPlus, Send, CheckCircle2, FileText, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useContractByNumber, useUpdateContract } from "@/hooks/useContracts";
 import { useCreateNotification } from "@/hooks/useNotifications";
+import { useUpdateClient } from "@/hooks/useClients";
 
 const DriverSubmission = () => {
   const { contractId } = useParams<{ contractId: string }>();
@@ -18,6 +19,7 @@ const DriverSubmission = () => {
   const { data: contract, isLoading, isError } = useContractByNumber(decodedId);
   const updateContract = useUpdateContract();
   const createNotificationMutation = useCreateNotification();
+  const updateClient = useUpdateClient();
   const [submitted, setSubmitted] = useState(false);
   const [additionalDrivers, setAdditionalDrivers] = useState<number[]>([]);
   const [formData, setFormData] = useState({
@@ -170,6 +172,23 @@ const DriverSubmission = () => {
           tenant_trailer_license_category: formData.trailerLicenseCategory || null,
         } as any,
       });
+
+      // Sprawdź czy dane email lub telefon się różnią od danych klienta i zaktualizuj klienta
+      if (contract.client_id) {
+        const emailChanged = formData.driverEmail !== contract.tenant_email;
+        const phoneChanged = formData.driverPhone !== contract.tenant_phone;
+        
+        if (emailChanged || phoneChanged) {
+          const clientUpdates: any = {};
+          if (emailChanged) clientUpdates.email = formData.driverEmail;
+          if (phoneChanged) clientUpdates.phone = formData.driverPhone;
+          
+          await updateClient.mutateAsync({
+            id: contract.client_id,
+            updates: clientUpdates,
+          });
+        }
+      }
 
       // Create notification for new drivers
       const driversCount = allDrivers.length;
