@@ -29,7 +29,7 @@ export function DateTimePicker({
   const [isOpen, setIsOpen] = React.useState(false);
 
   const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8-20
-  const minutes = Array.from({ length: 60 }, (_, i) => i);
+  const minutes = [0, 15, 30, 45];
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (!selectedDate) return;
