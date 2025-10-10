@@ -571,7 +571,10 @@ const Inquiries = () => {
                           {format(new Date(msg.created_at), 'dd.MM.yyyy HH:mm')}
                         </p>
                       </div>
-                      <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                      <div 
+                        className="text-sm whitespace-pre-wrap"
+                        dangerouslySetInnerHTML={{ __html: msg.message }}
+                      />
                     </div>
                   ))}
                 </div>
