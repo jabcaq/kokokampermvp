@@ -533,11 +533,11 @@ const DriverSubmission = () => {
                 <TooltipProvider>
                   <div className="grid gap-4 lg:grid-cols-2">
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-h-[24px]">
                         <Label htmlFor="trailerF1Mass">F1 - Maksymalna masa całkowita *</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                            <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
                           </TooltipTrigger>
                           <TooltipContent className="max-w-xs">
                             <p>Maksymalna masa całkowita pojazdu znajduje się w dowodzie rejestracyjnym w polu F1. Jest to maksymalna dopuszczalna masa całkowita pojazdu wraz z ładunkiem.</p>
@@ -558,11 +558,11 @@ const DriverSubmission = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-h-[24px]">
                         <Label htmlFor="trailerO1Mass">O1 - Maks. masa przyczepy z hamulcem *</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                            <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
                           </TooltipTrigger>
                           <TooltipContent className="max-w-xs">
                             <p>Maksymalna masa przyczepy z hamulcem znajduje się w dowodzie rejestracyjnym w polu O1. Jest to maksymalna dopuszczalna masa przyczepy wyposażonej w hamulce, którą może holować dany pojazd.</p>
