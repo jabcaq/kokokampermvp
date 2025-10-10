@@ -221,7 +221,7 @@ const Contracts = () => {
         is_full_payment_as_reservation: isFullPaymentAsReservation,
         tenant_company_name: formData.get('tenant_company_name') as string || "",
         lessor_name: "Koko Group Sp. z o.o.",
-        lessor_address: "ul. Lazurowa 85a/53, 01-479 Warszawa",
+        lessor_address: "Złotokłos, 05-504, ul. Stawowa 1",
         lessor_phone: "+48 660 694 257",
         lessor_website: "www.kokokamper.pl",
         lessor_email: "kontakt@kokokamper.pl",
