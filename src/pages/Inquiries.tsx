@@ -120,7 +120,7 @@ const Inquiries = () => {
       // Send all data to Make.com webhook for AI training
       try {
         const dwEmails = recipientEmails.filter(r => r.type === 'dw').map(r => r.email);
-        const uwEmails = recipientEmails.filter(r => r.type === 'udw').map(r => r.email);
+        const udwEmails = recipientEmails.filter(r => r.type === 'udw').map(r => r.email);
         
         await fetch('https://hook.eu2.make.com/xtmpyhgk5ls5gslzwr2x6qclmte23zvv', {
           method: 'POST',
@@ -129,17 +129,12 @@ const Inquiries = () => {
           },
           mode: 'no-cors',
           body: JSON.stringify({
-            main_email: selectedInquiry.email,
+            inquiry: selectedInquiry,
             admin_response: replyMessage,
             conversation_history: messages,
-            data: [
-              {
-                ...selectedInquiry,
-                udw_email: dwEmails.length > 0 ? dwEmails : [],
-                uw_email: uwEmails.length > 0 ? uwEmails : [],
-                timestamp: new Date().toISOString(),
-              }
-            ],
+            additional_dw_emails: dwEmails,
+            additional_udw_emails: udwEmails,
+            timestamp: new Date().toISOString(),
           }),
         });
       } catch (webhookError) {
@@ -409,7 +404,7 @@ const Inquiries = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Dodatkowe osoby</Label>
+                  <Label className="text-sm font-medium">Do</Label>
                   <div className="flex gap-2">
                     <Input
                       type="email"
@@ -585,7 +580,7 @@ const Inquiries = () => {
                 </div>
 
                 <div className="space-y-2 flex-shrink-0">
-                  <Label className="text-sm font-medium">Dodatkowe osoby</Label>
+                  <Label className="text-sm font-medium">Do</Label>
                   <div className="flex gap-2">
                     <Input
                       type="email"
