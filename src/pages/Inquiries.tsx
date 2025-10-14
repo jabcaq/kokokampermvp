@@ -122,8 +122,11 @@ const Inquiries = () => {
         const dwEmails = recipientEmails.filter(r => r.type === 'dw').map(r => r.email);
         const uwEmails = recipientEmails.filter(r => r.type === 'udw').map(r => r.email);
         
-        // Combine main email with UW emails
-        const mainAndUwEmails = [selectedInquiry.email, ...uwEmails];
+        // Combine all emails into one array with type indicator
+        const allRecipients = [
+          ...dwEmails.map((email, index) => ({ email, number: index + 1, type: 'dw' })),
+          ...uwEmails.map((email, index) => ({ email, number: index + 1, type: 'uw' }))
+        ];
         
         await fetch('https://hook.eu2.make.com/xtmpyhgk5ls5gslzwr2x6qclmte23zvv', {
           method: 'POST',
@@ -138,8 +141,7 @@ const Inquiries = () => {
             data: [
               {
                 ...selectedInquiry,
-                additional_dw_emails: dwEmails.map((email, index) => ({ email, number: index + 1 })),
-                uw_emails: uwEmails.map((email, index) => ({ email, number: index + 1 })),
+                recipients: allRecipients,
                 timestamp: new Date().toISOString(),
               }
             ],
