@@ -404,7 +404,7 @@ const Inquiries = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Do</Label>
+                  <Label className="text-sm font-medium">Dodatkowe osoby</Label>
                   <div className="flex gap-2">
                     <Input
                       type="email"
@@ -580,7 +580,7 @@ const Inquiries = () => {
                 </div>
 
                 <div className="space-y-2 flex-shrink-0">
-                  <Label className="text-sm font-medium">Do</Label>
+                  <Label className="text-sm font-medium">Dodatkowe osoby</Label>
                   <div className="flex gap-2">
                     <Input
                       type="email"
