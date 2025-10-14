@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Mail, Send, Inbox, Trash2, Reply, Clock, Loader2, Plus, Filter, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Toggle } from "@/components/ui/toggle";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -29,10 +30,8 @@ const Inquiries = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [additionalUdwEmails, setAdditionalUdwEmails] = useState<string[]>([]);
-  const [newUdwEmail, setNewUdwEmail] = useState("");
-  const [additionalUwEmails, setAdditionalUwEmails] = useState<string[]>([]);
-  const [newUwEmail, setNewUwEmail] = useState("");
+  const [recipientEmails, setRecipientEmails] = useState<{ email: string; type: 'dw' | 'udw' }[]>([]);
+  const [newEmail, setNewEmail] = useState("");
   const { toast } = useToast();
   const updateStatusMutation = useUpdateInquiryStatus();
   const createNotificationMutation = useCreateNotification();
@@ -120,6 +119,9 @@ const Inquiries = () => {
 
       // Send all data to Make.com webhook for AI training
       try {
+        const dwEmails = recipientEmails.filter(r => r.type === 'dw').map(r => r.email);
+        const udwEmails = recipientEmails.filter(r => r.type === 'udw').map(r => r.email);
+        
         await fetch('https://hook.eu2.make.com/xtmpyhgk5ls5gslzwr2x6qclmte23zvv', {
           method: 'POST',
           headers: {
@@ -130,8 +132,8 @@ const Inquiries = () => {
             inquiry: selectedInquiry,
             admin_response: replyMessage,
             conversation_history: messages,
-            additional_udw_emails: additionalUdwEmails,
-            additional_uw_emails: additionalUwEmails,
+            additional_dw_emails: dwEmails,
+            additional_udw_emails: udwEmails,
             timestamp: new Date().toISOString(),
           }),
         });
@@ -140,8 +142,7 @@ const Inquiries = () => {
       }
       
       setReplyMessage("");
-      setAdditionalUdwEmails([]);
-      setAdditionalUwEmails([]);
+      setRecipientEmails([]);
       
       // Show success toast
       toast({
@@ -157,10 +158,10 @@ const Inquiries = () => {
     }
   };
 
-  const handleAddUdwEmail = () => {
-    if (newUdwEmail.trim() && newUdwEmail.includes('@')) {
-      setAdditionalUdwEmails([...additionalUdwEmails, newUdwEmail.trim()]);
-      setNewUdwEmail("");
+  const handleAddEmail = () => {
+    if (newEmail.trim() && newEmail.includes('@')) {
+      setRecipientEmails([...recipientEmails, { email: newEmail.trim(), type: 'dw' }]);
+      setNewEmail("");
     } else {
       toast({
         title: "Błędny adres email",
@@ -170,25 +171,14 @@ const Inquiries = () => {
     }
   };
 
-  const handleRemoveUdwEmail = (index: number) => {
-    setAdditionalUdwEmails(additionalUdwEmails.filter((_, i) => i !== index));
+  const handleRemoveEmail = (index: number) => {
+    setRecipientEmails(recipientEmails.filter((_, i) => i !== index));
   };
 
-  const handleAddUwEmail = () => {
-    if (newUwEmail.trim() && newUwEmail.includes('@')) {
-      setAdditionalUwEmails([...additionalUwEmails, newUwEmail.trim()]);
-      setNewUwEmail("");
-    } else {
-      toast({
-        title: "Błędny adres email",
-        description: "Wprowadź poprawny adres email.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleRemoveUwEmail = (index: number) => {
-    setAdditionalUwEmails(additionalUwEmails.filter((_, i) => i !== index));
+  const handleToggleEmailType = (index: number) => {
+    setRecipientEmails(recipientEmails.map((recipient, i) => 
+      i === index ? { ...recipient, type: recipient.type === 'dw' ? 'udw' : 'dw' } : recipient
+    ));
   };
 
   return (
@@ -414,57 +404,34 @@ const Inquiries = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Dodatkowe adresy email dla UDW</Label>
+                  <Label className="text-sm font-medium">Do</Label>
                   <div className="flex gap-2">
                     <Input
                       type="email"
                       placeholder="email@example.com"
-                      value={newUdwEmail}
-                      onChange={(e) => setNewUdwEmail(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddUdwEmail()}
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddEmail()}
                     />
-                    <Button onClick={handleAddUdwEmail} variant="outline" size="sm">
+                    <Button onClick={handleAddEmail} variant="outline" size="sm">
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
-                  {additionalUdwEmails.length > 0 && (
+                  {recipientEmails.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {additionalUdwEmails.map((email, index) => (
-                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                          {email}
-                          <button
-                            onClick={() => handleRemoveUdwEmail(index)}
-                            className="ml-1 hover:text-destructive"
+                      {recipientEmails.map((recipient, index) => (
+                        <Badge key={index} variant="secondary" className="flex items-center gap-2 pr-1">
+                          <span>{recipient.email}</span>
+                          <Toggle
+                            size="sm"
+                            pressed={recipient.type === 'udw'}
+                            onPressedChange={() => handleToggleEmailType(index)}
+                            className="h-5 px-1.5 text-[10px] data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                           >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Dodatkowe adresy email dla UW</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="email"
-                      placeholder="email@example.com"
-                      value={newUwEmail}
-                      onChange={(e) => setNewUwEmail(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddUwEmail()}
-                    />
-                    <Button onClick={handleAddUwEmail} variant="outline" size="sm">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {additionalUwEmails.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {additionalUwEmails.map((email, index) => (
-                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                          {email}
+                            {recipient.type === 'dw' ? 'DW' : 'UDW'}
+                          </Toggle>
                           <button
-                            onClick={() => handleRemoveUwEmail(index)}
+                            onClick={() => handleRemoveEmail(index)}
                             className="ml-1 hover:text-destructive"
                           >
                             <X className="h-3 w-3" />
@@ -613,57 +580,34 @@ const Inquiries = () => {
                 </div>
 
                 <div className="space-y-2 flex-shrink-0">
-                  <Label className="text-sm font-medium">Dodatkowe adresy email dla UDW</Label>
+                  <Label className="text-sm font-medium">Do</Label>
                   <div className="flex gap-2">
                     <Input
                       type="email"
                       placeholder="email@example.com"
-                      value={newUdwEmail}
-                      onChange={(e) => setNewUdwEmail(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddUdwEmail()}
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddEmail()}
                     />
-                    <Button onClick={handleAddUdwEmail} variant="outline" size="sm">
+                    <Button onClick={handleAddEmail} variant="outline" size="sm">
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
-                  {additionalUdwEmails.length > 0 && (
+                  {recipientEmails.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {additionalUdwEmails.map((email, index) => (
-                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                          {email}
-                          <button
-                            onClick={() => handleRemoveUdwEmail(index)}
-                            className="ml-1 hover:text-destructive"
+                      {recipientEmails.map((recipient, index) => (
+                        <Badge key={index} variant="secondary" className="flex items-center gap-2 pr-1">
+                          <span>{recipient.email}</span>
+                          <Toggle
+                            size="sm"
+                            pressed={recipient.type === 'udw'}
+                            onPressedChange={() => handleToggleEmailType(index)}
+                            className="h-5 px-1.5 text-[10px] data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                           >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2 flex-shrink-0">
-                  <Label className="text-sm font-medium">Dodatkowe adresy email dla UW</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="email"
-                      placeholder="email@example.com"
-                      value={newUwEmail}
-                      onChange={(e) => setNewUwEmail(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddUwEmail()}
-                    />
-                    <Button onClick={handleAddUwEmail} variant="outline" size="sm">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {additionalUwEmails.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {additionalUwEmails.map((email, index) => (
-                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                          {email}
+                            {recipient.type === 'dw' ? 'DW' : 'UDW'}
+                          </Toggle>
                           <button
-                            onClick={() => handleRemoveUwEmail(index)}
+                            onClick={() => handleRemoveEmail(index)}
                             className="ml-1 hover:text-destructive"
                           >
                             <X className="h-3 w-3" />
