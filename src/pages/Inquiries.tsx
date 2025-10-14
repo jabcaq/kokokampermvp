@@ -135,8 +135,8 @@ const Inquiries = () => {
             inquiry: selectedInquiry,
             admin_response: replyMessage,
             conversation_history: messages,
-            additional_dw_emails: dwEmails.map(email => ({ email })),
-            main_and_uw_emails: mainAndUwEmails.map(email => ({ email })),
+            additional_dw_emails: dwEmails.map((email, index) => ({ email, number: index + 1 })),
+            main_and_uw_emails: mainAndUwEmails.map((email, index) => ({ email, number: index + 1 })),
             timestamp: new Date().toISOString(),
           }),
         });
