@@ -2,7 +2,9 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Send, Inbox, Trash2, Reply, Clock, Loader2, Plus, Filter } from "lucide-react";
+import { Mail, Send, Inbox, Trash2, Reply, Clock, Loader2, Plus, Filter, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -27,6 +29,8 @@ const Inquiries = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [additionalUdwEmails, setAdditionalUdwEmails] = useState<string[]>([]);
+  const [newUdwEmail, setNewUdwEmail] = useState("");
   const { toast } = useToast();
   const updateStatusMutation = useUpdateInquiryStatus();
   const createNotificationMutation = useCreateNotification();
@@ -124,6 +128,7 @@ const Inquiries = () => {
             inquiry: selectedInquiry,
             admin_response: replyMessage,
             conversation_history: messages,
+            additional_udw_emails: additionalUdwEmails,
             timestamp: new Date().toISOString(),
           }),
         });
@@ -132,6 +137,7 @@ const Inquiries = () => {
       }
       
       setReplyMessage("");
+      setAdditionalUdwEmails([]);
       
       // Show success toast
       toast({
@@ -145,6 +151,23 @@ const Inquiries = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleAddUdwEmail = () => {
+    if (newUdwEmail.trim() && newUdwEmail.includes('@')) {
+      setAdditionalUdwEmails([...additionalUdwEmails, newUdwEmail.trim()]);
+      setNewUdwEmail("");
+    } else {
+      toast({
+        title: "Błędny adres email",
+        description: "Wprowadź poprawny adres email.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRemoveUdwEmail = (index: number) => {
+    setAdditionalUdwEmails(additionalUdwEmails.filter((_, i) => i !== index));
   };
 
   return (
@@ -369,6 +392,37 @@ const Inquiries = () => {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Dodatkowe adresy email dla UDW</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="email"
+                      placeholder="email@example.com"
+                      value={newUdwEmail}
+                      onChange={(e) => setNewUdwEmail(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddUdwEmail()}
+                    />
+                    <Button onClick={handleAddUdwEmail} variant="outline" size="sm">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {additionalUdwEmails.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {additionalUdwEmails.map((email, index) => (
+                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                          {email}
+                          <button
+                            onClick={() => handleRemoveUdwEmail(index)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex flex-col sm:flex-row gap-2 justify-end">
                   <Button
                     variant="secondary"
@@ -504,6 +558,37 @@ const Inquiries = () => {
                       inquiryData={selectedInquiry}
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2 flex-shrink-0">
+                  <Label className="text-sm font-medium">Dodatkowe adresy email dla UDW</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="email"
+                      placeholder="email@example.com"
+                      value={newUdwEmail}
+                      onChange={(e) => setNewUdwEmail(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddUdwEmail()}
+                    />
+                    <Button onClick={handleAddUdwEmail} variant="outline" size="sm">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {additionalUdwEmails.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {additionalUdwEmails.map((email, index) => (
+                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                          {email}
+                          <button
+                            onClick={() => handleRemoveUdwEmail(index)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-2 justify-end flex-shrink-0 pt-2 border-t">
