@@ -31,6 +31,8 @@ const Inquiries = () => {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [additionalUdwEmails, setAdditionalUdwEmails] = useState<string[]>([]);
   const [newUdwEmail, setNewUdwEmail] = useState("");
+  const [additionalUwEmails, setAdditionalUwEmails] = useState<string[]>([]);
+  const [newUwEmail, setNewUwEmail] = useState("");
   const { toast } = useToast();
   const updateStatusMutation = useUpdateInquiryStatus();
   const createNotificationMutation = useCreateNotification();
@@ -129,6 +131,7 @@ const Inquiries = () => {
             admin_response: replyMessage,
             conversation_history: messages,
             additional_udw_emails: additionalUdwEmails,
+            additional_uw_emails: additionalUwEmails,
             timestamp: new Date().toISOString(),
           }),
         });
@@ -138,6 +141,7 @@ const Inquiries = () => {
       
       setReplyMessage("");
       setAdditionalUdwEmails([]);
+      setAdditionalUwEmails([]);
       
       // Show success toast
       toast({
@@ -168,6 +172,23 @@ const Inquiries = () => {
 
   const handleRemoveUdwEmail = (index: number) => {
     setAdditionalUdwEmails(additionalUdwEmails.filter((_, i) => i !== index));
+  };
+
+  const handleAddUwEmail = () => {
+    if (newUwEmail.trim() && newUwEmail.includes('@')) {
+      setAdditionalUwEmails([...additionalUwEmails, newUwEmail.trim()]);
+      setNewUwEmail("");
+    } else {
+      toast({
+        title: "Błędny adres email",
+        description: "Wprowadź poprawny adres email.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRemoveUwEmail = (index: number) => {
+    setAdditionalUwEmails(additionalUwEmails.filter((_, i) => i !== index));
   };
 
   return (
@@ -423,6 +444,37 @@ const Inquiries = () => {
                   )}
                 </div>
 
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Dodatkowe adresy email dla UW</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="email"
+                      placeholder="email@example.com"
+                      value={newUwEmail}
+                      onChange={(e) => setNewUwEmail(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddUwEmail()}
+                    />
+                    <Button onClick={handleAddUwEmail} variant="outline" size="sm">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {additionalUwEmails.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {additionalUwEmails.map((email, index) => (
+                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                          {email}
+                          <button
+                            onClick={() => handleRemoveUwEmail(index)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex flex-col sm:flex-row gap-2 justify-end">
                   <Button
                     variant="secondary"
@@ -581,6 +633,37 @@ const Inquiries = () => {
                           {email}
                           <button
                             onClick={() => handleRemoveUdwEmail(index)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2 flex-shrink-0">
+                  <Label className="text-sm font-medium">Dodatkowe adresy email dla UW</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="email"
+                      placeholder="email@example.com"
+                      value={newUwEmail}
+                      onChange={(e) => setNewUwEmail(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddUwEmail()}
+                    />
+                    <Button onClick={handleAddUwEmail} variant="outline" size="sm">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {additionalUwEmails.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {additionalUwEmails.map((email, index) => (
+                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                          {email}
+                          <button
+                            onClick={() => handleRemoveUwEmail(index)}
                             className="ml-1 hover:text-destructive"
                           >
                             <X className="h-3 w-3" />
