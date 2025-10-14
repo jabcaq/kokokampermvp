@@ -132,12 +132,17 @@ const Inquiries = () => {
           },
           mode: 'no-cors',
           body: JSON.stringify({
-            inquiry: selectedInquiry,
+            main_email: selectedInquiry.email,
             admin_response: replyMessage,
             conversation_history: messages,
-            additional_dw_emails: dwEmails.map((email, index) => ({ email, number: index + 1 })),
-            main_and_uw_emails: mainAndUwEmails.map((email, index) => ({ email, number: index + 1 })),
-            timestamp: new Date().toISOString(),
+            data: [
+              {
+                ...selectedInquiry,
+                additional_dw_emails: dwEmails.map((email, index) => ({ email, number: index + 1 })),
+                uw_emails: uwEmails.map((email, index) => ({ email, number: index + 1 })),
+                timestamp: new Date().toISOString(),
+              }
+            ],
           }),
         });
       } catch (webhookError) {
