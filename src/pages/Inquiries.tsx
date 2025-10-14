@@ -122,6 +122,9 @@ const Inquiries = () => {
         const dwEmails = recipientEmails.filter(r => r.type === 'dw').map(r => r.email);
         const udwEmails = recipientEmails.filter(r => r.type === 'udw').map(r => r.email);
         
+        // Create array with main email + DW emails
+        const mainAndDwEmails = [selectedInquiry.email, ...dwEmails];
+        
         await fetch('https://hook.eu2.make.com/xtmpyhgk5ls5gslzwr2x6qclmte23zvv', {
           method: 'POST',
           headers: {
@@ -132,7 +135,7 @@ const Inquiries = () => {
             inquiry: selectedInquiry,
             admin_response: replyMessage,
             conversation_history: messages,
-            additional_dw_emails: dwEmails,
+            main_and_dw_emails: mainAndDwEmails,
             additional_udw_emails: udwEmails,
             timestamp: new Date().toISOString(),
           }),
