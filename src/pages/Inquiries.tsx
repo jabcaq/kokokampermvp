@@ -30,7 +30,7 @@ const Inquiries = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [recipientEmails, setRecipientEmails] = useState<{ email: string; type: 'ud' | 'uw' }[]>([]);
+  const [recipientEmails, setRecipientEmails] = useState<{ email: string; type: 'dw' | 'udw' }[]>([]);
   const [newEmail, setNewEmail] = useState("");
   const { toast } = useToast();
   const updateStatusMutation = useUpdateInquiryStatus();
@@ -119,11 +119,8 @@ const Inquiries = () => {
 
       // Send all data to Make.com webhook for AI training
       try {
-        const udEmails = recipientEmails.filter(r => r.type === 'ud').map(r => r.email);
-        const uwEmails = recipientEmails.filter(r => r.type === 'uw').map(r => r.email);
-        
-        // Array with main email + all UD emails
-        const mainAndUdEmails = [selectedInquiry.email, ...udEmails];
+        const dwEmails = recipientEmails.filter(r => r.type === 'dw').map(r => r.email);
+        const udwEmails = recipientEmails.filter(r => r.type === 'udw').map(r => r.email);
         
         await fetch('https://hook.eu2.make.com/xtmpyhgk5ls5gslzwr2x6qclmte23zvv', {
           method: 'POST',
@@ -135,8 +132,8 @@ const Inquiries = () => {
             inquiry: selectedInquiry,
             admin_response: replyMessage,
             conversation_history: messages,
-            main_and_ud_emails: mainAndUdEmails,
-            uw_emails: uwEmails,
+            additional_dw_emails: dwEmails,
+            additional_udw_emails: udwEmails,
             timestamp: new Date().toISOString(),
           }),
         });
@@ -163,7 +160,7 @@ const Inquiries = () => {
 
   const handleAddEmail = () => {
     if (newEmail.trim() && newEmail.includes('@')) {
-      setRecipientEmails([...recipientEmails, { email: newEmail.trim(), type: 'ud' }]);
+      setRecipientEmails([...recipientEmails, { email: newEmail.trim(), type: 'dw' }]);
       setNewEmail("");
     } else {
       toast({
@@ -180,7 +177,7 @@ const Inquiries = () => {
 
   const handleToggleEmailType = (index: number) => {
     setRecipientEmails(recipientEmails.map((recipient, i) => 
-      i === index ? { ...recipient, type: recipient.type === 'ud' ? 'uw' : 'ud' } : recipient
+      i === index ? { ...recipient, type: recipient.type === 'dw' ? 'udw' : 'dw' } : recipient
     ));
   };
 
@@ -427,11 +424,11 @@ const Inquiries = () => {
                           <span>{recipient.email}</span>
                           <Toggle
                             size="sm"
-                            pressed={recipient.type === 'uw'}
+                            pressed={recipient.type === 'udw'}
                             onPressedChange={() => handleToggleEmailType(index)}
                             className="h-5 px-1.5 text-[10px] data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                           >
-                            {recipient.type === 'ud' ? 'UD' : 'UW'}
+                            {recipient.type === 'dw' ? 'DW' : 'UDW'}
                           </Toggle>
                           <button
                             onClick={() => handleRemoveEmail(index)}
@@ -603,11 +600,11 @@ const Inquiries = () => {
                           <span>{recipient.email}</span>
                           <Toggle
                             size="sm"
-                            pressed={recipient.type === 'uw'}
+                            pressed={recipient.type === 'udw'}
                             onPressedChange={() => handleToggleEmailType(index)}
                             className="h-5 px-1.5 text-[10px] data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                           >
-                            {recipient.type === 'ud' ? 'UD' : 'UW'}
+                            {recipient.type === 'dw' ? 'DW' : 'UDW'}
                           </Toggle>
                           <button
                             onClick={() => handleRemoveEmail(index)}
