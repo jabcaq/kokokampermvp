@@ -51,7 +51,7 @@ const Contracts = () => {
   const [isFullPaymentAsReservation, setIsFullPaymentAsReservation] = useState(false);
   const [customDepositAmount, setCustomDepositAmount] = useState(false);
   const [isPremiumCamper, setIsPremiumCamper] = useState(false);
-  const [depositAmount, setDepositAmount] = useState<string>("5000");
+  const [depositAmount, setDepositAmount] = useState<string>("");
   const [insuranceWarning, setInsuranceWarning] = useState("");
   const [vehicleData, setVehicleData] = useState({
     model: "",
@@ -269,7 +269,7 @@ const Contracts = () => {
       setIsFullPaymentAsReservation(false);
       setCustomDepositAmount(false);
       setIsPremiumCamper(false);
-      setDepositAmount("5000");
+      setDepositAmount("");
       setInsuranceWarning("");
       setVehicleData({
         model: "",
@@ -330,7 +330,7 @@ const Contracts = () => {
       setIsFullPaymentAsReservation(false);
       setCustomDepositAmount(false);
       setIsPremiumCamper(false);
-      setDepositAmount("5000");
+      setDepositAmount("");
       setInsuranceWarning("");
       setVehicleData({
         model: "",
