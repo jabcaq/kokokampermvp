@@ -213,7 +213,6 @@ const ContractDetails = () => {
             },
             kaucja: {
               ...prev.payments?.kaucja,
-              wysokosc: 1000,
             },
           };
         } else {
@@ -233,7 +232,6 @@ const ContractDetails = () => {
             },
             kaucja: {
               ...prev.payments?.kaucja,
-              wysokosc: 1000,
             },
           };
         }
@@ -257,7 +255,6 @@ const ContractDetails = () => {
             },
             kaucja: {
               ...prev.payments?.kaucja,
-              wysokosc: prev.payments?.kaucja?.wysokosc || 1000,
             },
           };
         } else {
@@ -277,7 +274,6 @@ const ContractDetails = () => {
             },
             kaucja: {
               ...prev.payments?.kaucja,
-              wysokosc: prev.payments?.kaucja?.wysokosc || 1000,
             },
           };
         }
