@@ -38,6 +38,7 @@ export interface Contract {
   vehicle_cleaning?: string;
   vehicle_animals?: string;
   vehicle_extra_equipment?: string;
+  number_of_travelers?: number;
   additional_drivers?: any[];
   payments?: any;
   notes?: string;

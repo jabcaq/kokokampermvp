@@ -192,6 +192,15 @@ export const ContractActionsPanel = ({
   };
 
   const handleCopyDriverForm = async () => {
+    if (!contractId || !contractNumber) {
+      toast({
+        title: "Błąd",
+        description: "Brak danych umowy. Poczekaj na załadowanie.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const driverFormLink = `${window.location.origin}/driver-form/${encodeURIComponent(contractNumber)}`;
     navigator.clipboard.writeText(driverFormLink);
     
@@ -203,7 +212,9 @@ export const ContractActionsPanel = ({
         },
         body: JSON.stringify({
           contract_id: contractId,
+          contract_number: contractNumber,
           driver_form_link: driverFormLink,
+          number_of_travelers: contract?.number_of_travelers || null,
         }),
       });
       

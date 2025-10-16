@@ -27,6 +27,7 @@ const DriverSubmission = () => {
     invoiceType: "receipt" as "receipt" | "invoice",
     companyName: "",
     nip: "",
+    numberOfTravelers: "",
     driverName: "",
     driverEmail: "",
     driverPhone: "",
@@ -56,6 +57,7 @@ const DriverSubmission = () => {
         invoiceType: (contract.invoice_type as "receipt" | "invoice") || "receipt",
         companyName: contract.tenant_company_name || "",
         nip: contract.tenant_nip || "",
+        numberOfTravelers: contract.number_of_travelers?.toString() || "",
         driverName: contract.tenant_name || "",
         driverEmail: contract.tenant_email || "",
         driverPhone: contract.tenant_phone || "",
@@ -78,6 +80,14 @@ const DriverSubmission = () => {
     e.preventDefault();
     
     if (!contract?.id) return;
+
+    // Validate number of travelers
+    if (!formData.numberOfTravelers || Number(formData.numberOfTravelers) < 1) {
+      toast.error("Błąd walidacji", {
+        description: "Musisz podać liczbę podróżujących osób (minimum 1)"
+      });
+      return;
+    }
 
     // Validate F1 and O1 fields
     if (!formData.trailerF1Mass || !formData.trailerO1Mass) {
@@ -171,6 +181,7 @@ const DriverSubmission = () => {
           invoice_type: formData.invoiceType,
           tenant_company_name: formData.companyName,
           tenant_nip: formData.nip,
+          number_of_travelers: Number(formData.numberOfTravelers),
           tenant_name: formData.driverName,
           tenant_email: formData.driverEmail,
           tenant_phone: formData.driverPhone,
@@ -381,6 +392,21 @@ const DriverSubmission = () => {
                   </div>
                 </div>
               )}
+
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="numberOfTravelers">Liczba podróżujących osób *</Label>
+                <Input
+                  id="numberOfTravelers"
+                  type="number"
+                  min="1"
+                  value={formData.numberOfTravelers}
+                  onChange={(e) =>
+                    setFormData({ ...formData, numberOfTravelers: e.target.value })
+                  }
+                  placeholder="Ile osób będzie podróżować?"
+                  required
+                />
+              </div>
             </form>
           </CardContent>
         </Card>

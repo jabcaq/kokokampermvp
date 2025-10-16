@@ -963,6 +963,26 @@ const ContractDetails = () => {
           </div>
           
           <Separator />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Liczba podróżujących</Label>
+              {isEditing ? (
+                <Input 
+                  type="number" 
+                  min="1"
+                  value={displayData?.number_of_travelers || ''} 
+                  onChange={(e) => updateField('number_of_travelers', e.target.value ? Number(e.target.value) : null)} 
+                />
+              ) : (
+                <p className="text-base font-semibold text-foreground pt-1">
+                  {displayData?.number_of_travelers ? `${displayData.number_of_travelers} ${displayData.number_of_travelers === 1 ? 'osoba' : 'osoby'}` : 'Nie podano'}
+                </p>
+              )}
+            </div>
+          </div>
+          
+          <Separator />
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
             <div className="space-y-3">

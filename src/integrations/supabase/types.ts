@@ -165,6 +165,7 @@ export type Database = {
           lessor_phone: string | null
           lessor_website: string | null
           notes: string | null
+          number_of_travelers: number | null
           payments: Json | null
           registration_number: string
           return_link: string | null
@@ -220,6 +221,7 @@ export type Database = {
           lessor_phone?: string | null
           lessor_website?: string | null
           notes?: string | null
+          number_of_travelers?: number | null
           payments?: Json | null
           registration_number: string
           return_link?: string | null
@@ -275,6 +277,7 @@ export type Database = {
           lessor_phone?: string | null
           lessor_website?: string | null
           notes?: string | null
+          number_of_travelers?: number | null
           payments?: Json | null
           registration_number?: string
           return_link?: string | null
