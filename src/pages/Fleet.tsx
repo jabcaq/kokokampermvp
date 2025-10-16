@@ -34,6 +34,7 @@ const Fleet = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | VehicleType>("all");
   const [filterStatus, setFilterStatus] = useState<"all" | VehicleStatus>("all");
+  const [showArchived, setShowArchived] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteVehicleId, setDeleteVehicleId] = useState<string | null>(null);
   const [archiveVehicleId, setArchiveVehicleId] = useState<string | null>(null);
@@ -133,9 +134,9 @@ const Fleet = () => {
     return variants[status];
   };
 
-  // Filter out archived vehicles and map to UI format
-  const activeVehicles = (vehicles || [])
-    .filter((v) => v.status !== "archived")
+  // Filter vehicles based on archive toggle
+  const displayedVehicles = (vehicles || [])
+    .filter((v) => showArchived ? v.status === "archived" : v.status !== "archived")
     .map((v) => ({
       ...v,
       name: v.name || v.model,
@@ -143,7 +144,7 @@ const Fleet = () => {
       uiStatus: mapStatus(v.status),
     }));
 
-  const filteredVehicles = activeVehicles.filter((vehicle) => {
+  const filteredVehicles = displayedVehicles.filter((vehicle) => {
     const matchesSearch =
       (vehicle.name?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
       (vehicle.brand?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
@@ -155,10 +156,10 @@ const Fleet = () => {
   });
 
   const stats = {
-    total: activeVehicles.length,
-    kampers: activeVehicles.filter((v) => v.type === "Kamper").length,
-    trailers: activeVehicles.filter((v) => v.type === "Przyczepa").length,
-    available: activeVehicles.filter((v) => v.status === "available").length,
+    total: displayedVehicles.length,
+    kampers: displayedVehicles.filter((v) => v.type === "Kamper").length,
+    trailers: displayedVehicles.filter((v) => v.type === "Przyczepa").length,
+    available: displayedVehicles.filter((v) => v.status === "available").length,
   };
 
   if (isLoading) {
@@ -357,7 +358,18 @@ const Fleet = () => {
 
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle>Filtry i wyszukiwanie</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Filtry i wyszukiwanie</CardTitle>
+            <Button
+              variant={showArchived ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowArchived(!showArchived)}
+              className="gap-2"
+            >
+              <Archive className="h-4 w-4" />
+              {showArchived ? "Pokaż aktywne" : "Pokaż zarchiwizowane"}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">
@@ -380,17 +392,19 @@ const Fleet = () => {
                 <SelectItem value="Przyczepa">Przyczepy</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Wszystkie statusy</SelectItem>
-                <SelectItem value="dostepny">Dostępne</SelectItem>
-                <SelectItem value="wynajety">Wynajęte</SelectItem>
-                <SelectItem value="serwis">W serwisie</SelectItem>
-              </SelectContent>
-            </Select>
+            {!showArchived && (
+              <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Wszystkie statusy</SelectItem>
+                  <SelectItem value="dostepny">Dostępne</SelectItem>
+                  <SelectItem value="wynajety">Wynajęte</SelectItem>
+                  <SelectItem value="serwis">W serwisie</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </CardContent>
       </Card>
