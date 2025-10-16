@@ -423,6 +423,21 @@ const DriverSubmission = () => {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="numberOfTravelers">Liczba podróżujących osób *</Label>
+                <Input
+                  id="numberOfTravelers"
+                  type="number"
+                  min="1"
+                  value={formData.numberOfTravelers}
+                  onChange={(e) =>
+                    setFormData({ ...formData, numberOfTravelers: e.target.value })
+                  }
+                  placeholder="Ile osób będzie podróżować?"
+                  required
+                />
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="driverEmail">Email *</Label>
@@ -478,20 +493,6 @@ const DriverSubmission = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="numberOfTravelers">Liczba podróżujących osób *</Label>
-                <Input
-                  id="numberOfTravelers"
-                  type="number"
-                  min="1"
-                  value={formData.numberOfTravelers}
-                  onChange={(e) =>
-                    setFormData({ ...formData, numberOfTravelers: e.target.value })
-                  }
-                  placeholder="Ile osób będzie podróżować?"
-                  required
-                />
-              </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
