@@ -65,6 +65,21 @@ const ContractDetails = () => {
     );
   }, [vehicles, vehicleFilter]);
 
+  // Helper function to parse old vehicle_additional_info for legacy contracts
+  const parseVehicleOptions = (additionalInfo: string | null | undefined) => {
+    if (!additionalInfo) return { cleaning: null, animals: null, extra_equipment: null };
+    
+    const cleaningMatch = additionalInfo.match(/Sprzątanie dodatkowo:\s*(Tak|Nie)/i);
+    const animalsMatch = additionalInfo.match(/Zwierzę:\s*(Tak|Nie)/i);
+    const equipmentMatch = additionalInfo.match(/Wyposażenie dodatkowo:\s*(Tak|Nie)/i);
+    
+    return {
+      cleaning: cleaningMatch ? cleaningMatch[1] : null,
+      animals: animalsMatch ? animalsMatch[1] : null,
+      extra_equipment: equipmentMatch ? equipmentMatch[1] : null,
+    };
+  };
+
   const sanitizeContractUpdates = (data: any) => {
     const sanitized: any = { ...data };
 
@@ -284,7 +299,21 @@ const ContractDetails = () => {
     });
   };
 
-  const displayData = isEditing ? editedData : contract;
+  // Merge display data with parsed legacy values
+  const displayData = useMemo(() => {
+    const data = isEditing ? editedData : contract;
+    if (!data) return null;
+    
+    // Parse legacy vehicle options if new columns are empty
+    const legacyOptions = parseVehicleOptions(data.vehicle_additional_info);
+    
+    return {
+      ...data,
+      vehicle_cleaning: data.vehicle_cleaning || legacyOptions.cleaning,
+      vehicle_animals: data.vehicle_animals || legacyOptions.animals,
+      vehicle_extra_equipment: data.vehicle_extra_equipment || legacyOptions.extra_equipment,
+    };
+  }, [isEditing, editedData, contract]);
 
   if (isLoading) {
     return (
