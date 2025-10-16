@@ -393,20 +393,7 @@ const DriverSubmission = () => {
                 </div>
               )}
 
-              <div className="space-y-2 mt-4">
-                <Label htmlFor="numberOfTravelers">Liczba podróżujących osób *</Label>
-                <Input
-                  id="numberOfTravelers"
-                  type="number"
-                  min="1"
-                  value={formData.numberOfTravelers}
-                  onChange={(e) =>
-                    setFormData({ ...formData, numberOfTravelers: e.target.value })
-                  }
-                  placeholder="Ile osób będzie podróżować?"
-                  required
-                />
-              </div>
+              {/* Pole przeniesione do sekcji Dane głównego kierowcy */}
             </form>
           </CardContent>
         </Card>
@@ -488,6 +475,21 @@ const DriverSubmission = () => {
                   }
                   placeholder="00000000000"
                   maxLength={11}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="numberOfTravelers">Liczba podróżujących osób *</Label>
+                <Input
+                  id="numberOfTravelers"
+                  type="number"
+                  min="1"
+                  value={formData.numberOfTravelers}
+                  onChange={(e) =>
+                    setFormData({ ...formData, numberOfTravelers: e.target.value })
+                  }
+                  placeholder="Ile osób będzie podróżować?"
+                  required
                 />
               </div>
 
