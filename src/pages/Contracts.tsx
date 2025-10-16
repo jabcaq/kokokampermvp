@@ -240,15 +240,13 @@ const Contracts = () => {
         vehicle_next_inspection: emptyToNull(vehicleData.next_inspection_date || (formData.get('przedmiot_nastepne_badanie') as string)),
         vehicle_insurance_number: vehicleData.insurance_policy_number || (formData.get('przedmiot_polisa_numer') as string) || "",
         vehicle_insurance_valid_until: emptyToNull(vehicleData.insurance_valid_until || (formData.get('przedmiot_polisa_wazna_do') as string)),
+        vehicle_cleaning: vehicleData.cleaning || null,
+        vehicle_animals: vehicleData.animals || null,
+        vehicle_extra_equipment: vehicleData.extra_equipment || null,
         vehicle_additional_info: (() => {
-          const options = [];
-          if (vehicleData.cleaning) options.push(`Sprzątanie dodatkowo: ${vehicleData.cleaning}`);
-          if (vehicleData.animals) options.push(`Zwierzę: ${vehicleData.animals}`);
-          if (vehicleData.extra_equipment) options.push(`Wyposażenie dodatkowo: ${vehicleData.extra_equipment}`);
           const additionalText = vehicleData.additional_info || (formData.get('przedmiot_dodatkowe_info') as string) || "";
-          const optionsText = options.join(', ');
           const insuranceNote = insuranceWarning ? `UWAGA: ${insuranceWarning}` : "";
-          const combined = [optionsText, additionalText, insuranceNote].filter(Boolean).join(' | ');
+          const combined = [additionalText, insuranceNote].filter(Boolean).join(' | ');
           return combined;
         })(),
         additional_drivers: [],

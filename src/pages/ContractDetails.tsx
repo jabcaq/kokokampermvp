@@ -935,6 +935,86 @@ const ContractDetails = () => {
           
           <Separator />
           
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Sprzątanie dodatkowo</Label>
+              {isEditing ? (
+                <Select 
+                  value={displayData?.vehicle_cleaning || ''} 
+                  onValueChange={(value) => updateField('vehicle_cleaning', value)}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Wybierz opcję" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="Tak">Tak</SelectItem>
+                    <SelectItem value="Nie">Nie</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="text-base font-semibold text-foreground pt-1">
+                  {displayData?.vehicle_cleaning ? (
+                    <Badge variant={displayData.vehicle_cleaning === 'Tak' ? 'default' : 'outline'}>
+                      {displayData.vehicle_cleaning}
+                    </Badge>
+                  ) : 'Nie podano'}
+                </p>
+              )}
+            </div>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Zwierzę</Label>
+              {isEditing ? (
+                <Select 
+                  value={displayData?.vehicle_animals || ''} 
+                  onValueChange={(value) => updateField('vehicle_animals', value)}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Wybierz opcję" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="Tak">Tak</SelectItem>
+                    <SelectItem value="Nie">Nie</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="text-base font-semibold text-foreground pt-1">
+                  {displayData?.vehicle_animals ? (
+                    <Badge variant={displayData.vehicle_animals === 'Tak' ? 'default' : 'outline'}>
+                      {displayData.vehicle_animals}
+                    </Badge>
+                  ) : 'Nie podano'}
+                </p>
+              )}
+            </div>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Wyposażenie dodatkowo</Label>
+              {isEditing ? (
+                <Select 
+                  value={displayData?.vehicle_extra_equipment || ''} 
+                  onValueChange={(value) => updateField('vehicle_extra_equipment', value)}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Wybierz opcję" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="Tak">Tak</SelectItem>
+                    <SelectItem value="Nie">Nie</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="text-base font-semibold text-foreground pt-1">
+                  {displayData?.vehicle_extra_equipment ? (
+                    <Badge variant={displayData.vehicle_extra_equipment === 'Tak' ? 'default' : 'outline'}>
+                      {displayData.vehicle_extra_equipment}
+                    </Badge>
+                  ) : 'Nie podano'}
+                </p>
+              )}
+            </div>
+          </div>
+          
+          <Separator />
+          
           <div className="space-y-3">
             <Label className="text-xs text-muted-foreground uppercase tracking-wider">Dodatkowe informacje</Label>
             {isEditing ? (

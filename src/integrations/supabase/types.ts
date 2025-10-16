@@ -189,6 +189,9 @@ export type Database = {
           updated_at: string | null
           value: number | null
           vehicle_additional_info: string | null
+          vehicle_animals: string | null
+          vehicle_cleaning: string | null
+          vehicle_extra_equipment: string | null
           vehicle_f1_mass: number | null
           vehicle_insurance_number: string | null
           vehicle_insurance_valid_until: string | null
@@ -241,6 +244,9 @@ export type Database = {
           updated_at?: string | null
           value?: number | null
           vehicle_additional_info?: string | null
+          vehicle_animals?: string | null
+          vehicle_cleaning?: string | null
+          vehicle_extra_equipment?: string | null
           vehicle_f1_mass?: number | null
           vehicle_insurance_number?: string | null
           vehicle_insurance_valid_until?: string | null
@@ -293,6 +299,9 @@ export type Database = {
           updated_at?: string | null
           value?: number | null
           vehicle_additional_info?: string | null
+          vehicle_animals?: string | null
+          vehicle_cleaning?: string | null
+          vehicle_extra_equipment?: string | null
           vehicle_f1_mass?: number | null
           vehicle_insurance_number?: string | null
           vehicle_insurance_valid_until?: string | null

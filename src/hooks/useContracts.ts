@@ -35,6 +35,9 @@ export interface Contract {
   vehicle_insurance_number?: string;
   vehicle_insurance_valid_until?: string;
   vehicle_additional_info?: string;
+  vehicle_cleaning?: string;
+  vehicle_animals?: string;
+  vehicle_extra_equipment?: string;
   additional_drivers?: any[];
   payments?: any;
   notes?: string;
