@@ -342,6 +342,7 @@ export type Database = {
           folder: string | null
           folder_link: string | null
           id: string
+          is_archived: boolean
           link: string | null
           nazwa_pliku: string
           path: string | null
@@ -358,6 +359,7 @@ export type Database = {
           folder?: string | null
           folder_link?: string | null
           id?: string
+          is_archived?: boolean
           link?: string | null
           nazwa_pliku: string
           path?: string | null
@@ -374,6 +376,7 @@ export type Database = {
           folder?: string | null
           folder_link?: string | null
           id?: string
+          is_archived?: boolean
           link?: string | null
           nazwa_pliku?: string
           path?: string | null

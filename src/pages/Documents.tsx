@@ -5,11 +5,12 @@ import { Plus, Search, Loader2, Trash2, ArrowUpDown, FileText, Eye, ChevronLeft,
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useDocuments, useAddDocument, useDeleteDocument, useUpdateDocument, Document } from "@/hooks/useDocuments";
+import { useDocuments, useArchivedDocuments, useArchiveDocument, useAddDocument, useDeleteDocument, useUpdateDocument, Document } from "@/hooks/useDocuments";
 import { useClients } from "@/hooks/useClients";
 import { useContracts } from "@/hooks/useContracts";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,7 @@ const Documents = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [rodzajFilter, setRodzajFilter] = useState<string>("all");
   const [umowaSystemFilter, setUmowaSystemFilter] = useState<"all" | "with" | "without">("all");
+  const [showArchived, setShowArchived] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
@@ -33,6 +35,7 @@ const Documents = () => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [columnWidths, setColumnWidths] = useState({
     rodzaj: 150,
     umowa: 160,
@@ -50,16 +53,37 @@ const Documents = () => {
   const { toast } = useToast();
   
   const { data: documents = [], isLoading } = useDocuments();
+  const { data: archivedDocuments = [], isLoading: isLoadingArchived } = useArchivedDocuments();
   const { data: clients = [] } = useClients();
   const { data: contracts = [] } = useContracts();
   const addDocumentMutation = useAddDocument();
   const updateDocumentMutation = useUpdateDocument();
+  const archiveDocumentMutation = useArchiveDocument();
   const deleteDocumentMutation = useDeleteDocument();
 
-  // Get unique rodzaj values for filter (filter out empty strings)
-  const uniqueRodzaje = Array.from(new Set(documents.map(doc => doc.rodzaj).filter(r => r && r.trim() !== ''))).sort();
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+        setIsAdmin(!!data);
+      }
+    };
+    checkAdminStatus();
+  }, []);
 
-  const filteredDocuments = documents.filter(
+
+  // Get unique rodzaj values for filter (filter out empty strings)
+  const displayedDocuments = showArchived ? archivedDocuments : documents;
+  const uniqueRodzaje = Array.from(new Set(displayedDocuments.map(doc => doc.rodzaj).filter(r => r && r.trim() !== ''))).sort();
+
+  const filteredDocuments = displayedDocuments.filter(
     (doc) => {
       const matchesSearch = doc.rodzaj.toLowerCase().includes(searchQuery.toLowerCase()) ||
         doc.nazwa_pliku.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -190,12 +214,29 @@ const Documents = () => {
     }
   };
 
+  const handleArchiveDocument = async (id: string) => {
+    try {
+      await archiveDocumentMutation.mutateAsync(id);
+      toast({
+        title: "Sukces",
+        description: "Dokument został zarchiwizowany.",
+      });
+      setDeleteDocumentId(null);
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się zarchiwizować dokumentu.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDeleteDocument = async (id: string) => {
     try {
       await deleteDocumentMutation.mutateAsync(id);
       toast({
         title: "Sukces",
-        description: "Dokument został usunięty.",
+        description: "Dokument został trwale usunięty.",
       });
       setDeleteDocumentId(null);
     } catch (error) {
@@ -257,13 +298,23 @@ const Documents = () => {
           <h1 className="text-4xl font-bold text-foreground mb-2">Dokumenty</h1>
           <p className="text-muted-foreground">Zarządzaj dokumentami</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 shadow-md">
-              <Plus className="h-4 w-4" />
-              Dodaj dokument
+        <div className="flex gap-2 flex-wrap">
+          {isAdmin && (
+            <Button 
+              variant={showArchived ? "default" : "outline"}
+              onClick={() => setShowArchived(!showArchived)}
+              className="gap-2"
+            >
+              {showArchived ? "Pokaż aktywne" : "Pokaż zarchiwizowane"}
             </Button>
-          </DialogTrigger>
+          )}
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 shadow-md">
+                <Plus className="h-4 w-4" />
+                Dodaj dokument
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Dodaj nowy dokument</DialogTitle>
@@ -357,6 +408,7 @@ const Documents = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -672,18 +724,30 @@ const Documents = () => {
       <AlertDialog open={!!deleteDocumentId} onOpenChange={() => setDeleteDocumentId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Czy na pewno chcesz usunąć ten dokument?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {showArchived ? "Czy na pewno chcesz trwale usunąć ten dokument?" : "Czy na pewno chcesz zarchiwizować ten dokument?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Ta operacja jest nieodwracalna. Dokument zostanie trwale usunięty.
+              {showArchived 
+                ? "Ta operacja jest nieodwracalna. Dokument zostanie trwale usunięty z bazy danych." 
+                : "Dokument zostanie zarchiwizowany i będzie widoczny tylko dla administratorów w widoku zarchiwizowanych."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Anuluj</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteDocumentId && handleDeleteDocument(deleteDocumentId)}
+              onClick={() => {
+                if (deleteDocumentId) {
+                  if (showArchived) {
+                    handleDeleteDocument(deleteDocumentId);
+                  } else {
+                    handleArchiveDocument(deleteDocumentId);
+                  }
+                }
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Usuń
+              {showArchived ? "Usuń trwale" : "Archiwizuj"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

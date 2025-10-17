@@ -36,6 +36,27 @@ export const useDocuments = () => {
           contract:contracts(contract_number, tenant_name),
           client:clients(name)
         `)
+        .eq('is_archived', false)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Document[];
+    },
+  });
+};
+
+export const useArchivedDocuments = () => {
+  return useQuery({
+    queryKey: ['documents', 'archived'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('documents')
+        .select(`
+          *,
+          contract:contracts(contract_number, tenant_name),
+          client:clients(name)
+        `)
+        .eq('is_archived', true)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -64,6 +85,24 @@ export const useAddDocument = () => {
   });
 };
 
+export const useArchiveDocument = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('documents')
+        .update({ is_archived: true })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+    },
+  });
+};
+
 export const useDeleteDocument = () => {
   const queryClient = useQueryClient();
   
@@ -78,6 +117,7 @@ export const useDeleteDocument = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['documents', 'archived'] });
     },
   });
 };
