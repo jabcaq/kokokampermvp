@@ -6,6 +6,8 @@ import { FileText, Send, CheckCircle, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAddContractDocument } from "@/hooks/useContractDocuments";
 import { useContract } from "@/hooks/useContracts";
+import { toZonedTime } from "date-fns-tz";
+import { format } from "date-fns";
 
 interface ContractActionsPanelProps {
   contractId: string;
@@ -77,8 +79,24 @@ export const ContractActionsPanel = ({
         ? `${contractNumberParts[1]} ${contractNumberParts[2] || ''}`.trim()
         : contract.contract_number;
 
+      // Format dates to Europe/Warsaw timezone in ISO format
+      const formatDateForWebhook = (dateString: string | null | undefined) => {
+        if (!dateString) return null;
+        try {
+          const date = new Date(dateString);
+          const zonedDate = toZonedTime(date, 'Europe/Warsaw');
+          return format(zonedDate, "yyyy-MM-dd'T'HH:mm:ssXXX");
+        } catch (e) {
+          console.error('Error formatting date:', dateString, e);
+          return dateString;
+        }
+      };
+
       const webhookData = {
         ...contractData,
+        // Format dates properly
+        start_date: formatDateForWebhook(contractData.start_date),
+        end_date: formatDateForWebhook(contractData.end_date),
         // Flatten client data
         client_name: client?.name,
         client_email: client?.email,
