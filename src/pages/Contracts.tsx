@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useContracts, useDeleteContract, useAddContract } from "@/hooks/useContracts";
+import { useContracts, useArchivedContracts, useArchiveContract, useDeleteContract, useAddContract } from "@/hooks/useContracts";
 import { useClients } from "@/hooks/useClients";
 import { useVehicles } from "@/hooks/useVehicles";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,9 +41,11 @@ const Contracts = () => {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [deleteContractId, setDeleteContractId] = useState<string | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
   const [vehicleSearchOpen, setVehicleSearchOpen] = useState(false);
   const [generatedContractNumber, setGeneratedContractNumber] = useState<string>("");
@@ -69,10 +71,29 @@ const Contracts = () => {
   const { toast } = useToast();
   
   const { data: contractsData = [], isLoading } = useContracts();
+  const { data: archivedContractsData = [], isLoading: isLoadingArchived } = useArchivedContracts();
   const { data: vehicles = [] } = useVehicles();
   const { data: clients = [] } = useClients();
+  const archiveContractMutation = useArchiveContract();
   const deleteContractMutation = useDeleteContract();
   const addContractMutation = useAddContract();
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+        setIsAdmin(!!data);
+      }
+    };
+    checkAdminStatus();
+  }, []);
   
   // Automatycznie otwórz dialog z wybranym klientem jeśli przekazano clientId
   useEffect(() => {
@@ -291,12 +312,29 @@ const Contracts = () => {
     }
   };
 
+  const handleArchiveContract = async (id: string) => {
+    try {
+      await archiveContractMutation.mutateAsync(id);
+      toast({
+        title: "Sukces",
+        description: "Umowa została zarchiwizowana.",
+      });
+      setDeleteContractId(null);
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się zarchiwizować umowy.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDeleteContract = async (id: string) => {
     try {
       await deleteContractMutation.mutateAsync(id);
       toast({
         title: "Sukces",
-        description: "Umowa została usunięta.",
+        description: "Umowa została trwale usunięta.",
       });
       setDeleteContractId(null);
     } catch (error) {
@@ -308,7 +346,8 @@ const Contracts = () => {
     }
   };
 
-  const filteredContracts = contractsData.filter(
+  const displayedContracts = showArchived ? archivedContractsData : contractsData;
+  const filteredContracts = displayedContracts.filter(
     (contract) =>
       contract.contract_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (contract.client?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -353,15 +392,25 @@ const Contracts = () => {
           <h1 className="text-4xl font-bold text-foreground mb-2">Umowy</h1>
           <p className="text-muted-foreground">Zarządzaj umowami najmu</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 shadow-md">
-              <Plus className="h-4 w-4" />
-              Nowa umowa
+        <div className="flex gap-2 flex-wrap">
+          {isAdmin && (
+            <Button 
+              variant={showArchived ? "default" : "outline"}
+              onClick={() => setShowArchived(!showArchived)}
+              className="gap-2"
+            >
+              {showArchived ? "Pokaż aktywne" : "Pokaż zarchiwizowane"}
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+          )}
+          <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 shadow-md">
+                <Plus className="h-4 w-4" />
+                Nowa umowa
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
               <DialogTitle>Nowa umowa</DialogTitle>
               <DialogDescription>
                 Wypełnij formularz, aby utworzyć nową umowę najmu
@@ -876,6 +925,7 @@ const Contracts = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="relative">
@@ -982,18 +1032,30 @@ const Contracts = () => {
       <AlertDialog open={!!deleteContractId} onOpenChange={() => setDeleteContractId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Czy na pewno chcesz usunąć tę umowę?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {showArchived ? "Czy na pewno chcesz trwale usunąć tę umowę?" : "Czy na pewno chcesz zarchiwizować tę umowę?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Ta operacja jest nieodwracalna. Wszystkie dane umowy zostaną trwale usunięte.
+              {showArchived 
+                ? "Ta operacja jest nieodwracalna. Wszystkie dane umowy zostaną trwale usunięte z bazy danych." 
+                : "Umowa zostanie zarchiwizowana i będzie widoczna tylko dla administratorów w widoku zarchiwizowanych."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Anuluj</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteContractId && handleDeleteContract(deleteContractId)}
+              onClick={() => {
+                if (deleteContractId) {
+                  if (showArchived) {
+                    handleDeleteContract(deleteContractId);
+                  } else {
+                    handleArchiveContract(deleteContractId);
+                  }
+                }
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Usuń
+              {showArchived ? "Usuń trwale" : "Archiwizuj"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

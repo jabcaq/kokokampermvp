@@ -158,6 +158,7 @@ export type Database = {
           inquiry_id: string | null
           inquiry_number: string | null
           invoice_type: string | null
+          is_archived: boolean
           is_full_payment_as_reservation: boolean | null
           lessor_address: string | null
           lessor_email: string | null
@@ -214,6 +215,7 @@ export type Database = {
           inquiry_id?: string | null
           inquiry_number?: string | null
           invoice_type?: string | null
+          is_archived?: boolean
           is_full_payment_as_reservation?: boolean | null
           lessor_address?: string | null
           lessor_email?: string | null
@@ -270,6 +272,7 @@ export type Database = {
           inquiry_id?: string | null
           inquiry_number?: string | null
           invoice_type?: string | null
+          is_archived?: boolean
           is_full_payment_as_reservation?: boolean | null
           lessor_address?: string | null
           lessor_email?: string | null
