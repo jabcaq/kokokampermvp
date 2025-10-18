@@ -346,6 +346,7 @@ export type Database = {
           link: string | null
           nazwa_pliku: string
           path: string | null
+          regulamin_id: string | null
           rodzaj: string
           rok: number | null
           umowa_id: string | null
@@ -363,6 +364,7 @@ export type Database = {
           link?: string | null
           nazwa_pliku: string
           path?: string | null
+          regulamin_id?: string | null
           rodzaj: string
           rok?: number | null
           umowa_id?: string | null
@@ -380,6 +382,7 @@ export type Database = {
           link?: string | null
           nazwa_pliku?: string
           path?: string | null
+          regulamin_id?: string | null
           rodzaj?: string
           rok?: number | null
           umowa_id?: string | null
