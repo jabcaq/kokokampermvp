@@ -166,6 +166,34 @@ const Contracts = () => {
     // Get selected client to pre-fill tenant data
     const selectedClient = clients.find(c => c.id === selectedClientId);
     
+    // Generate fresh contract number to avoid duplicates
+    const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
+    let finalContractNumber = generatedContractNumber;
+    
+    if (selectedVehicle?.type) {
+      const prefix = selectedVehicle.type === "Kamper" ? "K" : "P";
+      const currentYear = new Date().getFullYear();
+      
+      // Find the last contract number for this vehicle type
+      const { data: lastContract } = await supabase
+        .from('contracts')
+        .select('contract_number')
+        .like('contract_number', `${prefix}/%/${currentYear}`)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      let nextNumber = 1;
+      if (lastContract?.contract_number) {
+        const parts = lastContract.contract_number.split('/');
+        if (parts.length === 3) {
+          nextNumber = parseInt(parts[1]) + 1;
+        }
+      }
+      
+      finalContractNumber = `${prefix}/${nextNumber}/${currentYear}`;
+    }
+    
     // Calculate payment amounts
     const total = parseFloat(totalAmount) || 0;
     const reservationAmount = isFullPaymentAsReservation ? total.toFixed(2) : (total * 0.30).toFixed(2);
@@ -230,7 +258,7 @@ const Contracts = () => {
     
     try {
       await addContractMutation.mutateAsync({
-        contract_number: generatedContractNumber || (formData.get('umowa_numer') as string),
+        contract_number: finalContractNumber || (formData.get('umowa_numer') as string),
         umowa_text: formData.get('umowa_text') as string,
         client_id: selectedClientId,
         vehicle_model: vehicleData.model || (formData.get('przedmiot_model') as string) || "",
