@@ -1,7 +1,10 @@
 import * as React from "react";
 import { format } from "date-fns";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { pl } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
+
+const WARSAW_TZ = "Europe/Warsaw";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -25,7 +28,9 @@ export function DateTimePicker({
   placeholder = "Wybierz datę i godzinę",
   className,
 }: DateTimePickerProps) {
-  const [selectedDateTime, setSelectedDateTime] = React.useState<Date | undefined>(date);
+  const [selectedDateTime, setSelectedDateTime] = React.useState<Date | undefined>(
+    date ? toZonedTime(date, WARSAW_TZ) : undefined
+  );
   const [isOpen, setIsOpen] = React.useState(false);
 
   const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8-20
@@ -34,31 +39,35 @@ export function DateTimePicker({
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (!selectedDate) return;
     
-    const newDateTime = new Date(selectedDate);
+    const warsawDate = toZonedTime(selectedDate, WARSAW_TZ);
     if (selectedDateTime) {
-      newDateTime.setHours(selectedDateTime.getHours());
-      newDateTime.setMinutes(selectedDateTime.getMinutes());
+      warsawDate.setHours(selectedDateTime.getHours());
+      warsawDate.setMinutes(selectedDateTime.getMinutes());
     } else {
-      newDateTime.setHours(10);
-      newDateTime.setMinutes(0);
+      warsawDate.setHours(10);
+      warsawDate.setMinutes(0);
     }
-    setSelectedDateTime(newDateTime);
+    setSelectedDateTime(warsawDate);
   };
 
   const handleHourChange = (hour: number) => {
-    const newDateTime = selectedDateTime ? new Date(selectedDateTime) : new Date();
+    const newDateTime = selectedDateTime ? new Date(selectedDateTime) : toZonedTime(new Date(), WARSAW_TZ);
     newDateTime.setHours(hour);
     setSelectedDateTime(newDateTime);
   };
 
   const handleMinuteChange = (minute: number) => {
-    const newDateTime = selectedDateTime ? new Date(selectedDateTime) : new Date();
+    const newDateTime = selectedDateTime ? new Date(selectedDateTime) : toZonedTime(new Date(), WARSAW_TZ);
     newDateTime.setMinutes(minute);
     setSelectedDateTime(newDateTime);
   };
 
   const handleConfirm = () => {
-    setDate(selectedDateTime);
+    if (selectedDateTime) {
+      // Convert Warsaw time to UTC for storage
+      const utcDate = fromZonedTime(selectedDateTime, WARSAW_TZ);
+      setDate(utcDate);
+    }
     setIsOpen(false);
   };
 
@@ -81,7 +90,7 @@ export function DateTimePicker({
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {date ? (
-            format(date, "dd.MM.yyyy, HH:mm", { locale: pl })
+            format(toZonedTime(date, WARSAW_TZ), "dd.MM.yyyy, HH:mm", { locale: pl })
           ) : (
             <span>{placeholder}</span>
           )}
