@@ -5,15 +5,26 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useVehicles } from "@/hooks/useVehicles";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, Loader2 } from "lucide-react";
+import { Bell, Loader2, Unplug, Plug } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const TestNotifications = () => {
   const { data: vehicles, isLoading: vehiclesLoading } = useVehicles();
   const [selectedVehicle, setSelectedVehicle] = useState<string>("");
+  const [connectionStatus, setConnectionStatus] = useState<"disconnected" | "connected">("disconnected");
   const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
 
   const handleSendNotification = async () => {
+    if (connectionStatus === "disconnected") {
+      toast({
+        title: "Błąd",
+        description: "Najpierw połącz webhook (zmień status na 'Połączone')",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!selectedVehicle) {
       toast({
         title: "Błąd",
@@ -77,13 +88,58 @@ const TestNotifications = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">
-                30 dni do wygaśnięcia polisy ubezpieczeniowej pojazdu
-              </h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">
+                  30 dni do wygaśnięcia polisy ubezpieczeniowej pojazdu
+                </h3>
+                <Badge 
+                  variant={connectionStatus === "connected" ? "default" : "secondary"}
+                  className="gap-1"
+                >
+                  {connectionStatus === "connected" ? (
+                    <>
+                      <Plug className="h-3 w-3" />
+                      Połączone
+                    </>
+                  ) : (
+                    <>
+                      <Unplug className="h-3 w-3" />
+                      Niepołączone
+                    </>
+                  )}
+                </Badge>
+              </div>
               <p className="text-sm text-muted-foreground mb-4">
                 Wysyła powiadomienie o zbliżającym się terminie wygaśnięcia polisy ubezpieczeniowej pojazdu
               </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="connection-status">Status połączenia webhook</Label>
+              <Select
+                value={connectionStatus}
+                onValueChange={(value) => setConnectionStatus(value as "disconnected" | "connected")}
+                disabled={isSending}
+              >
+                <SelectTrigger id="connection-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="disconnected">
+                    <div className="flex items-center gap-2">
+                      <Unplug className="h-4 w-4" />
+                      Niepołączone
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="connected">
+                    <div className="flex items-center gap-2">
+                      <Plug className="h-4 w-4" />
+                      Połączone
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -111,12 +167,17 @@ const TestNotifications = () => {
 
             <Button 
               onClick={handleSendNotification} 
-              disabled={!selectedVehicle || isSending}
+              disabled={!selectedVehicle || isSending || connectionStatus === "disconnected"}
               className="w-full sm:w-auto"
             >
               {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Wyślij powiadomienie
             </Button>
+            {connectionStatus === "disconnected" && (
+              <p className="text-sm text-muted-foreground">
+                Zmień status na "Połączone" aby wysłać powiadomienie
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
