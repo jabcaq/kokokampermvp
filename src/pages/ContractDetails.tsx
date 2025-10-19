@@ -17,6 +17,8 @@ import { useVehicles } from "@/hooks/useVehicles";
 import { useVehicleHandovers, useAddVehicleHandover } from "@/hooks/useVehicleHandovers";
 import { useVehicleReturns, useAddVehicleReturn } from "@/hooks/useVehicleReturns";
 import { format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+import { pl } from "date-fns/locale";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { DriversTab } from "@/components/contract-tabs/DriversTab";
 import { HandoverTab } from "@/components/contract-tabs/HandoverTab";
@@ -33,6 +35,8 @@ const statusConfig = {
   completed: { label: "Zakończona", className: "bg-muted text-muted-foreground border-muted" },
   cancelled: { label: "Anulowana", className: "bg-destructive/10 text-destructive border-destructive/20" },
 };
+
+const WARSAW_TZ = "Europe/Warsaw";
 
 const ContractDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -634,7 +638,7 @@ const ContractDetails = () => {
                 />
               ) : (
                 <p className="text-base font-semibold text-foreground pt-1">
-                  {displayData?.start_date ? format(new Date(displayData.start_date), 'dd.MM.yyyy HH:mm') : 'Nie podano'}
+                  {displayData?.start_date ? format(toZonedTime(new Date(displayData.start_date), WARSAW_TZ), "dd.MM.yyyy, HH:mm", { locale: pl }) : 'Nie podano'}
                 </p>
               )}
             </div>
@@ -648,7 +652,7 @@ const ContractDetails = () => {
                 />
               ) : (
                 <p className="text-base font-semibold text-foreground pt-1">
-                  {displayData?.end_date ? format(new Date(displayData.end_date), 'dd.MM.yyyy HH:mm') : 'Nie podano'}
+                  {displayData?.end_date ? format(toZonedTime(new Date(displayData.end_date), WARSAW_TZ), "dd.MM.yyyy, HH:mm", { locale: pl }) : 'Nie podano'}
                 </p>
               )}
             </div>
