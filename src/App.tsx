@@ -45,10 +45,6 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/driver-form/:contractId" element={<DriverSubmission />} />
-            <Route path="/vehicle-handover/:contractId" element={<VehicleHandover />} />
-            <Route path="/vehicle-handover" element={<VehicleHandover />} />
-            <Route path="/vehicle-return/:contractId" element={<VehicleReturn />} />
-            <Route path="/vehicle-return" element={<VehicleReturn />} />
             <Route path="/driver-submission/:contractId" element={<DriverSubmission />} />
             <Route path="/accounting-upload/:invoiceId" element={<AccountingUpload />} />
             <Route path="/invoice-upload/:invoiceId" element={<InvoiceUpload />} />
@@ -76,8 +72,12 @@ const App = () => (
               <Route path="/my-returns" element={<MyReturns />} />
               <Route path="/admin/employee-schedules" element={<AdminEmployeeSchedules />} />
               <Route path="/test-notifications" element={<TestNotifications />} />
-              <Route path="*" element={<NotFound />} />
             </Route>
+            <Route path="/vehicle-handover/:contractId" element={<VehicleHandover />} />
+            <Route path="/vehicle-handover" element={<VehicleHandover />} />
+            <Route path="/vehicle-return/:contractId" element={<VehicleReturn />} />
+            <Route path="/vehicle-return" element={<VehicleReturn />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
