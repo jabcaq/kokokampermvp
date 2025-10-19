@@ -32,19 +32,44 @@ export const useContractDocuments = (contractId: string | undefined) => {
   });
 };
 
-export const useAddContractDocument = () => {
+export const useUpsertContractDocument = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async (document: Omit<ContractDocument, 'id' | 'created_at' | 'updated_at'>) => {
-      const { data, error } = await supabase
+      // First, check if a document of this type already exists for this contract
+      const { data: existing } = await supabase
         .from('contract_documents')
-        .insert([document])
-        .select()
-        .single();
+        .select('id')
+        .eq('contract_id', document.contract_id)
+        .eq('document_type', document.document_type)
+        .maybeSingle();
+
+      let result;
+      if (existing) {
+        // Update existing document
+        const { data, error } = await supabase
+          .from('contract_documents')
+          .update(document)
+          .eq('id', existing.id)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        result = data;
+      } else {
+        // Insert new document
+        const { data, error } = await supabase
+          .from('contract_documents')
+          .insert([document])
+          .select()
+          .single();
+        
+        if (error) throw error;
+        result = data;
+      }
       
-      if (error) throw error;
-      return data;
+      return result;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['contract-documents', variables.contract_id] });

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FileText, Send, CheckCircle, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAddContractDocument } from "@/hooks/useContractDocuments";
+import { useUpsertContractDocument } from "@/hooks/useContractDocuments";
 import { useContract } from "@/hooks/useContracts";
 import { toZonedTime } from "date-fns-tz";
 import { format } from "date-fns";
@@ -21,7 +21,7 @@ export const ContractActionsPanel = ({
   clientEmail 
 }: ContractActionsPanelProps) => {
   const { toast } = useToast();
-  const addDocument = useAddContractDocument();
+  const upsertDocument = useUpsertContractDocument();
   const { data: contract } = useContract(contractId);
 
   const generateVerificationText = () => {
@@ -114,7 +114,7 @@ export const ContractActionsPanel = ({
         body: JSON.stringify(webhookData),
       });
 
-      await addDocument.mutateAsync({
+      await upsertDocument.mutateAsync({
         contract_id: contractId,
         document_type: 'contract',
         status: 'generated',
@@ -158,7 +158,7 @@ export const ContractActionsPanel = ({
         }),
       });
 
-      await addDocument.mutateAsync({
+      await upsertDocument.mutateAsync({
         contract_id: contractId,
         document_type: 'contract',
         status: 'sent',
@@ -260,7 +260,7 @@ export const ContractActionsPanel = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <Button 
               onClick={handleGenerateContract}
-              disabled={addDocument.isPending}
+              disabled={upsertDocument.isPending}
               size="sm"
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
@@ -270,7 +270,7 @@ export const ContractActionsPanel = ({
             <Button 
               onClick={handleSendToClient}
               variant="outline"
-              disabled={addDocument.isPending || !clientEmail}
+              disabled={upsertDocument.isPending || !clientEmail}
               size="sm"
               className="border-gray-400 text-gray-700 hover:bg-gray-100"
             >
