@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,12 +22,20 @@ const VehicleHandover = () => {
   const createNotificationMutation = useCreateNotification();
   
   
-  const contractId = searchParams.get('contractId');
-  const contractNumber = searchParams.get('contractNumber');
-  const tenantName = searchParams.get('tenantName');
-  const startDate = searchParams.get('startDate');
-  const endDate = searchParams.get('endDate');
-  const vehicleModel = searchParams.get('vehicleModel');
+  const { contractId: routeContractId } = useParams<{ contractId: string }>();
+  const contractId = (searchParams.get('contractId') || routeContractId || undefined) as string | null;
+  const [contractMeta, setContractMeta] = useState<{
+    contract_number?: string;
+    tenant_name?: string;
+    start_date?: string;
+    end_date?: string;
+    vehicle_model?: string;
+  } | null>(null);
+  const contractNumber = searchParams.get('contractNumber') || contractMeta?.contract_number || undefined;
+  const tenantName = searchParams.get('tenantName') || contractMeta?.tenant_name || undefined;
+  const startDate = searchParams.get('startDate') || contractMeta?.start_date || undefined;
+  const endDate = searchParams.get('endDate') || contractMeta?.end_date || undefined;
+  const vehicleModel = searchParams.get('vehicleModel') || contractMeta?.vehicle_model || undefined;
 
   const { data: existingHandovers } = useVehicleHandovers(contractId || undefined);
   const existingHandover = existingHandovers?.[0];
@@ -48,6 +56,21 @@ const VehicleHandover = () => {
     protocols: [],
     photos: [],
   });
+
+  // Load contract meta when only ID is provided
+  useEffect(() => {
+    const loadContractMeta = async () => {
+      if (contractId && (!contractNumber || !tenantName || !vehicleModel || !startDate || !endDate)) {
+        const { data, error } = await supabase
+          .from('contracts')
+          .select('contract_number, tenant_name, vehicle_model, start_date, end_date')
+          .eq('id', contractId)
+          .maybeSingle();
+        if (!error && data) setContractMeta(data);
+      }
+    };
+    loadContractMeta();
+  }, [contractId]);
 
   // Load existing data when available
   useEffect(() => {
@@ -137,7 +160,7 @@ const VehicleHandover = () => {
         await createNotificationMutation.mutateAsync({
           type: 'handover_new',
           title: 'Nowy formularz wydania pojazdu',
-          message: `Wypełniono formularz wydania dla umowy ${contractNumber} (${vehicleModel})`,
+          message: `Wypełniono formularz wydania dla umowy ${contractNumber || contractMeta?.contract_number || '—'} (${vehicleModel || contractMeta?.vehicle_model || '—'})`,
           link: `/contracts/${contractId}`,
         });
       }
@@ -198,13 +221,13 @@ const VehicleHandover = () => {
     }
   };
 
-  if (!contractId || !contractNumber) {
+  if (!contractId) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="max-w-md">
           <CardHeader>
             <CardTitle>Błąd</CardTitle>
-            <CardDescription>Brak wymaganych parametrów umowy. Sprawdź poprawność linku.</CardDescription>
+            <CardDescription>Brak ID umowy. Sprawdź poprawność linku.</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -279,10 +302,10 @@ const VehicleHandover = () => {
             <div className="mb-6 p-4 bg-muted rounded-lg">
               <h3 className="font-semibold mb-2">Dane umowy:</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                <p><span className="font-medium">Numer umowy:</span> {contractNumber}</p>
-                <p><span className="font-medium">Najemca:</span> {tenantName}</p>
-                <p><span className="font-medium">Pojazd:</span> {vehicleModel}</p>
-                <p><span className="font-medium">Okres najmu:</span> {startDate && format(new Date(startDate), 'dd.MM.yyyy')} - {endDate && format(new Date(endDate), 'dd.MM.yyyy')}</p>
+                <p><span className="font-medium">Numer umowy:</span> {contractNumber || contractMeta?.contract_number || '—'}</p>
+                <p><span className="font-medium">Najemca:</span> {tenantName || contractMeta?.tenant_name || '—'}</p>
+                <p><span className="font-medium">Pojazd:</span> {vehicleModel || contractMeta?.vehicle_model || '—'}</p>
+                <p><span className="font-medium">Okres najmu:</span> {(startDate || contractMeta?.start_date) ? format(new Date(startDate || contractMeta!.start_date!), 'dd.MM.yyyy') : '—'} - {(endDate || contractMeta?.end_date) ? format(new Date(endDate || contractMeta!.end_date!), 'dd.MM.yyyy') : '—'}</p>
               </div>
             </div>
 
