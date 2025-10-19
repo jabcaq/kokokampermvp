@@ -2,6 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Loader2, Trash2, ArrowUpDown, FileText, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+import { pl } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -12,6 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
+const WARSAW_TZ = "Europe/Warsaw";
+
 const Documents = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [rodzajFilter, setRodzajFilter] = useState<string>("all");
@@ -35,6 +41,7 @@ const Documents = () => {
     link: 100,
     path: 150,
     rok: 80,
+    data_dodania: 150,
     akcje: 120
   });
   const [resizing, setResizing] = useState<string | null>(null);
@@ -491,6 +498,15 @@ const Documents = () => {
                   Rok
                   <div className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 active:bg-primary" onMouseDown={e => handleMouseDown(e, 'rok')} />
                 </TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors relative" style={{
+                width: columnWidths.data_dodania
+              }} onClick={() => handleSort("created_at")}>
+                  <div className="flex items-center gap-2">
+                    Data dodania
+                    <ArrowUpDown className="h-4 w-4" />
+                  </div>
+                  <div className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 active:bg-primary" onMouseDown={e => handleMouseDown(e, 'data_dodania')} />
+                </TableHead>
                 <TableHead className="text-right relative" style={{
                 width: columnWidths.akcje
               }}>
@@ -542,6 +558,11 @@ const Documents = () => {
                 width: columnWidths.rok
               }}>
                     {doc.rok || "—"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm" style={{
+                width: columnWidths.data_dodania
+              }}>
+                    {doc.created_at ? format(toZonedTime(new Date(doc.created_at), WARSAW_TZ), "dd.MM.yyyy, HH:mm", { locale: pl }) : "—"}
                   </TableCell>
                   <TableCell className="text-right" style={{
                 width: columnWidths.akcje
