@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useVehicles } from "@/hooks/useVehicles";
+import { useContracts } from "@/hooks/useContracts";
 import { useToast } from "@/hooks/use-toast";
 import { Bell, Loader2, Unplug, Plug } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const TestNotifications = () => {
   const { data: vehicles, isLoading: vehiclesLoading } = useVehicles();
+  const { data: contracts, isLoading: contractsLoading } = useContracts();
   
   // Insurance notification state
   const [selectedVehicleInsurance, setSelectedVehicleInsurance] = useState<string>("");
@@ -20,6 +22,11 @@ const TestNotifications = () => {
   const [selectedVehicleInspection, setSelectedVehicleInspection] = useState<string>("");
   const [connectionStatusInspection, setConnectionStatusInspection] = useState<"disconnected" | "connected">("disconnected");
   const [isSendingInspection, setIsSendingInspection] = useState(false);
+  
+  // Rental notification state
+  const [selectedContractRental, setSelectedContractRental] = useState<string>("");
+  const [connectionStatusRental, setConnectionStatusRental] = useState<"disconnected" | "connected">("disconnected");
+  const [isSendingRental, setIsSendingRental] = useState(false);
   
   const { toast } = useToast();
 
@@ -138,6 +145,62 @@ const TestNotifications = () => {
       });
     } finally {
       setIsSendingInspection(false);
+    }
+  };
+
+  const handleSendRentalNotification = async () => {
+    if (connectionStatusRental === "disconnected") {
+      toast({
+        title: "Błąd",
+        description: "Najpierw połącz webhook (zmień status na 'Połączone')",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedContractRental) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz umowę",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const contract = contracts?.find((c: any) => c.id === selectedContractRental);
+    if (!contract) return;
+
+    setIsSendingRental(true);
+    try {
+      const response = await fetch("https://hook.eu2.make.com/luarjrss1fx7b39bmr12fpkinx61sesk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...contract,
+          notification_type: "rental_starting_3_days",
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Webhook error: ${response.status}`);
+      }
+
+      toast({
+        title: "Sukces",
+        description: `Powiadomienie o wynajmie wysłane dla umowy: ${contract.contract_number}`,
+      });
+    } catch (error: any) {
+      console.error("Error sending notification:", error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się wysłać powiadomienia",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingRental(false);
     }
   };
 
@@ -336,6 +399,100 @@ const TestNotifications = () => {
               Wyślij powiadomienie
             </Button>
             {connectionStatusInspection === "disconnected" && (
+              <p className="text-sm text-muted-foreground">
+                Zmień status na "Połączone" aby wysłać powiadomienie
+              </p>
+            )}
+          </div>
+
+          {/* Rental Notification */}
+          <div className="space-y-4 pt-6 border-t">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">
+                  3 dni przed zbliżającym się okresem wynajmu pojazdu
+                </h3>
+                <Badge 
+                  variant={connectionStatusRental === "connected" ? "default" : "secondary"}
+                  className="gap-1"
+                >
+                  {connectionStatusRental === "connected" ? (
+                    <>
+                      <Plug className="h-3 w-3" />
+                      Połączone
+                    </>
+                  ) : (
+                    <>
+                      <Unplug className="h-3 w-3" />
+                      Niepołączone
+                    </>
+                  )}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Wysyła powiadomienie z danymi umowy 3 dni przed rozpoczęciem wynajmu
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="connection-status-rental">Status połączenia webhook</Label>
+              <Select
+                value={connectionStatusRental}
+                onValueChange={(value) => setConnectionStatusRental(value as "disconnected" | "connected")}
+                disabled={isSendingRental}
+              >
+                <SelectTrigger id="connection-status-rental">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="disconnected">
+                    <div className="flex items-center gap-2">
+                      <Unplug className="h-4 w-4" />
+                      Niepołączone
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="connected">
+                    <div className="flex items-center gap-2">
+                      <Plug className="h-4 w-4" />
+                      Połączone
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contract-select-rental">Wybierz umowę</Label>
+              <Select
+                value={selectedContractRental}
+                onValueChange={setSelectedContractRental}
+                disabled={contractsLoading || isSendingRental}
+              >
+                <SelectTrigger id="contract-select-rental">
+                  <SelectValue placeholder="Wybierz umowę..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {contracts?.map((contract: any) => (
+                    <SelectItem key={contract.id} value={contract.id}>
+                      {contract.contract_number} - {contract.tenant_name || contract.tenant_company_name || 'Klient'}
+                      {contract.start_date && 
+                        ` (start: ${new Date(contract.start_date).toLocaleDateString("pl-PL")})`
+                      }
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button 
+              onClick={handleSendRentalNotification} 
+              disabled={!selectedContractRental || isSendingRental || connectionStatusRental === "disconnected"}
+              className="w-full sm:w-auto"
+            >
+              {isSendingRental && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Wyślij powiadomienie
+            </Button>
+            {connectionStatusRental === "disconnected" && (
               <p className="text-sm text-muted-foreground">
                 Zmień status na "Połączone" aby wysłać powiadomienie
               </p>
