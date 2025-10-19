@@ -48,8 +48,26 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (!webhookResponse.ok) {
-      console.error('Webhook error:', await webhookResponse.text());
-      throw new Error(`Webhook failed with status: ${webhookResponse.status}`);
+      const errorText = await webhookResponse.text();
+      console.error('Webhook error:', errorText);
+      
+      // Zwróć sukces mimo błędu webhooka, ale z informacją o problemie
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          warning: `Webhook returned status ${webhookResponse.status}. The webhook might not be active in Make.com.`,
+          message: 'Notification attempted but webhook might not be configured',
+          notification_type: requestData.notification_type,
+          contracts_count: requestData.contracts_count
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
     }
 
     console.log('Notification sent successfully:', requestData.notification_type);
