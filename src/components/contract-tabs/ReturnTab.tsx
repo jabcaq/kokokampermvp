@@ -25,7 +25,7 @@ export const ReturnTab = ({ contractId, contractNumber, tenantName, startDate, e
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [previewReturn, setPreviewReturn] = useState<VehicleReturn | null>(null);
   
-  const returnBookingLink = `${window.location.origin}/return-booking/${contractId}?contractNumber=${encodeURIComponent(contractNumber)}&tenantName=${encodeURIComponent(tenantName)}&vehicleModel=${encodeURIComponent(vehicleModel)}&startDate=${startDate}&endDate=${endDate}`;
+  const returnBookingLink = `https://app.kokokamper.pl/return-booking/${contractId}?contractNumber=${encodeURIComponent(contractNumber)}&tenantName=${encodeURIComponent(tenantName)}&vehicleModel=${encodeURIComponent(vehicleModel)}&startDate=${startDate}&endDate=${endDate}`;
 
   const copyBookingLink = () => {
     navigator.clipboard.writeText(returnBookingLink);

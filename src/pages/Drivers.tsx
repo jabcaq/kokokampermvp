@@ -15,7 +15,7 @@ const Drivers = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const copyLink = (contractId: string) => {
-    const link = `${window.location.origin}/driver-form/${encodeURIComponent(contractId)}`;
+    const link = `https://app.kokokamper.pl/driver-form/${encodeURIComponent(contractId)}`;
     navigator.clipboard.writeText(link);
     setCopiedId(contractId);
     toast.success("Link skopiowany do schowka!", {
@@ -71,7 +71,7 @@ const Drivers = () => {
                 </Button>
                 <div className="flex-1 bg-muted/50 rounded-md px-3 py-2 text-sm text-muted-foreground truncate">
                   <Link2 className="h-4 w-4 inline mr-2" />
-                  {window.location.origin}/driver-form/{encodeURIComponent(contract.id)}
+                  https://app.kokokamper.pl/driver-form/{encodeURIComponent(contract.id)}
                 </div>
               </div>
             </CardContent>

@@ -61,7 +61,7 @@ export const AccountingPanel = ({
         notes: notes || null,
         files: []
       });
-      const accountingLink = `${window.location.origin}/accounting-upload/${result.id}`;
+      const accountingLink = `https://app.kokokamper.pl/accounting-upload/${result.id}`;
       toast({
         title: "Sukces",
         description: "Wysłano do księgowości"
@@ -85,7 +85,7 @@ export const AccountingPanel = ({
     }
   };
   const copyAccountingLink = (invoiceId: string) => {
-    const link = `${window.location.origin}/accounting-upload/${invoiceId}`;
+    const link = `https://app.kokokamper.pl/accounting-upload/${invoiceId}`;
     navigator.clipboard.writeText(link);
     toast({
       title: "Link skopiowany",

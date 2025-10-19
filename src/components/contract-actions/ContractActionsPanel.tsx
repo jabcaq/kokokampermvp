@@ -219,7 +219,7 @@ export const ContractActionsPanel = ({
       return;
     }
 
-    const driverFormLink = `${window.location.origin}/driver-form/${encodeURIComponent(contractNumber)}`;
+    const driverFormLink = `https://app.kokokamper.pl/driver-form/${encodeURIComponent(contractNumber)}`;
     navigator.clipboard.writeText(driverFormLink);
     
     try {

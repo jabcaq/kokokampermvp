@@ -22,7 +22,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Sending webhook notification for contract:', contractNumber);
 
     // Link do wgrania faktur
-    const invoiceUploadLink = `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com')}/contracts/${contractId}`;
+    const invoiceUploadLink = `https://app.kokokamper.pl/contracts/${contractId}`;
 
     // Wysyłanie webhooka do Make.com
     const webhookResponse = await fetch('https://hook.eu2.make.com/h6d7ee9fb114su7n7hz3x8w5h4mfjr3b', {

@@ -294,7 +294,7 @@ export const InvoicesReceiptsTab = ({
       };
       const newInvoiceRecord = await addInvoice.mutateAsync(invoiceData);
       if (newInvoiceRecord) {
-        const uploadLink = `${window.location.origin}/invoice-upload/${newInvoiceRecord.id}`;
+        const uploadLink = `https://app.kokokamper.pl/invoice-upload/${newInvoiceRecord.id}`;
         await navigator.clipboard.writeText(uploadLink);
         setNewInvoice({
           type: 'reservation',
@@ -315,7 +315,7 @@ export const InvoicesReceiptsTab = ({
     }
   };
   const copyLinkToClipboard = async (invoiceId: string) => {
-    const uploadLink = `${window.location.origin}/invoice-upload/${invoiceId}`;
+    const uploadLink = `https://app.kokokamper.pl/invoice-upload/${invoiceId}`;
     await navigator.clipboard.writeText(uploadLink);
     toast({
       title: "Link skopiowany",

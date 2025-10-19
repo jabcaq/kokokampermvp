@@ -165,7 +165,7 @@ export const useAddContract = () => {
       if (error) throw error;
       
       // Generate links for handover, return, and driver submission
-      const baseUrl = window.location.origin;
+      const baseUrl = 'https://app.kokokamper.pl';
       const handoverLink = `${baseUrl}/vehicle-handover/${newContract.id}`;
       const returnLink = `${baseUrl}/vehicle-return/${newContract.id}`;
       const driverSubmissionLink = `${baseUrl}/driver-submission/${newContract.id}`;
