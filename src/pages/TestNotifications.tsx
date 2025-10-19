@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -24,11 +24,27 @@ const TestNotifications = () => {
   const [isSendingInspection, setIsSendingInspection] = useState(false);
   
   // Rental notification state
-  const [selectedContractRental, setSelectedContractRental] = useState<string>("");
+  const [selectedDateRental, setSelectedDateRental] = useState<string>("");
   const [connectionStatusRental, setConnectionStatusRental] = useState<"disconnected" | "connected">("disconnected");
   const [isSendingRental, setIsSendingRental] = useState(false);
   
   const { toast } = useToast();
+
+  // Group contracts by start date
+  const contractsByDate = useMemo(() => {
+    if (!contracts) return {};
+    
+    return contracts.reduce((acc: Record<string, any[]>, contract: any) => {
+      const startDate = contract.start_date ? new Date(contract.start_date).toISOString().split('T')[0] : '';
+      if (startDate) {
+        if (!acc[startDate]) {
+          acc[startDate] = [];
+        }
+        acc[startDate].push(contract);
+      }
+      return acc;
+    }, {});
+  }, [contracts]);
 
   const handleSendInsuranceNotification = async () => {
     if (connectionStatusInsurance === "disconnected") {
@@ -158,17 +174,17 @@ const TestNotifications = () => {
       return;
     }
 
-    if (!selectedContractRental) {
+    if (!selectedDateRental) {
       toast({
         title: "Błąd",
-        description: "Wybierz umowę",
+        description: "Wybierz datę",
         variant: "destructive",
       });
       return;
     }
 
-    const contract = contracts?.find((c: any) => c.id === selectedContractRental);
-    if (!contract) return;
+    const contractsForDate = contractsByDate[selectedDateRental];
+    if (!contractsForDate || contractsForDate.length === 0) return;
 
     setIsSendingRental(true);
     try {
@@ -178,8 +194,10 @@ const TestNotifications = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...contract,
           notification_type: "rental_starting_3_days",
+          rental_date: selectedDateRental,
+          contracts_count: contractsForDate.length,
+          contracts: contractsForDate,
           timestamp: new Date().toISOString(),
         }),
       });
@@ -190,7 +208,7 @@ const TestNotifications = () => {
 
       toast({
         title: "Sukces",
-        description: `Powiadomienie o wynajmie wysłane dla umowy: ${contract.contract_number}`,
+        description: `Powiadomienie wysłane dla ${contractsForDate.length} umów z dnia ${new Date(selectedDateRental).toLocaleDateString("pl-PL")}`,
       });
     } catch (error: any) {
       console.error("Error sending notification:", error);
@@ -462,31 +480,30 @@ const TestNotifications = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="contract-select-rental">Wybierz umowę</Label>
+              <Label htmlFor="date-select-rental">Wybierz datę rozpoczęcia wynajmu</Label>
               <Select
-                value={selectedContractRental}
-                onValueChange={setSelectedContractRental}
+                value={selectedDateRental}
+                onValueChange={setSelectedDateRental}
                 disabled={contractsLoading || isSendingRental}
               >
-                <SelectTrigger id="contract-select-rental">
-                  <SelectValue placeholder="Wybierz umowę..." />
+                <SelectTrigger id="date-select-rental">
+                  <SelectValue placeholder="Wybierz datę..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {contracts?.map((contract: any) => (
-                    <SelectItem key={contract.id} value={contract.id}>
-                      {contract.contract_number} - {contract.tenant_name || contract.tenant_company_name || 'Klient'}
-                      {contract.start_date && 
-                        ` (start: ${new Date(contract.start_date).toLocaleDateString("pl-PL")})`
-                      }
-                    </SelectItem>
-                  ))}
+                  {Object.entries(contractsByDate)
+                    .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+                    .map(([date, contracts]) => (
+                      <SelectItem key={date} value={date}>
+                        {new Date(date).toLocaleDateString("pl-PL")} - {contracts.length} {contracts.length === 1 ? 'umowa' : contracts.length < 5 ? 'umowy' : 'umów'}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
 
             <Button 
               onClick={handleSendRentalNotification} 
-              disabled={!selectedContractRental || isSendingRental || connectionStatusRental === "disconnected"}
+              disabled={!selectedDateRental || isSendingRental || connectionStatusRental === "disconnected"}
               className="w-full sm:w-auto"
             >
               {isSendingRental && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
