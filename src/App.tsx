@@ -46,7 +46,9 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/driver-form/:contractId" element={<DriverSubmission />} />
             <Route path="/vehicle-handover/:contractId" element={<VehicleHandover />} />
+            <Route path="/vehicle-handover" element={<VehicleHandover />} />
             <Route path="/vehicle-return/:contractId" element={<VehicleReturn />} />
+            <Route path="/vehicle-return" element={<VehicleReturn />} />
             <Route path="/driver-submission/:contractId" element={<DriverSubmission />} />
             <Route path="/accounting-upload/:invoiceId" element={<AccountingUpload />} />
             <Route path="/invoice-upload/:invoiceId" element={<InvoiceUpload />} />
