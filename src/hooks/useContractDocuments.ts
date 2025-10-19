@@ -38,11 +38,13 @@ export const useUpsertContractDocument = () => {
   return useMutation({
     mutationFn: async (document: Omit<ContractDocument, 'id' | 'created_at' | 'updated_at'>) => {
       // First, check if a document of this type already exists for this contract
-      const { data: existing } = await supabase
+      const { data: existing, error: existingError } = await supabase
         .from('contract_documents')
-        .select('id')
+        .select('id, created_at')
         .eq('contract_id', document.contract_id)
         .eq('document_type', document.document_type)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       let result;
