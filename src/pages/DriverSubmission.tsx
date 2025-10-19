@@ -12,6 +12,11 @@ import { useContractByNumber, useUpdateContract } from "@/hooks/useContracts";
 import { useCreateNotification } from "@/hooks/useNotifications";
 import { useUpdateClient } from "@/hooks/useClients";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+import { pl } from "date-fns/locale";
+
+const WARSAW_TZ = "Europe/Warsaw";
 
 const DriverSubmission = () => {
   const { contractId } = useParams<{ contractId: string }>();
@@ -325,7 +330,15 @@ const DriverSubmission = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Data rozpoczęcia:</span>
-                <span className="font-medium text-foreground">{contract.start_date}</span>
+                <span className="font-medium text-foreground">
+                  {contract.start_date ? format(toZonedTime(new Date(contract.start_date), WARSAW_TZ), "dd.MM.yyyy, HH:mm", { locale: pl }) : 'Nie podano'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Data zakończenia:</span>
+                <span className="font-medium text-foreground">
+                  {contract.end_date ? format(toZonedTime(new Date(contract.end_date), WARSAW_TZ), "dd.MM.yyyy, HH:mm", { locale: pl }) : 'Nie podano'}
+                </span>
               </div>
             </div>
           </CardContent>
