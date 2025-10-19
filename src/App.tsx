@@ -31,6 +31,7 @@ import ReturnBooking from "./pages/ReturnBooking";
 import EmployeeSchedule from "./pages/EmployeeSchedule";
 import MyReturns from "./pages/MyReturns";
 import AdminEmployeeSchedules from "./pages/AdminEmployeeSchedules";
+import TestNotifications from "./pages/TestNotifications";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="/employee-schedule" element={<EmployeeSchedule />} />
               <Route path="/my-returns" element={<MyReturns />} />
               <Route path="/admin/employee-schedules" element={<AdminEmployeeSchedules />} />
+              <Route path="/test-notifications" element={<TestNotifications />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

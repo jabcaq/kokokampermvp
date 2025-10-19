@@ -1,5 +1,5 @@
 import { Link, useLocation, Outlet } from "react-router-dom";
-import { Home, Users, FileText, UserPlus, Truck, Menu, Mail, ClipboardCheck, LogOut, FolderOpen, UserCog, Receipt, Calendar, CalendarClock, CalendarCheck } from "lucide-react";
+import { Home, Users, FileText, UserPlus, Truck, Menu, Mail, ClipboardCheck, LogOut, FolderOpen, UserCog, Receipt, Calendar, CalendarClock, CalendarCheck, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
@@ -23,6 +23,7 @@ const navItems = [
   { path: "/inquiries", label: "Zapytania", icon: Mail },
   { path: "/users", label: "Użytkownicy", icon: UserCog },
   { path: "/admin/employee-schedules", label: "Harmonogramy\npracowników", icon: CalendarClock, adminOnly: true },
+  { path: "/test-notifications", label: "Test powiadomień", icon: Bell, adminOnly: true },
 ];
 
 export const Layout = () => {
