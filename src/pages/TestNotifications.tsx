@@ -8,6 +8,7 @@ import { useContracts } from "@/hooks/useContracts";
 import { useToast } from "@/hooks/use-toast";
 import { Bell, Loader2, Unplug, Plug } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 const TestNotifications = () => {
   const { data: vehicles, isLoading: vehiclesLoading } = useVehicles();
@@ -193,22 +194,18 @@ const TestNotifications = () => {
 
     setIsSendingRental(true);
     try {
-      const response = await fetch("https://hook.eu2.make.com/luarjrss1fx7b39bmr12fpkinx61sesk", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await supabase.functions.invoke('send-rental-notification', {
+        body: {
           notification_type: "rental_starting_3_days",
           rental_date: selectedDateRental,
           contracts_count: contractsForDate.length,
           contracts: contractsForDate,
           timestamp: new Date().toISOString(),
-        }),
+        }
       });
 
-      if (!response.ok) {
-        throw new Error(`Webhook error: ${response.status}`);
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to send notification');
       }
 
       toast({
@@ -251,22 +248,19 @@ const TestNotifications = () => {
 
     setIsSendingRental2Days(true);
     try {
-      const response = await fetch("https://hook.eu2.make.com/g28f6wb4s5xyiul9kx82ydqgcpgkxxl2", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await supabase.functions.invoke('send-rental-notification', {
+        body: {
           notification_type: "rental_starting_2_days",
           rental_date: selectedDateRental2Days,
           contracts_count: contractsForDate.length,
           contracts: contractsForDate,
           timestamp: new Date().toISOString(),
-        }),
+        }
       });
 
-      if (!response.ok) {
-        throw new Error(`Webhook error: ${response.status}`);
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to send notification');
       }
 
       toast({
