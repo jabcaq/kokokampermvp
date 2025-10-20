@@ -744,7 +744,7 @@ const Inquiries = () => {
             <div className="flex-1 overflow-hidden">
               <ResizablePanelGroup direction="horizontal" className="h-full">
                 {/* Left side - Inquiry and Editor */}
-                <ResizablePanel defaultSize={65} minSize={50}>
+                <ResizablePanel defaultSize={70} minSize={60}>
                   <div className="h-full flex flex-col p-6 gap-4">
                     {/* Inquiry Details - Scrollable */}
                     <div className="flex-shrink-0">
@@ -828,81 +828,88 @@ const Inquiries = () => {
                         </div>
                       )}
                     </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-3 justify-end flex-shrink-0 pt-4 pb-2 border-t">
-                      <Button
-                        variant="secondary"
-                        size="lg"
-                        onClick={() => setIsDialogOpen(true)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Utwórz klienta i umowę
-                      </Button>
-                      <Button variant="outline" size="lg" onClick={() => setReplyMessage("")}>
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Wyczyść
-                      </Button>
-                      <Button 
-                        size="lg" 
-                        onClick={async () => {
-                          await handleSendReply();
-                          setIsFocusModeOpen(false);
-                        }} 
-                        disabled={!replyMessage.trim()}
-                      >
-                        <Send className="h-4 w-4 mr-2" />
-                        Wyślij odpowiedź
-                      </Button>
-                    </div>
                   </div>
                 </ResizablePanel>
 
                 <ResizableHandle withHandle />
 
-                {/* Right side - Conversation History */}
-                <ResizablePanel defaultSize={35} minSize={30}>
-                  <div className="h-full flex flex-col p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex-shrink-0">
-                      Historia konwersacji
-                      <span className="text-sm text-muted-foreground ml-2">({messages.length} wiadomości)</span>
-                    </h3>
-                    {messages.length > 0 ? (
-                      <ScrollArea className="flex-1">
-                        <div className="space-y-4 pr-4">
-                          {messages.map((msg) => (
-                            <div
-                              key={msg.id}
-                              className={`p-5 rounded-lg ${
-                                msg.sender_type === 'admin' 
-                                  ? 'bg-primary/10' 
-                                  : 'bg-muted'
-                              }`}
-                            >
-                              <div className="flex items-start justify-between mb-3 gap-2">
-                                <p className="text-base font-semibold">
-                                  {msg.sender_type === 'admin' ? 'Administrator' : selectedInquiry.name}
-                                </p>
-                                <p className="text-sm text-muted-foreground whitespace-nowrap">
-                                  {format(new Date(msg.created_at), 'dd.MM.yyyy HH:mm')}
-                                </p>
+                {/* Right side - Conversation History and Actions */}
+                <ResizablePanel defaultSize={30} minSize={25}>
+                  <div className="h-full flex flex-col p-6 gap-4">
+                    {/* Conversation History */}
+                    <div className="flex-1 flex flex-col min-h-0">
+                      <h3 className="text-lg font-semibold mb-4 flex-shrink-0">
+                        Historia konwersacji
+                        <span className="text-sm text-muted-foreground ml-2">({messages.length} wiadomości)</span>
+                      </h3>
+                      {messages.length > 0 ? (
+                        <ScrollArea className="flex-1">
+                          <div className="space-y-4 pr-4">
+                            {messages.map((msg) => (
+                              <div
+                                key={msg.id}
+                                className={`p-4 rounded-lg ${
+                                  msg.sender_type === 'admin' 
+                                    ? 'bg-primary/10' 
+                                    : 'bg-muted'
+                                }`}
+                              >
+                                <div className="flex items-start justify-between mb-3 gap-2">
+                                  <p className="text-sm font-semibold">
+                                    {msg.sender_type === 'admin' ? 'Administrator' : selectedInquiry.name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground whitespace-nowrap">
+                                    {format(new Date(msg.created_at), 'dd.MM.yyyy HH:mm')}
+                                  </p>
+                                </div>
+                                <div 
+                                  className="text-sm whitespace-pre-wrap leading-relaxed"
+                                  dangerouslySetInnerHTML={{ __html: msg.message }}
+                                />
                               </div>
-                              <div 
-                                className="text-base whitespace-pre-wrap leading-relaxed"
-                                dangerouslySetInnerHTML={{ __html: msg.message }}
-                              />
-                            </div>
-                          ))}
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      ) : (
+                        <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                          <div className="text-center">
+                            <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                            <p className="text-base">Brak historii konwersacji</p>
+                          </div>
                         </div>
-                      </ScrollArea>
-                    ) : (
-                      <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                        <div className="text-center">
-                          <Mail className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                          <p className="text-lg">Brak historii konwersacji</p>
-                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex-shrink-0 space-y-3 pt-4 border-t">
+                      <Button
+                        variant="secondary"
+                        size="lg"
+                        onClick={() => setIsDialogOpen(true)}
+                        className="w-full"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Utwórz klienta i umowę
+                      </Button>
+                      <div className="flex gap-3">
+                        <Button variant="outline" size="lg" onClick={() => setReplyMessage("")} className="flex-1">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Wyczyść
+                        </Button>
+                        <Button 
+                          size="lg" 
+                          onClick={async () => {
+                            await handleSendReply();
+                            setIsFocusModeOpen(false);
+                          }} 
+                          disabled={!replyMessage.trim()}
+                          className="flex-1"
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          Wyślij odpowiedź
+                        </Button>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </ResizablePanel>
               </ResizablePanelGroup>
