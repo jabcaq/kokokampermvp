@@ -16,6 +16,8 @@ import { useClients } from "@/hooks/useClients";
 import { useVehicles } from "@/hooks/useVehicles";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+import { pl } from "date-fns/locale";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +38,8 @@ const statusConfig = {
   completed: { label: "Zakończona", className: "bg-muted text-muted-foreground border-muted" },
   cancelled: { label: "Anulowana", className: "bg-destructive/10 text-destructive border-destructive/20" },
 };
+
+const WARSAW_TZ = "Europe/Warsaw";
 
 const Contracts = () => {
   const location = useLocation();
@@ -1005,7 +1009,7 @@ const Contracts = () => {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
                       <span>
-                        {format(new Date(contract.start_date), 'dd.MM.yyyy')} - {format(new Date(contract.end_date), 'dd.MM.yyyy')}
+                        {format(toZonedTime(new Date(contract.start_date), WARSAW_TZ), 'dd.MM.yyyy, HH:mm', { locale: pl })} - {format(toZonedTime(new Date(contract.end_date), WARSAW_TZ), 'dd.MM.yyyy, HH:mm', { locale: pl })}
                       </span>
                     </div>
                   </div>
