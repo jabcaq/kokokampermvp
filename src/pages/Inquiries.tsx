@@ -305,24 +305,24 @@ const Inquiries = () => {
                       }`}
                       onClick={() => setSelectedInquiry(inquiry)}
                     >
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">{inquiry.name}</p>
-                            <p className="text-xs text-muted-foreground">{inquiry.email}</p>
-                            {inquiry.inquiry_number && (
-                              <p className="text-xs font-mono text-primary mt-1">{inquiry.inquiry_number}</p>
-                            )}
-                          </div>
-                          {getStatusBadge(inquiry.status)}
-                        </div>
-                        <p className="font-medium text-sm mb-1">{inquiry.subject || 'Bez tematu'}</p>
-                        <p className="text-xs text-muted-foreground line-clamp-2">{inquiry.message}</p>
-                        <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {inquiry.created_at ? format(new Date(inquiry.created_at), 'dd.MM.yyyy HH:mm') : 'Brak daty'}
-                        </div>
-                      </CardContent>
+                       <CardContent className="p-4">
+                         <div className="flex items-start justify-between mb-2">
+                           <div className="flex-1">
+                             <p className="font-medium text-sm">{inquiry.name}</p>
+                             <p className="text-xs text-muted-foreground">{inquiry.email}</p>
+                             {inquiry.inquiry_number && (
+                               <p className="text-xs font-mono text-primary mt-1">{inquiry.inquiry_number}</p>
+                             )}
+                           </div>
+                           {getStatusBadge(inquiry.status)}
+                         </div>
+                         <p className="font-medium text-sm mb-1">{inquiry.subject || 'Bez tematu'}</p>
+                         <p className="text-xs text-muted-foreground line-clamp-2">{inquiry.message}</p>
+                         <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                           <Clock className="h-3 w-3" />
+                           {inquiry.created_at ? format(new Date(inquiry.created_at), 'dd.MM.yyyy HH:mm') : 'Brak daty'}
+                         </div>
+                       </CardContent>
                     </Card>
                   ))}
                 </div>
@@ -501,18 +501,18 @@ const Inquiries = () => {
                        <CardContent className="p-4">
                          <div className="flex items-start justify-between mb-2 gap-2">
                            <div className="flex-1 min-w-0">
-                             <p className="font-medium">{inquiry.name}</p>
-                             <p className="text-sm text-muted-foreground truncate">{inquiry.email}</p>
+                             <p className="font-medium text-sm">{inquiry.name}</p>
+                             <p className="text-xs text-muted-foreground truncate">{inquiry.email}</p>
                              {inquiry.inquiry_number && (
                                <p className="text-xs font-mono text-primary mt-1">{inquiry.inquiry_number}</p>
                              )}
                            </div>
                            <div className="flex-shrink-0">{getStatusBadge(inquiry.status)}</div>
                          </div>
-                         <p className="font-medium mb-1">{inquiry.subject || 'Bez tematu'}</p>
-                         <p className="text-sm text-muted-foreground line-clamp-2">{inquiry.message}</p>
-                         <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
-                           <Clock className="h-4 w-4" />
+                         <p className="font-medium text-sm mb-1">{inquiry.subject || 'Bez tematu'}</p>
+                         <p className="text-xs text-muted-foreground line-clamp-2">{inquiry.message}</p>
+                         <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                           <Clock className="h-3 w-3" />
                            {inquiry.created_at ? format(new Date(inquiry.created_at), 'dd.MM.yyyy HH:mm') : 'Brak daty'}
                          </div>
                        </CardContent>
@@ -566,26 +566,26 @@ const Inquiries = () => {
                    <div className="bg-muted p-4 rounded-lg space-y-3">
                        <div className="flex items-start justify-between gap-3">
                          <div className="flex-1 min-w-0">
-                           <p className="font-semibold text-base">{selectedInquiry.name}</p>
-                           <p className="text-sm text-muted-foreground break-all">{selectedInquiry.email}</p>
+                           <p className="font-semibold text-sm">{selectedInquiry.name}</p>
+                           <p className="text-xs text-muted-foreground break-all">{selectedInquiry.email}</p>
                            {selectedInquiry.inquiry_number && (
-                             <p className="text-sm font-mono text-primary mt-1">{selectedInquiry.inquiry_number}</p>
+                             <p className="text-xs font-mono text-primary mt-1">{selectedInquiry.inquiry_number}</p>
                            )}
                          </div>
-                         <p className="text-sm text-muted-foreground whitespace-nowrap">
+                         <p className="text-xs text-muted-foreground whitespace-nowrap">
                            {selectedInquiry.created_at ? format(new Date(selectedInquiry.created_at), 'dd.MM.yyyy HH:mm') : 'Brak daty'}
                          </p>
                        </div>
                        <Separator className="my-2" />
                        <div>
-                         <p className="font-semibold mb-2">{selectedInquiry.subject || 'Bez tematu'}</p>
+                         <p className="font-semibold text-sm mb-2">{selectedInquiry.subject || 'Bez tematu'}</p>
                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{selectedInquiry.message}</p>
                        </div>
                    </div>
                 </ScrollArea>
 
                  <div className="flex-1 flex flex-col gap-3 min-h-0 overflow-hidden">
-                   <label className="font-medium flex-shrink-0">Twoja odpowiedź</label>
+                   <label className="text-sm font-medium flex-shrink-0">Twoja odpowiedź</label>
                    <div className="flex-1 min-h-0 overflow-auto">
                      <RichTextEditor
                        content={replyMessage}
@@ -597,7 +597,7 @@ const Inquiries = () => {
                  </div>
 
                  <div className="space-y-2 flex-shrink-0">
-                   <Label className="font-medium">Do</Label>
+                   <Label className="text-sm font-medium">Do</Label>
                    <div className="flex gap-2">
                     <Input
                       type="email"
@@ -693,10 +693,10 @@ const Inquiries = () => {
                        }`}
                      >
                        <div className="flex items-start justify-between mb-2 gap-2">
-                         <p className="text-sm font-semibold">
+                         <p className="text-xs font-semibold">
                            {msg.sender_type === 'admin' ? 'Administrator' : selectedInquiry.name}
                          </p>
-                         <p className="text-sm text-muted-foreground whitespace-nowrap">
+                         <p className="text-xs text-muted-foreground whitespace-nowrap">
                            {format(new Date(msg.created_at), 'dd.MM.yyyy HH:mm')}
                          </p>
                        </div>
