@@ -32,6 +32,7 @@ import EmployeeSchedule from "./pages/EmployeeSchedule";
 import MyReturns from "./pages/MyReturns";
 import AdminEmployeeSchedules from "./pages/AdminEmployeeSchedules";
 import TestNotifications from "./pages/TestNotifications";
+import BookingsCalendar from "./pages/BookingsCalendar";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/invoices" element={<InvoicesManagement />} />
               <Route path="/users" element={<Users />} />
               <Route path="/return-calendar" element={<ReturnCalendar />} />
+              <Route path="/bookings-calendar" element={<BookingsCalendar />} />
               <Route path="/employee-schedule" element={<EmployeeSchedule />} />
               <Route path="/my-returns" element={<MyReturns />} />
               <Route path="/admin/employee-schedules" element={<AdminEmployeeSchedules />} />
