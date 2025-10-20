@@ -134,8 +134,10 @@ const Inquiries = () => {
             inquiry: selectedInquiry,
             admin_response: replyMessage,
             conversation_history: messages,
-            additional_dw_emails: dwEmails,
-            additional_udw_emails: udwEmails,
+            UW_1: dwEmails[0] || null,
+            UW_2: dwEmails[1] || null,
+            UWD_1: udwEmails[0] || null,
+            UWD_2: udwEmails[1] || null,
             timestamp: new Date().toISOString(),
           }),
         });
