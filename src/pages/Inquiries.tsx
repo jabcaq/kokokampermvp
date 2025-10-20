@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Send, Inbox, Trash2, Reply, Clock, Loader2, Plus, Filter, X } from "lucide-react";
+import { Mail, Send, Inbox, Trash2, Reply, Clock, Loader2, Plus, Filter, X, Maximize2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Toggle } from "@/components/ui/toggle";
@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useInquiries, useUpdateInquiryStatus } from "@/hooks/useInquiries";
 import { useCreateNotification } from "@/hooks/useNotifications";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +28,7 @@ const Inquiries = () => {
   const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
   const [draftMessages, setDraftMessages] = useState<Map<string, string>>(new Map());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFocusModeOpen, setIsFocusModeOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("new");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
@@ -529,18 +531,33 @@ const Inquiries = () => {
         <ResizablePanel defaultSize={42} minSize={35}>
         <Card className="flex flex-col overflow-hidden h-full">
           <CardHeader className="flex-shrink-0">
-            <CardTitle className="flex items-center gap-2">
-              <Reply className="h-5 w-5" />
-              Edytor odpowiedzi
-            </CardTitle>
-            <CardDescription>
-              {selectedInquiry ? (
-                <span>
-                  {selectedInquiry.inquiry_number && <span className="font-mono">{selectedInquiry.inquiry_number} - </span>}
-                  {selectedInquiry.subject || 'Bez tematu'}
-                </span>
-              ) : "Wybierz zapytanie"}
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Reply className="h-5 w-5" />
+                  Edytor odpowiedzi
+                </CardTitle>
+                <CardDescription>
+                  {selectedInquiry ? (
+                    <span>
+                      {selectedInquiry.inquiry_number && <span className="font-mono">{selectedInquiry.inquiry_number} - </span>}
+                      {selectedInquiry.subject || 'Bez tematu'}
+                    </span>
+                  ) : "Wybierz zapytanie"}
+                </CardDescription>
+              </div>
+              {selectedInquiry && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsFocusModeOpen(true)}
+                  className="gap-2"
+                >
+                  <Maximize2 className="h-4 w-4" />
+                  Tryb skupienia
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col overflow-hidden min-h-0 p-4">
             {selectedInquiry ? (
@@ -713,6 +730,184 @@ const Inquiries = () => {
           setReplyMessage("");
         }}
       />
+
+      {/* Focus Mode Dialog */}
+      <Dialog open={isFocusModeOpen} onOpenChange={setIsFocusModeOpen}>
+        <DialogContent className="max-w-[95vw] w-[1400px] h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
+            <DialogTitle className="text-2xl">
+              Tryb skupienia - {selectedInquiry?.inquiry_number || 'Zapytanie'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedInquiry && (
+            <div className="flex-1 overflow-hidden">
+              <ResizablePanelGroup direction="horizontal" className="h-full">
+                {/* Left side - Inquiry and Editor */}
+                <ResizablePanel defaultSize={65} minSize={50}>
+                  <div className="h-full flex flex-col p-6 gap-6">
+                    {/* Inquiry Details */}
+                    <div className="flex-shrink-0">
+                      <h3 className="text-lg font-semibold mb-3">Zapytanie</h3>
+                      <div className="bg-muted p-6 rounded-lg space-y-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <p className="font-semibold text-lg">{selectedInquiry.name}</p>
+                            <p className="text-base text-muted-foreground break-all mt-1">{selectedInquiry.email}</p>
+                            {selectedInquiry.inquiry_number && (
+                              <p className="text-base font-mono text-primary mt-2">{selectedInquiry.inquiry_number}</p>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <p className="text-base text-muted-foreground whitespace-nowrap">
+                              {selectedInquiry.created_at ? format(new Date(selectedInquiry.created_at), 'dd.MM.yyyy HH:mm') : 'Brak daty'}
+                            </p>
+                            {getStatusBadge(selectedInquiry.status)}
+                          </div>
+                        </div>
+                        <Separator />
+                        <div>
+                          <p className="font-semibold text-lg mb-3">{selectedInquiry.subject || 'Bez tematu'}</p>
+                          <p className="text-base whitespace-pre-wrap leading-relaxed">{selectedInquiry.message}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Editor */}
+                    <div className="flex-1 flex flex-col min-h-0 gap-4">
+                      <h3 className="text-lg font-semibold">Twoja odpowiedź</h3>
+                      <div className="flex-1 min-h-0 overflow-auto border rounded-lg">
+                        <RichTextEditor
+                          content={replyMessage}
+                          onChange={setReplyMessage}
+                          placeholder="Napisz odpowiedź..."
+                          inquiryData={selectedInquiry}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Recipients */}
+                    <div className="flex-shrink-0 space-y-3">
+                      <Label className="text-base font-semibold">Do</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="email"
+                          placeholder="email@example.com"
+                          value={newEmail}
+                          onChange={(e) => setNewEmail(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleAddEmail()}
+                          className="text-base"
+                        />
+                        <Button onClick={handleAddEmail} variant="outline">
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {recipientEmails.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {recipientEmails.map((recipient, index) => (
+                            <Badge key={index} variant="secondary" className="flex items-center gap-2 pr-1 text-sm py-1.5">
+                              <span>{recipient.email}</span>
+                              <Toggle
+                                size="sm"
+                                pressed={recipient.type === 'udw'}
+                                onPressedChange={() => handleToggleEmailType(index)}
+                                className="h-6 px-2 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                              >
+                                {recipient.type === 'dw' ? 'DW' : 'UDW'}
+                              </Toggle>
+                              <button
+                                onClick={() => handleRemoveEmail(index)}
+                                className="ml-1 hover:text-destructive"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-3 justify-end flex-shrink-0 pt-4 border-t">
+                      <Button
+                        variant="secondary"
+                        size="lg"
+                        onClick={() => setIsDialogOpen(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Utwórz klienta i umowę
+                      </Button>
+                      <Button variant="outline" size="lg" onClick={() => setReplyMessage("")}>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Wyczyść
+                      </Button>
+                      <Button 
+                        size="lg" 
+                        onClick={async () => {
+                          await handleSendReply();
+                          setIsFocusModeOpen(false);
+                        }} 
+                        disabled={!replyMessage.trim()}
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        Wyślij odpowiedź
+                      </Button>
+                    </div>
+                  </div>
+                </ResizablePanel>
+
+                <ResizableHandle withHandle />
+
+                {/* Right side - Conversation History */}
+                <ResizablePanel defaultSize={35} minSize={30}>
+                  <div className="h-full flex flex-col p-6">
+                    <h3 className="text-lg font-semibold mb-4 flex-shrink-0">
+                      Historia konwersacji
+                      <span className="text-sm text-muted-foreground ml-2">({messages.length} wiadomości)</span>
+                    </h3>
+                    {messages.length > 0 ? (
+                      <ScrollArea className="flex-1">
+                        <div className="space-y-4 pr-4">
+                          {messages.map((msg) => (
+                            <div
+                              key={msg.id}
+                              className={`p-5 rounded-lg ${
+                                msg.sender_type === 'admin' 
+                                  ? 'bg-primary/10' 
+                                  : 'bg-muted'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between mb-3 gap-2">
+                                <p className="text-base font-semibold">
+                                  {msg.sender_type === 'admin' ? 'Administrator' : selectedInquiry.name}
+                                </p>
+                                <p className="text-sm text-muted-foreground whitespace-nowrap">
+                                  {format(new Date(msg.created_at), 'dd.MM.yyyy HH:mm')}
+                                </p>
+                              </div>
+                              <div 
+                                className="text-base whitespace-pre-wrap leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: msg.message }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    ) : (
+                      <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                        <div className="text-center">
+                          <Mail className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                          <p className="text-lg">Brak historii konwersacji</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
