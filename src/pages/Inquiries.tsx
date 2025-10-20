@@ -745,11 +745,13 @@ const Inquiries = () => {
               <ResizablePanelGroup direction="horizontal" className="h-full">
                 {/* Left side - Inquiry and Editor */}
                 <ResizablePanel defaultSize={65} minSize={50}>
-                  <div className="h-full flex flex-col p-6 gap-6">
-                    {/* Inquiry Details */}
+                  <div className="h-full flex flex-col p-6 gap-4">
+                    {/* Inquiry Details - Scrollable */}
                     <div className="flex-shrink-0">
                       <h3 className="text-lg font-semibold mb-3">Zapytanie</h3>
-                      <div className="bg-muted p-6 rounded-lg space-y-4">
+                    </div>
+                    <ScrollArea className="flex-shrink-0 max-h-[25vh]">
+                      <div className="bg-muted p-6 rounded-lg space-y-4 mr-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
                             <p className="font-semibold text-lg">{selectedInquiry.name}</p>
@@ -771,12 +773,12 @@ const Inquiries = () => {
                           <p className="text-base whitespace-pre-wrap leading-relaxed">{selectedInquiry.message}</p>
                         </div>
                       </div>
-                    </div>
+                    </ScrollArea>
 
-                    {/* Editor */}
-                    <div className="flex-1 flex flex-col min-h-0 gap-4">
+                    {/* Editor - Takes remaining space */}
+                    <div className="flex-1 flex flex-col min-h-[300px] gap-3">
                       <h3 className="text-lg font-semibold">Twoja odpowiedź</h3>
-                      <div className="flex-1 min-h-0 overflow-auto border rounded-lg">
+                      <div className="flex-1 border rounded-lg overflow-hidden">
                         <RichTextEditor
                           content={replyMessage}
                           onChange={setReplyMessage}
