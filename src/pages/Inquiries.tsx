@@ -469,7 +469,7 @@ const Inquiries = () => {
       {/* Desktop Layout */}
       <ResizablePanelGroup direction="horizontal" className="hidden lg:flex gap-6 flex-1 min-h-0">
         {/* Lista zapytań */}
-        <ResizablePanel defaultSize={25} minSize={20}>
+        <ResizablePanel defaultSize={30} minSize={25}>
         <Card className="flex flex-col overflow-hidden h-full">
           <CardHeader className="flex-shrink-0">
             <CardTitle className="flex items-center gap-2">
@@ -496,24 +496,24 @@ const Inquiries = () => {
                       }`}
                       onClick={() => setSelectedInquiry(inquiry)}
                     >
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">{inquiry.name}</p>
-                            <p className="text-xs text-muted-foreground">{inquiry.email}</p>
-                            {inquiry.inquiry_number && (
-                              <p className="text-xs font-mono text-primary mt-1">{inquiry.inquiry_number}</p>
-                            )}
-                          </div>
-                          {getStatusBadge(inquiry.status)}
-                        </div>
-                        <p className="font-medium text-sm mb-1">{inquiry.subject || 'Bez tematu'}</p>
-                        <p className="text-xs text-muted-foreground line-clamp-2">{inquiry.message}</p>
-                        <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {inquiry.created_at ? format(new Date(inquiry.created_at), 'dd.MM.yyyy HH:mm') : 'Brak daty'}
-                        </div>
-                      </CardContent>
+                       <CardContent className="p-4">
+                         <div className="flex items-start justify-between mb-2 gap-2">
+                           <div className="flex-1 min-w-0">
+                             <p className="font-medium">{inquiry.name}</p>
+                             <p className="text-sm text-muted-foreground truncate">{inquiry.email}</p>
+                             {inquiry.inquiry_number && (
+                               <p className="text-xs font-mono text-primary mt-1">{inquiry.inquiry_number}</p>
+                             )}
+                           </div>
+                           <div className="flex-shrink-0">{getStatusBadge(inquiry.status)}</div>
+                         </div>
+                         <p className="font-medium mb-1">{inquiry.subject || 'Bez tematu'}</p>
+                         <p className="text-sm text-muted-foreground line-clamp-2">{inquiry.message}</p>
+                         <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
+                           <Clock className="h-4 w-4" />
+                           {inquiry.created_at ? format(new Date(inquiry.created_at), 'dd.MM.yyyy HH:mm') : 'Brak daty'}
+                         </div>
+                       </CardContent>
                     </Card>
                   ))}
                 </div>
@@ -526,7 +526,7 @@ const Inquiries = () => {
         <ResizableHandle withHandle />
 
         {/* Edytor odpowiedzi */}
-        <ResizablePanel defaultSize={40} minSize={30}>
+        <ResizablePanel defaultSize={42} minSize={35}>
         <Card className="flex flex-col overflow-hidden h-full">
           <CardHeader className="flex-shrink-0">
             <CardTitle className="flex items-center gap-2">
@@ -546,42 +546,42 @@ const Inquiries = () => {
             {selectedInquiry ? (
               <div className="flex flex-col h-full gap-3">
                 <ScrollArea className="flex-shrink-0 max-h-[30vh]">
-                  <div className="bg-muted p-4 rounded-lg space-y-2">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-medium">{selectedInquiry.name}</p>
-                          <p className="text-sm text-muted-foreground">{selectedInquiry.email}</p>
-                          {selectedInquiry.inquiry_number && (
-                            <p className="text-xs font-mono text-primary mt-1">{selectedInquiry.inquiry_number}</p>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {selectedInquiry.created_at ? format(new Date(selectedInquiry.created_at), 'dd.MM.yyyy HH:mm') : 'Brak daty'}
-                        </p>
-                      </div>
-                      <Separator className="my-2" />
-                      <div>
-                        <p className="font-medium text-sm mb-1">{selectedInquiry.subject || 'Bez tematu'}</p>
-                        <p className="text-sm whitespace-pre-wrap">{selectedInquiry.message}</p>
-                      </div>
-                  </div>
+                   <div className="bg-muted p-4 rounded-lg space-y-3">
+                       <div className="flex items-start justify-between gap-3">
+                         <div className="flex-1 min-w-0">
+                           <p className="font-semibold text-base">{selectedInquiry.name}</p>
+                           <p className="text-sm text-muted-foreground break-all">{selectedInquiry.email}</p>
+                           {selectedInquiry.inquiry_number && (
+                             <p className="text-sm font-mono text-primary mt-1">{selectedInquiry.inquiry_number}</p>
+                           )}
+                         </div>
+                         <p className="text-sm text-muted-foreground whitespace-nowrap">
+                           {selectedInquiry.created_at ? format(new Date(selectedInquiry.created_at), 'dd.MM.yyyy HH:mm') : 'Brak daty'}
+                         </p>
+                       </div>
+                       <Separator className="my-2" />
+                       <div>
+                         <p className="font-semibold mb-2">{selectedInquiry.subject || 'Bez tematu'}</p>
+                         <p className="text-sm whitespace-pre-wrap leading-relaxed">{selectedInquiry.message}</p>
+                       </div>
+                   </div>
                 </ScrollArea>
 
-                <div className="flex-1 flex flex-col gap-2 min-h-0 overflow-hidden">
-                  <label className="text-sm font-medium flex-shrink-0">Twoja odpowiedź</label>
-                  <div className="flex-1 min-h-0 overflow-auto">
-                    <RichTextEditor
-                      content={replyMessage}
-                      onChange={setReplyMessage}
-                      placeholder="Napisz odpowiedź..."
-                      inquiryData={selectedInquiry}
-                    />
-                  </div>
-                </div>
+                 <div className="flex-1 flex flex-col gap-3 min-h-0 overflow-hidden">
+                   <label className="font-medium flex-shrink-0">Twoja odpowiedź</label>
+                   <div className="flex-1 min-h-0 overflow-auto">
+                     <RichTextEditor
+                       content={replyMessage}
+                       onChange={setReplyMessage}
+                       placeholder="Napisz odpowiedź..."
+                       inquiryData={selectedInquiry}
+                     />
+                   </div>
+                 </div>
 
-                <div className="space-y-2 flex-shrink-0">
-                  <Label className="text-sm font-medium">Do</Label>
-                  <div className="flex gap-2">
+                 <div className="space-y-2 flex-shrink-0">
+                   <Label className="font-medium">Do</Label>
+                   <div className="flex gap-2">
                     <Input
                       type="email"
                       placeholder="email@example.com"
@@ -651,7 +651,7 @@ const Inquiries = () => {
         <ResizableHandle withHandle />
 
         {/* Historia konwersacji */}
-        <ResizablePanel defaultSize={35} minSize={25}>
+        <ResizablePanel defaultSize={28} minSize={20}>
         <Card className="flex flex-col overflow-hidden h-full">
           <CardHeader className="flex-shrink-0">
             <CardTitle className="flex items-center gap-2">
@@ -666,29 +666,29 @@ const Inquiries = () => {
             {selectedInquiry && messages.length > 0 ? (
               <ScrollArea className="h-full">
                 <div className="space-y-3 pr-4">
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`p-3 rounded-lg ${
-                        msg.sender_type === 'admin' 
-                          ? 'bg-primary/10 ml-8' 
-                          : 'bg-muted mr-8'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between mb-1">
-                        <p className="text-xs font-medium">
-                          {msg.sender_type === 'admin' ? 'Administrator' : selectedInquiry.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(msg.created_at), 'dd.MM.yyyy HH:mm')}
-                        </p>
-                      </div>
-                      <div 
-                        className="text-sm whitespace-pre-wrap"
-                        dangerouslySetInnerHTML={{ __html: msg.message }}
-                      />
-                    </div>
-                  ))}
+                   {messages.map((msg) => (
+                     <div
+                       key={msg.id}
+                       className={`p-4 rounded-lg ${
+                         msg.sender_type === 'admin' 
+                           ? 'bg-primary/10 ml-8' 
+                           : 'bg-muted mr-8'
+                       }`}
+                     >
+                       <div className="flex items-start justify-between mb-2 gap-2">
+                         <p className="text-sm font-semibold">
+                           {msg.sender_type === 'admin' ? 'Administrator' : selectedInquiry.name}
+                         </p>
+                         <p className="text-sm text-muted-foreground whitespace-nowrap">
+                           {format(new Date(msg.created_at), 'dd.MM.yyyy HH:mm')}
+                         </p>
+                       </div>
+                       <div 
+                         className="text-sm whitespace-pre-wrap leading-relaxed"
+                         dangerouslySetInnerHTML={{ __html: msg.message }}
+                       />
+                     </div>
+                   ))}
                 </div>
               </ScrollArea>
             ) : (
