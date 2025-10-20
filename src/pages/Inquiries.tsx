@@ -830,7 +830,7 @@ const Inquiries = () => {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-3 justify-end flex-shrink-0 pt-4 border-t">
+                    <div className="flex gap-3 justify-end flex-shrink-0 pt-4 pb-2 border-t">
                       <Button
                         variant="secondary"
                         size="lg"
