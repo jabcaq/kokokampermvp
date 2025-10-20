@@ -27,7 +27,7 @@ const Inquiries = () => {
   const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
   const [draftMessages, setDraftMessages] = useState<Map<string, string>>(new Map());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("new");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [recipientEmails, setRecipientEmails] = useState<{ email: string; type: 'dw' | 'udw' }[]>([]);
