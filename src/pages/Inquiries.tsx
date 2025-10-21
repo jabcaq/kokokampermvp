@@ -13,6 +13,7 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useInquiries, useUpdateInquiryStatus } from "@/hooks/useInquiries";
 import { useCreateNotification } from "@/hooks/useNotifications";
+import { useCreateNotificationLog } from "@/hooks/useNotificationLogs";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfDay, endOfDay } from "date-fns";
 import { useInquiryMessages, useAddInquiryMessage } from "@/hooks/useInquiryMessages";
@@ -37,6 +38,7 @@ const Inquiries = () => {
   const { toast } = useToast();
   const updateStatusMutation = useUpdateInquiryStatus();
   const createNotificationMutation = useCreateNotification();
+  const createLog = useCreateNotificationLog();
   const { data: messages = [] } = useInquiryMessages(selectedInquiry?.id);
   const addMessageMutation = useAddInquiryMessage();
 
@@ -145,6 +147,23 @@ const Inquiries = () => {
         console.error('Webhook error:', webhookError);
       }
       
+      // Log the action
+      const dwEmails = recipientEmails.filter(r => r.type === 'dw').map(r => r.email);
+      const udwEmails = recipientEmails.filter(r => r.type === 'udw').map(r => r.email);
+      
+      await createLog.mutateAsync({
+        notification_type: 'inquiry_reply_sent',
+        notification_title: 'Wysłano odpowiedź na zapytanie',
+        action_description: `Odpowiedź wysłana dla zapytania ${selectedInquiry.inquiry_number}`,
+        inquiry_id: selectedInquiry.id,
+        inquiry_number: selectedInquiry.inquiry_number,
+        metadata: { 
+          action: 'send_inquiry_reply',
+          has_dw_emails: dwEmails.length > 0,
+          has_udw_emails: udwEmails.length > 0
+        }
+      });
+
       setReplyMessage("");
       setRecipientEmails([]);
       

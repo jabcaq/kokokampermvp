@@ -652,6 +652,69 @@ export type Database = {
           },
         ]
       }
+      notification_logs: {
+        Row: {
+          action_description: string
+          contract_id: string | null
+          contract_number: string | null
+          created_at: string
+          id: string
+          inquiry_id: string | null
+          inquiry_number: string | null
+          metadata: Json | null
+          notification_title: string
+          notification_type: string
+          updated_at: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_description: string
+          contract_id?: string | null
+          contract_number?: string | null
+          created_at?: string
+          id?: string
+          inquiry_id?: string | null
+          inquiry_number?: string | null
+          metadata?: Json | null
+          notification_title: string
+          notification_type: string
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_description?: string
+          contract_id?: string | null
+          contract_number?: string | null
+          created_at?: string
+          id?: string
+          inquiry_id?: string | null
+          inquiry_number?: string | null
+          metadata?: Json | null
+          notification_title?: string
+          notification_type?: string
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_logs_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string

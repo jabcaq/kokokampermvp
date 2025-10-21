@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
+import { useCreateNotificationLog } from './useNotificationLogs';
 
 export interface Notification {
   id: string;
@@ -119,6 +120,7 @@ export const useMarkAllAsRead = () => {
 
 export const useCreateNotification = () => {
   const queryClient = useQueryClient();
+  const createLog = useCreateNotificationLog();
   
   return useMutation({
     mutationFn: async (notification: Omit<Notification, 'id' | 'created_at' | 'updated_at' | 'read'>) => {
@@ -129,6 +131,15 @@ export const useCreateNotification = () => {
         .single();
       
       if (error) throw error;
+      
+      // Log the notification creation
+      await createLog.mutateAsync({
+        notification_type: notification.type,
+        notification_title: notification.title,
+        action_description: notification.message,
+        metadata: { link: notification.link, automatic: true }
+      });
+      
       return data;
     },
     onSuccess: () => {

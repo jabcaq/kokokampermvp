@@ -6,6 +6,7 @@ import { FileText, Send, CheckCircle, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUpsertContractDocument } from "@/hooks/useContractDocuments";
 import { useContract } from "@/hooks/useContracts";
+import { useCreateNotificationLog } from "@/hooks/useNotificationLogs";
 import { toZonedTime } from "date-fns-tz";
 import { format } from "date-fns";
 
@@ -23,6 +24,7 @@ export const ContractActionsPanel = ({
   const { toast } = useToast();
   const upsertDocument = useUpsertContractDocument();
   const { data: contract } = useContract(contractId);
+  const createLog = useCreateNotificationLog();
 
   const generateVerificationText = () => {
     if (!contract) return "";
@@ -124,6 +126,16 @@ export const ContractActionsPanel = ({
         file_url: null,
       });
       
+      // Log the action
+      await createLog.mutateAsync({
+        notification_type: 'contract_generated',
+        notification_title: 'Wygenerowano umowę',
+        action_description: `Umowa ${contractNumber} została wygenerowana`,
+        contract_id: contractId,
+        contract_number: contractNumber,
+        metadata: { action: 'generate_contract' }
+      });
+
       toast({
         title: "Sukces",
         description: "Umowa została wygenerowana",
@@ -168,6 +180,16 @@ export const ContractActionsPanel = ({
         file_url: null,
       });
       
+      // Log the action
+      await createLog.mutateAsync({
+        notification_type: 'contract_sent',
+        notification_title: 'Wysłano umowę do klienta',
+        action_description: `Umowa ${contractNumber} wysłana na ${clientEmail}`,
+        contract_id: contractId,
+        contract_number: contractNumber,
+        metadata: { action: 'send_to_client', email: clientEmail }
+      });
+
       toast({
         title: "Sukces",
         description: `Umowa została wysłana do ${clientEmail}`,
@@ -196,6 +218,16 @@ export const ContractActionsPanel = ({
         }),
       });
       
+      // Log the action
+      await createLog.mutateAsync({
+        notification_type: 'verification_sent',
+        notification_title: 'Wysłano dane do weryfikacji',
+        action_description: `Dane umowy ${contractNumber} wysłane do weryfikacji`,
+        contract_id: contractId,
+        contract_number: contractNumber,
+        metadata: { action: 'send_verification' }
+      });
+
       toast({
         title: "Sukces",
         description: "Dane zostały wysłane do weryfikacji",
@@ -236,6 +268,16 @@ export const ContractActionsPanel = ({
         }),
       });
       
+      // Log the action
+      await createLog.mutateAsync({
+        notification_type: 'driver_form_sent',
+        notification_title: 'Wysłano formularz kierowcy',
+        action_description: `Formularz kierowcy dla umowy ${contractNumber}`,
+        contract_id: contractId,
+        contract_number: contractNumber,
+        metadata: { action: 'copy_driver_form', link: driverFormLink }
+      });
+
       toast({
         title: "Link skopiowany i wysłany",
         description: "Link do formularza kierowcy został skopiowany i wysłany",
