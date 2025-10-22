@@ -16,9 +16,8 @@ import { useClients } from "@/hooks/useClients";
 import { useVehicles } from "@/hooks/useVehicles";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { pl } from "date-fns/locale";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,8 +59,6 @@ const Contracts = () => {
   const [isPremiumCamper, setIsPremiumCamper] = useState(false);
   const [depositAmount, setDepositAmount] = useState<string>("");
   const [insuranceWarning, setInsuranceWarning] = useState("");
-  const [startDate, setStartDate] = useState<Date | undefined>();
-  const [endDate, setEndDate] = useState<Date | undefined>();
   const [vehicleData, setVehicleData] = useState({
     model: "",
     vin: "",
@@ -208,8 +205,11 @@ const Contracts = () => {
     
     console.log('Total amount:', total, 'from totalAmount:', totalAmount);
 
-    // Use dates from state (already in UTC from DateTimePicker)
-    if (!startDate || !endDate) {
+    // Get dates from inputs and convert from Warsaw to UTC
+    const startDateInput = (formData.get('okres_od') as string) || "";
+    const endDateInput = (formData.get('okres_do') as string) || "";
+    
+    if (!startDateInput || !endDateInput) {
       toast({
         title: "Błąd",
         description: "Proszę wybrać daty rozpoczęcia i zakończenia wynajmu.",
@@ -218,8 +218,16 @@ const Contracts = () => {
       return;
     }
     
-    const startDateISO = startDate.toISOString();
-    const endDateISO = endDate.toISOString();
+    // Convert datetime-local (Warsaw time) to UTC ISO string
+    const parseWarsawToUTC = (dateTimeLocal: string) => {
+      // datetime-local format: "2025-02-10T10:00"
+      // Treat this as Warsaw time and convert to UTC
+      const warsawDate = new Date(dateTimeLocal);
+      return fromZonedTime(warsawDate, WARSAW_TZ).toISOString();
+    };
+    
+    const startDateISO = parseWarsawToUTC(startDateInput);
+    const endDateISO = parseWarsawToUTC(endDateInput);
 
     // Helper for optional date fields (send null, not empty string)
     const emptyToNull = (v: string | undefined | null) => (v && v.trim() !== "" ? v : null);
@@ -232,7 +240,8 @@ const Contracts = () => {
     const reservationDateStr = reservationDate.toISOString().split('T')[0];
     
     // Data zasadnicza: 14 dni przed datą rozpoczęcia wynajmu
-    const mainPaymentDate = new Date(startDate);
+    const startDateObj = new Date(startDateISO);
+    const mainPaymentDate = new Date(startDateObj);
     mainPaymentDate.setDate(mainPaymentDate.getDate() - 14);
     const mainPaymentDateStr = mainPaymentDate.toISOString().split('T')[0];
     
@@ -323,8 +332,6 @@ const Contracts = () => {
       setSelectedClientId("");
       setGeneratedContractNumber("");
       setTotalAmount("");
-      setStartDate(undefined);
-      setEndDate(undefined);
       setIsFullPaymentAsReservation(false);
       setCustomDepositAmount(false);
       setIsPremiumCamper(false);
@@ -915,8 +922,11 @@ const Contracts = () => {
                     return today.toLocaleDateString('pl-PL');
                   })()}</span>
                   {!isFullPaymentAsReservation && (() => {
-                    if (startDate) {
-                      const mainPaymentDate = new Date(startDate);
+                    const startDateInput = (document.getElementById('okres_od') as HTMLInputElement)?.value;
+                    if (startDateInput) {
+                      const startDate = new Date(startDateInput);
+                      const warsawStartDate = fromZonedTime(startDate, WARSAW_TZ);
+                      const mainPaymentDate = new Date(warsawStartDate);
                       mainPaymentDate.setDate(mainPaymentDate.getDate() - 14);
                       return <span className="block">• Data opłaty zasadniczej: {mainPaymentDate.toLocaleDateString('pl-PL')}</span>;
                     }
