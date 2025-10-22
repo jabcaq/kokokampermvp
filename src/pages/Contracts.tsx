@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { pl } from "date-fns/locale";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,6 +60,8 @@ const Contracts = () => {
   const [isPremiumCamper, setIsPremiumCamper] = useState(false);
   const [depositAmount, setDepositAmount] = useState<string>("");
   const [insuranceWarning, setInsuranceWarning] = useState("");
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
   const [vehicleData, setVehicleData] = useState({
     model: "",
     vin: "",
@@ -205,12 +208,18 @@ const Contracts = () => {
     
     console.log('Total amount:', total, 'from totalAmount:', totalAmount);
 
-    // Normalize dates
-    const startDateInput = (formData.get('okres_od') as string) || "";
-    const endDateInput = (formData.get('okres_do') as string) || "";
-    const toDateOnly = (v: string) => (v ? v.split('T')[0] : null);
-    const startDate = toDateOnly(startDateInput);
-    const endDate = toDateOnly(endDateInput);
+    // Use dates from state (already in UTC from DateTimePicker)
+    if (!startDate || !endDate) {
+      toast({
+        title: "Błąd",
+        description: "Proszę wybrać daty rozpoczęcia i zakończenia wynajmu.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const startDateISO = startDate.toISOString();
+    const endDateISO = endDate.toISOString();
 
     // Helper for optional date fields (send null, not empty string)
     const emptyToNull = (v: string | undefined | null) => (v && v.trim() !== "" ? v : null);
@@ -223,12 +232,9 @@ const Contracts = () => {
     const reservationDateStr = reservationDate.toISOString().split('T')[0];
     
     // Data zasadnicza: 14 dni przed datą rozpoczęcia wynajmu
-    let mainPaymentDateStr = "";
-    if (startDate) {
-      const mainPaymentDate = new Date(startDate);
-      mainPaymentDate.setDate(mainPaymentDate.getDate() - 14);
-      mainPaymentDateStr = mainPaymentDate.toISOString().split('T')[0];
-    }
+    const mainPaymentDate = new Date(startDate);
+    mainPaymentDate.setDate(mainPaymentDate.getDate() - 14);
+    const mainPaymentDateStr = mainPaymentDate.toISOString().split('T')[0];
     
     // Przygotuj dane płatności z automatycznymi kwotami i datami
     const getDefaultDeposit = () => {
@@ -245,7 +251,7 @@ const Contracts = () => {
         rachunek: "34 1140 2004 0000 3802 8192 4912",
       },
       kaucja: {
-        data: startDate || "",
+        data: startDateISO.split('T')[0],
         wysokosc: finalDepositAmount,
         rachunek: "34 1140 2004 0000 3802 8192 4912",
       },
@@ -267,8 +273,8 @@ const Contracts = () => {
         client_id: selectedClientId,
         vehicle_model: vehicleData.model || (formData.get('przedmiot_model') as string) || "",
         registration_number: vehicleData.registration_number || (formData.get('przedmiot_nr_rej') as string) || "",
-        start_date: startDate as string,
-        end_date: endDate as string,
+        start_date: startDateISO,
+        end_date: endDateISO,
         status: 'pending',
         value: total > 0 ? total : null,
         is_full_payment_as_reservation: isFullPaymentAsReservation,
@@ -317,6 +323,8 @@ const Contracts = () => {
       setSelectedClientId("");
       setGeneratedContractNumber("");
       setTotalAmount("");
+      setStartDate(undefined);
+      setEndDate(undefined);
       setIsFullPaymentAsReservation(false);
       setCustomDepositAmount(false);
       setIsPremiumCamper(false);
@@ -907,9 +915,7 @@ const Contracts = () => {
                     return today.toLocaleDateString('pl-PL');
                   })()}</span>
                   {!isFullPaymentAsReservation && (() => {
-                    const startDateInput = (document.getElementById('okres_od') as HTMLInputElement)?.value;
-                    if (startDateInput) {
-                      const startDate = new Date(startDateInput);
+                    if (startDate) {
                       const mainPaymentDate = new Date(startDate);
                       mainPaymentDate.setDate(mainPaymentDate.getDate() - 14);
                       return <span className="block">• Data opłaty zasadniczej: {mainPaymentDate.toLocaleDateString('pl-PL')}</span>;
