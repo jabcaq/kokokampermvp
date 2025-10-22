@@ -48,18 +48,30 @@ export function DateTimePicker({
       warsawDate.setMinutes(0);
     }
     setSelectedDateTime(warsawDate);
+    
+    // Automatically save to parent when date changes
+    const utcDate = fromZonedTime(warsawDate, WARSAW_TZ);
+    setDate(utcDate);
   };
 
   const handleHourChange = (hour: number) => {
     const newDateTime = selectedDateTime ? new Date(selectedDateTime) : toZonedTime(new Date(), WARSAW_TZ);
     newDateTime.setHours(hour);
     setSelectedDateTime(newDateTime);
+    
+    // Automatically save to parent when hour changes
+    const utcDate = fromZonedTime(newDateTime, WARSAW_TZ);
+    setDate(utcDate);
   };
 
   const handleMinuteChange = (minute: number) => {
     const newDateTime = selectedDateTime ? new Date(selectedDateTime) : toZonedTime(new Date(), WARSAW_TZ);
     newDateTime.setMinutes(minute);
     setSelectedDateTime(newDateTime);
+    
+    // Automatically save to parent when minute changes
+    const utcDate = fromZonedTime(newDateTime, WARSAW_TZ);
+    setDate(utcDate);
   };
 
   const handleConfirm = () => {
