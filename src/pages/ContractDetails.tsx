@@ -455,8 +455,8 @@ const ContractDetails = () => {
 
         <TabsContent value="contract" className="space-y-8">
 
-      {/* Wynajmujący */}
-      <Card className="shadow-md">
+      {/* Wynajmujący - hidden but data still passed to API */}
+      <Card className="shadow-md hidden">
         <CardHeader className="pb-3">
           <CardTitle>Wynajmujący</CardTitle>
         </CardHeader>
