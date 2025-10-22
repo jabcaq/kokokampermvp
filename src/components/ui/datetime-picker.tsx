@@ -33,6 +33,21 @@ export function DateTimePicker({
   );
   const [isOpen, setIsOpen] = React.useState(false);
 
+  // Sync selectedDateTime when date prop changes from outside
+  React.useEffect(() => {
+    if (date) {
+      setSelectedDateTime(toZonedTime(date, WARSAW_TZ));
+    }
+  }, [date]);
+
+  // Auto-save when picker closes with a selected date
+  React.useEffect(() => {
+    if (!isOpen && selectedDateTime) {
+      const utcDate = fromZonedTime(selectedDateTime, WARSAW_TZ);
+      setDate(utcDate);
+    }
+  }, [isOpen, selectedDateTime, setDate]);
+
   const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8-20
   const minutes = [0, 15, 30, 45];
 
