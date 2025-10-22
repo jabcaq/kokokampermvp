@@ -550,32 +550,36 @@ const ContractDetails = () => {
             )}
           </div>
 
-          <Separator />
+          {(displayData?.tenant_company_name || displayData?.tenant_nip || isEditing) && (
+            <>
+              <Separator />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-            <div className="space-y-3">
-              <Label className="text-xs text-muted-foreground uppercase tracking-wider">
-                Nazwa firmy {displayData?.invoice_type === 'invoice' && '(wymagane dla faktury)'}
-              </Label>
-              {isEditing ? (
-                <Input value={displayData?.tenant_company_name || ''} onChange={(e) => updateField('tenant_company_name', e.target.value)} placeholder="Jeśli firma wynajmuje" />
-              ) : (
-                <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_company_name || 'Nie podano'}</p>
-              )}
-            </div>
-            <div className="space-y-3">
-              <Label className="text-xs text-muted-foreground uppercase tracking-wider">
-                NIP {displayData?.invoice_type === 'invoice' && '(wymagane dla faktury)'}
-              </Label>
-              {isEditing ? (
-                <Input value={displayData?.tenant_nip || ''} onChange={(e) => updateField('tenant_nip', e.target.value)} placeholder="NIP firmy" />
-              ) : (
-                <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_nip || 'Nie podano'}</p>
-              )}
-            </div>
-          </div>
-          
-          <Separator />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div className="space-y-3">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider">
+                    Nazwa firmy {displayData?.invoice_type === 'invoice' && '(wymagane dla faktury)'}
+                  </Label>
+                  {isEditing ? (
+                    <Input value={displayData?.tenant_company_name || ''} onChange={(e) => updateField('tenant_company_name', e.target.value)} placeholder="Jeśli firma wynajmuje" />
+                  ) : (
+                    <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_company_name || 'Nie podano'}</p>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider">
+                    NIP {displayData?.invoice_type === 'invoice' && '(wymagane dla faktury)'}
+                  </Label>
+                  {isEditing ? (
+                    <Input value={displayData?.tenant_nip || ''} onChange={(e) => updateField('tenant_nip', e.target.value)} placeholder="NIP firmy" />
+                  ) : (
+                    <p className="text-base font-semibold text-foreground pt-1">{displayData?.tenant_nip || 'Nie podano'}</p>
+                  )}
+                </div>
+              </div>
+              
+              <Separator />
+            </>
+          )}
           
           <div className="space-y-3">
             <Label className="text-xs text-muted-foreground uppercase tracking-wider">Numer umowy (stary system)</Label>
