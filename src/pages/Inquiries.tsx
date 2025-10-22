@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Send, Inbox, Trash2, Reply, Clock, Loader2, Plus, Filter, X, Maximize2 } from "lucide-react";
+import { Mail, Send, Inbox, Trash2, Reply, Clock, Loader2, Plus, Filter, X, Maximize2, Archive } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Toggle } from "@/components/ui/toggle";
@@ -48,6 +48,15 @@ const Inquiries = () => {
   // Update reply message for current inquiry
   const setReplyMessage = (message: string) => {
     if (!selectedInquiry) return;
+    
+    // Auto-update status to "in_progress" when user starts typing
+    if (message && !draftMessages.get(selectedInquiry.id) && selectedInquiry.status === 'new') {
+      updateStatusMutation.mutate({
+        id: selectedInquiry.id,
+        status: 'in_progress',
+      });
+    }
+    
     setDraftMessages(prev => {
       const newMap = new Map(prev);
       if (message) {
@@ -57,6 +66,58 @@ const Inquiries = () => {
       }
       return newMap;
     });
+  };
+
+  const handleArchiveInquiry = async () => {
+    if (!selectedInquiry) return;
+    
+    try {
+      await updateStatusMutation.mutateAsync({
+        id: selectedInquiry.id,
+        status: 'archived',
+      });
+      
+      toast({
+        title: "Zapytanie zarchiwizowane",
+        description: "Zapytanie zostało pomyślnie przeniesione do archiwum.",
+      });
+      
+      setSelectedInquiry(null);
+      setReplyMessage("");
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się zarchiwizować zapytania.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStatusChange = async (inquiryId: string, newStatus: 'new' | 'in_progress' | 'completed' | 'archived') => {
+    try {
+      await updateStatusMutation.mutateAsync({
+        id: inquiryId,
+        status: newStatus,
+      });
+      
+      const statusLabels = {
+        new: 'Nowe',
+        in_progress: 'W trakcie',
+        completed: 'Zakończone',
+        archived: 'Zarchiwizowane'
+      };
+      
+      toast({
+        title: "Status zmieniony",
+        description: `Status zapytania został zmieniony na "${statusLabels[newStatus]}".`,
+      });
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się zmienić statusu.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Filtered inquiries based on status and date
@@ -335,7 +396,20 @@ const Inquiries = () => {
                                <p className="text-xs font-mono text-primary mt-1">{inquiry.inquiry_number}</p>
                              )}
                            </div>
-                           {getStatusBadge(inquiry.status)}
+                           <Select
+                             value={inquiry.status}
+                             onValueChange={(value) => handleStatusChange(inquiry.id, value as any)}
+                           >
+                             <SelectTrigger className="w-[130px] h-7" onClick={(e) => e.stopPropagation()}>
+                               <SelectValue />
+                             </SelectTrigger>
+                             <SelectContent>
+                               <SelectItem value="new">Nowe</SelectItem>
+                               <SelectItem value="in_progress">W trakcie</SelectItem>
+                               <SelectItem value="completed">Zakończone</SelectItem>
+                               <SelectItem value="archived">Zarchiwizowane</SelectItem>
+                             </SelectContent>
+                           </Select>
                          </div>
                          <p className="font-medium text-sm mb-1">{inquiry.subject || 'Bez tematu'}</p>
                          <p className="text-xs text-muted-foreground line-clamp-2">{inquiry.message}</p>
@@ -474,6 +548,14 @@ const Inquiries = () => {
                     <Plus className="h-4 w-4 mr-2" />
                     Utwórz klienta i umowę
                   </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleArchiveInquiry}
+                    className="w-full sm:w-auto"
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    Archiwizuj
+                  </Button>
                   <Button variant="outline" onClick={() => setReplyMessage("")} className="w-full sm:w-auto">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Wyczyść
@@ -528,7 +610,20 @@ const Inquiries = () => {
                                <p className="text-xs font-mono text-primary mt-1">{inquiry.inquiry_number}</p>
                              )}
                            </div>
-                           <div className="flex-shrink-0">{getStatusBadge(inquiry.status)}</div>
+                           <Select
+                             value={inquiry.status}
+                             onValueChange={(value) => handleStatusChange(inquiry.id, value as any)}
+                           >
+                             <SelectTrigger className="w-[130px] h-7" onClick={(e) => e.stopPropagation()}>
+                               <SelectValue />
+                             </SelectTrigger>
+                             <SelectContent>
+                               <SelectItem value="new">Nowe</SelectItem>
+                               <SelectItem value="in_progress">W trakcie</SelectItem>
+                               <SelectItem value="completed">Zakończone</SelectItem>
+                               <SelectItem value="archived">Zarchiwizowane</SelectItem>
+                             </SelectContent>
+                           </Select>
                          </div>
                          <p className="font-medium text-sm mb-1">{inquiry.subject || 'Bez tematu'}</p>
                          <p className="text-xs text-muted-foreground line-clamp-2">{inquiry.message}</p>
@@ -663,6 +758,13 @@ const Inquiries = () => {
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Utwórz klienta i umowę
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleArchiveInquiry}
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    Archiwizuj
                   </Button>
                   <Button variant="outline" onClick={() => setReplyMessage("")}>
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -911,6 +1013,18 @@ const Inquiries = () => {
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Utwórz klienta i umowę
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={async () => {
+                          await handleArchiveInquiry();
+                          setIsFocusModeOpen(false);
+                        }}
+                        className="w-full"
+                      >
+                        <Archive className="h-4 w-4 mr-2" />
+                        Archiwizuj
                       </Button>
                       <div className="flex gap-3">
                         <Button variant="outline" size="lg" onClick={() => setReplyMessage("")} className="flex-1">
