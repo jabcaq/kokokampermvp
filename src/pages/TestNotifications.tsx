@@ -40,6 +40,8 @@ const TestNotifications = () => {
   const [selectedReturnDate, setSelectedReturnDate] = useState<string>("");
   const [connectionStatusReturn, setConnectionStatusReturn] = useState<"disconnected" | "connected">("disconnected");
   const [isSendingReturn, setIsSendingReturn] = useState(false);
+  const [selectedReturnDayDate, setSelectedReturnDayDate] = useState("");
+  const [isSendingReturnDay, setIsSendingReturnDay] = useState(false);
   
   const { toast } = useToast();
 
@@ -393,6 +395,72 @@ const TestNotifications = () => {
       });
     } finally {
       setIsSendingReturn(false);
+    }
+  };
+
+  const handleSendReturnDayNotification = async () => {
+    if (!selectedReturnDayDate) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz datę zwrotu.",
+      });
+      return;
+    }
+
+    const contractsForDate = returnContractsByDate[selectedReturnDayDate];
+    if (!contractsForDate || contractsForDate.length === 0) {
+      toast({
+        title: "Brak umów",
+        description: "Brak umów z zakończeniem wynajmu w wybranym dniu.",
+      });
+      return;
+    }
+
+    setIsSendingReturnDay(true);
+    try {
+      // Prepare bundles
+      const bundles = contractsForDate.map((contract) => ({
+        contract_id: contract.id,
+        contract_number: contract.contract_number,
+        tenant_name: contract.tenant_name,
+        tenant_email: contract.tenant_email,
+        tenant_phone: contract.tenant_phone,
+        vehicle_model: contract.vehicle_model,
+        registration_number: contract.registration_number,
+        scheduled_return_date: contract.end_date,
+        notification_type: "return_day",
+      }));
+
+      // Send single request with all bundles
+      const response = await fetch("https://hook.eu2.make.com/rhqdyg51l54f3put8ssxxhy5s7u02ba9", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          date: selectedReturnDayDate,
+          bundles: bundles,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send notification");
+      }
+
+      toast({
+        title: "Sukces",
+        description: `Powiadomienie wysłane dla ${contractsForDate.length} ${contractsForDate.length === 1 ? 'umowy' : contractsForDate.length < 5 ? 'umów' : 'umów'} z datą zwrotu ${new Date(selectedReturnDayDate).toLocaleDateString("pl-PL")}`,
+      });
+    } catch (error: any) {
+      console.error("Error sending notification:", error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się wysłać powiadomienia.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingReturnDay(false);
     }
   };
 
@@ -874,6 +942,55 @@ const TestNotifications = () => {
                 Zmień status na "Połączone" aby wysłać powiadomienie
               </p>
             )}
+          </div>
+
+          {/* Return Day Notification Test */}
+          <div className="space-y-4 pt-8 border-t">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">
+                Powiadomienie w dniu zwrotu (7:00 rano)
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Test powiadomienia wysyłanego automatycznie w dniu zwrotu o 7 rano ze wszystkimi oddaniami jako bundel
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-sm text-muted-foreground">
+                  Webhook: https://hook.eu2.make.com/rhqdyg51l54f3put8ssxxhy5s7u02ba9
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="date-select-return-day">Wybierz datę zwrotu</Label>
+              <Select
+                value={selectedReturnDayDate}
+                onValueChange={setSelectedReturnDayDate}
+                disabled={contractsLoading || isSendingReturnDay}
+              >
+                <SelectTrigger id="date-select-return-day">
+                  <SelectValue placeholder="Wybierz datę..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(returnContractsByDate)
+                    .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+                    .map(([date, contracts]) => (
+                      <SelectItem key={date} value={date}>
+                        {new Date(date).toLocaleDateString("pl-PL")} - {contracts.length} {contracts.length === 1 ? 'umowa' : contracts.length < 5 ? 'umowy' : 'umów'}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleSendReturnDayNotification}
+              disabled={!selectedReturnDayDate || isSendingReturnDay}
+              className="w-full sm:w-auto"
+            >
+              {isSendingReturnDay && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Wyślij powiadomienie (bundel)
+            </Button>
           </div>
         </CardContent>
       </Card>
