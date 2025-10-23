@@ -54,6 +54,7 @@ const VehicleReturn = () => {
     employeeId: "",
     canRefundDeposit: false,
     depositRefundedCash: false,
+    depositRefundedTransfer: false,
     vehicleIssue: false,
     fuelLevel: "",
     mileage: "",
@@ -71,6 +72,7 @@ const VehicleReturn = () => {
         employeeId: existingReturn.employee_id || "",
         canRefundDeposit: existingReturn.can_refund_deposit,
         depositRefundedCash: existingReturn.deposit_refunded_cash,
+        depositRefundedTransfer: existingReturn.deposit_refunded_transfer,
         vehicleIssue: existingReturn.vehicle_issue,
         fuelLevel: existingReturn.fuel_level.toString(),
         mileage: existingReturn.mileage.toString(),
@@ -148,6 +150,14 @@ const VehicleReturn = () => {
       // Combine existing photos (that weren't removed) with new uploads
       const allPhotoUrls = [...existingPhotos, ...newPhotoUrls];
 
+      // Check if deposit refund status is changing to trigger timestamp
+      const isDepositRefundJustMarked = !existingReturn 
+        ? (formData.depositRefundedCash || formData.depositRefundedTransfer)
+        : (
+            (!existingReturn.deposit_refunded_cash && formData.depositRefundedCash) ||
+            (!existingReturn.deposit_refunded_transfer && formData.depositRefundedTransfer)
+          );
+
       const returnData = {
         contract_id: contractId,
         mileage: parseInt(formData.mileage),
@@ -156,6 +166,9 @@ const VehicleReturn = () => {
         employee_id: formData.employeeId || null,
         can_refund_deposit: formData.canRefundDeposit,
         deposit_refunded_cash: formData.depositRefundedCash,
+        deposit_refunded_transfer: formData.depositRefundedTransfer,
+        deposit_refund_timestamp: isDepositRefundJustMarked ? new Date().toISOString() : existingReturn?.deposit_refund_timestamp || null,
+        review_request_sent: existingReturn?.review_request_sent || false,
         vehicle_issue: formData.vehicleIssue,
         return_notes: formData.returnNotes || null,
         photos: allPhotoUrls,
@@ -192,8 +205,8 @@ const VehicleReturn = () => {
         }
       }
 
-      // Automatycznie zmień status umowy na "Zakończona" gdy kaucja została zwrócona gotówką
-      if (formData.depositRefundedCash && contractId) {
+      // Automatycznie zmień status umowy na "Zakończona" gdy kaucja została zwrócona gotówką lub przelewem
+      if ((formData.depositRefundedCash || formData.depositRefundedTransfer) && contractId) {
         await updateContract.mutateAsync({
           id: contractId,
           updates: {
@@ -236,6 +249,7 @@ const VehicleReturn = () => {
       employeeId: "",
       canRefundDeposit: false,
       depositRefundedCash: false,
+      depositRefundedTransfer: false,
       vehicleIssue: false,
       fuelLevel: "",
       mileage: "",
@@ -369,7 +383,7 @@ const VehicleReturn = () => {
                   <p className="text-lg font-semibold">{formData.employeeName}</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="p-4 bg-muted rounded-lg flex items-center gap-3">
                     {formData.canRefundDeposit ? (
                       <CheckCircle className="h-5 w-5 text-green-500" />
@@ -390,6 +404,17 @@ const VehicleReturn = () => {
                     <div>
                       <p className="text-sm text-muted-foreground">Kaucja zwrócona gotówką</p>
                       <p className="font-medium">{formData.depositRefundedCash ? "Tak" : "Nie"}</p>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-muted rounded-lg flex items-center gap-3">
+                    {formData.depositRefundedTransfer ? (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-500" />
+                    )}
+                    <div>
+                      <p className="text-sm text-muted-foreground">Kaucja zwrócona przelewem</p>
+                      <p className="font-medium">{formData.depositRefundedTransfer ? "Tak" : "Nie"}</p>
                     </div>
                   </div>
                   <div className="p-4 bg-muted rounded-lg flex items-center gap-3">
@@ -480,6 +505,18 @@ const VehicleReturn = () => {
                     />
                     <Label htmlFor="depositRefundedCash" className="cursor-pointer">
                       Czy kaucja zwrócona gotówką?
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="depositRefundedTransfer"
+                      checked={formData.depositRefundedTransfer}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, depositRefundedTransfer: checked as boolean })
+                      }
+                    />
+                    <Label htmlFor="depositRefundedTransfer" className="cursor-pointer">
+                      Czy kaucja zwrócona przelewem?
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">

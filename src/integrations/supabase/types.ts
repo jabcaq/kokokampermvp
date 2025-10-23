@@ -850,7 +850,9 @@ export type Database = {
           can_refund_deposit: boolean | null
           contract_id: string
           created_at: string | null
+          deposit_refund_timestamp: string | null
           deposit_refunded_cash: boolean | null
+          deposit_refunded_transfer: boolean | null
           employee_id: string | null
           employee_name: string
           fuel_level: number
@@ -860,6 +862,7 @@ export type Database = {
           return_completed: boolean | null
           return_confirmed: boolean | null
           return_notes: string | null
+          review_request_sent: boolean | null
           scheduled_return_date: string | null
           scheduled_return_time: string | null
           updated_at: string | null
@@ -871,7 +874,9 @@ export type Database = {
           can_refund_deposit?: boolean | null
           contract_id: string
           created_at?: string | null
+          deposit_refund_timestamp?: string | null
           deposit_refunded_cash?: boolean | null
+          deposit_refunded_transfer?: boolean | null
           employee_id?: string | null
           employee_name: string
           fuel_level: number
@@ -881,6 +886,7 @@ export type Database = {
           return_completed?: boolean | null
           return_confirmed?: boolean | null
           return_notes?: string | null
+          review_request_sent?: boolean | null
           scheduled_return_date?: string | null
           scheduled_return_time?: string | null
           updated_at?: string | null
@@ -892,7 +898,9 @@ export type Database = {
           can_refund_deposit?: boolean | null
           contract_id?: string
           created_at?: string | null
+          deposit_refund_timestamp?: string | null
           deposit_refunded_cash?: boolean | null
+          deposit_refunded_transfer?: boolean | null
           employee_id?: string | null
           employee_name?: string
           fuel_level?: number
@@ -902,6 +910,7 @@ export type Database = {
           return_completed?: boolean | null
           return_confirmed?: boolean | null
           return_notes?: string | null
+          review_request_sent?: boolean | null
           scheduled_return_date?: string | null
           scheduled_return_time?: string | null
           updated_at?: string | null

@@ -12,6 +12,9 @@ export interface VehicleReturn {
   employee_id: string | null;
   can_refund_deposit: boolean;
   deposit_refunded_cash: boolean;
+  deposit_refunded_transfer: boolean;
+  deposit_refund_timestamp: string | null;
+  review_request_sent: boolean;
   vehicle_issue: boolean;
   return_notes: string | null;
   scheduled_return_date?: string | null;
