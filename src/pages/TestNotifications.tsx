@@ -627,12 +627,6 @@ const TestNotifications = () => {
       });
       return;
     }
-      toast({
-        title: "Błąd",
-        description: "Nie znaleziono umowy.",
-      });
-      return;
-    }
 
     setIsSendingReviewRequest(true);
     try {
