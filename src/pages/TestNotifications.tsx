@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useVehicles } from "@/hooks/useVehicles";
 import { useContracts } from "@/hooks/useContracts";
+import { useReturnBookings } from "@/hooks/useReturnBookings";
 import { useToast } from "@/hooks/use-toast";
 import { Bell, Loader2, Unplug, Plug } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 const TestNotifications = () => {
   const { data: vehicles, isLoading: vehiclesLoading } = useVehicles();
   const { data: contracts, isLoading: contractsLoading } = useContracts();
+  const { data: returnBookings, isLoading: returnBookingsLoading } = useReturnBookings();
   
   // Insurance notification state
   const [selectedVehicleInsurance, setSelectedVehicleInsurance] = useState<string>("");
@@ -34,6 +36,11 @@ const TestNotifications = () => {
   const [connectionStatusRental2Days, setConnectionStatusRental2Days] = useState<"disconnected" | "connected">("disconnected");
   const [isSendingRental2Days, setIsSendingRental2Days] = useState(false);
   
+  // Return notification state (2 days)
+  const [selectedReturnDate, setSelectedReturnDate] = useState<string>("");
+  const [connectionStatusReturn, setConnectionStatusReturn] = useState<"disconnected" | "connected">("disconnected");
+  const [isSendingReturn, setIsSendingReturn] = useState(false);
+  
   const { toast } = useToast();
 
   // Group contracts by start date
@@ -51,6 +58,23 @@ const TestNotifications = () => {
       return acc;
     }, {});
   }, [contracts]);
+
+  // Group return bookings by scheduled date
+  const returnsByDate = useMemo(() => {
+    if (!returnBookings) return {};
+    
+    return returnBookings.reduce((acc: Record<string, any[]>, returnBooking: any) => {
+      const returnDate = returnBooking.scheduled_return_date ? 
+        new Date(returnBooking.scheduled_return_date).toISOString().split('T')[0] : '';
+      if (returnDate) {
+        if (!acc[returnDate]) {
+          acc[returnDate] = [];
+        }
+        acc[returnDate].push(returnBooking);
+      }
+      return acc;
+    }, {});
+  }, [returnBookings]);
 
   const handleSendInsuranceNotification = async () => {
     if (connectionStatusInsurance === "disconnected") {
@@ -276,6 +300,82 @@ const TestNotifications = () => {
       });
     } finally {
       setIsSendingRental2Days(false);
+    }
+  };
+
+  const handleSendReturnNotification = async () => {
+    if (connectionStatusReturn === "disconnected") {
+      toast({
+        title: "Błąd",
+        description: "Najpierw połącz webhook (zmień status na 'Połączone')",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedReturnDate) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz datę",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const returnsForDate = returnsByDate[selectedReturnDate];
+    if (!returnsForDate || returnsForDate.length === 0) return;
+
+    setIsSendingReturn(true);
+    try {
+      for (const returnRecord of returnsForDate) {
+        // Fetch contract details
+        const { data: contract } = await supabase
+          .from("contracts")
+          .select("*")
+          .eq("id", returnRecord.contract_id)
+          .single();
+
+        if (!contract) continue;
+
+        const response = await fetch("https://hook.eu2.make.com/hk044wt625t33gs2qyvusatijdcrsa30", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            return_id: returnRecord.id,
+            contract_id: contract.id,
+            contract_number: contract.contract_number,
+            tenant_name: contract.tenant_name,
+            tenant_email: contract.tenant_email,
+            vehicle_model: contract.vehicle_model,
+            registration_number: contract.registration_number,
+            scheduled_return_date: returnRecord.scheduled_return_date,
+            scheduled_return_time: returnRecord.scheduled_return_time,
+            employee_name: returnRecord.employee_name,
+            notification_type: "return_2days_prior",
+            timestamp: new Date().toISOString(),
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Webhook error: ${response.status}`);
+        }
+      }
+
+      toast({
+        title: "Sukces",
+        description: `Powiadomienie wysłane dla ${returnsForDate.length} ${returnsForDate.length === 1 ? 'zwrotu' : returnsForDate.length < 5 ? 'zwrotów' : 'zwrotów'} z dnia ${new Date(selectedReturnDate).toLocaleDateString("pl-PL")}`,
+      });
+    } catch (error: any) {
+      console.error("Error sending notification:", error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się wysłać powiadomienia",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingReturn(false);
     }
   };
 
@@ -660,6 +760,99 @@ const TestNotifications = () => {
               Wyślij powiadomienie
             </Button>
             {connectionStatusRental2Days === "disconnected" && (
+              <p className="text-sm text-muted-foreground">
+              Zmień status na "Połączone" aby wysłać powiadomienie
+            </p>
+          )}
+        </div>
+
+          {/* Return Notification 2 Days */}
+          <div className="space-y-4 pt-6 border-t">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">
+                  2 dni przed spodziewanym zwrotem kampera
+                </h3>
+                <Badge 
+                  variant={connectionStatusReturn === "connected" ? "default" : "secondary"}
+                  className="gap-1"
+                >
+                  {connectionStatusReturn === "connected" ? (
+                    <>
+                      <Plug className="h-3 w-3" />
+                      Połączone
+                    </>
+                  ) : (
+                    <>
+                      <Unplug className="h-3 w-3" />
+                      Niepołączone
+                    </>
+                  )}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Wysyła powiadomienie z danymi zwrotu 2 dni przed spodziewanym zwrotem kampera
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="connection-status-return">Status połączenia webhook</Label>
+              <Select
+                value={connectionStatusReturn}
+                onValueChange={(value) => setConnectionStatusReturn(value as "disconnected" | "connected")}
+                disabled={isSendingReturn}
+              >
+                <SelectTrigger id="connection-status-return">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="disconnected">
+                    <div className="flex items-center gap-2">
+                      <Unplug className="h-4 w-4" />
+                      Niepołączone
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="connected">
+                    <div className="flex items-center gap-2">
+                      <Plug className="h-4 w-4" />
+                      Połączone
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="date-select-return">Wybierz datę zwrotu</Label>
+              <Select
+                value={selectedReturnDate}
+                onValueChange={setSelectedReturnDate}
+                disabled={returnBookingsLoading || isSendingReturn}
+              >
+                <SelectTrigger id="date-select-return">
+                  <SelectValue placeholder="Wybierz datę..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(returnsByDate)
+                    .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+                    .map(([date, returns]) => (
+                      <SelectItem key={date} value={date}>
+                        {new Date(date).toLocaleDateString("pl-PL")} - {returns.length} {returns.length === 1 ? 'zwrot' : returns.length < 5 ? 'zwroty' : 'zwrotów'}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button 
+              onClick={handleSendReturnNotification} 
+              disabled={!selectedReturnDate || isSendingReturn || connectionStatusReturn === "disconnected"}
+              className="w-full sm:w-auto"
+            >
+              {isSendingReturn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Wyślij powiadomienie
+            </Button>
+            {connectionStatusReturn === "disconnected" && (
               <p className="text-sm text-muted-foreground">
                 Zmień status na "Połączone" aby wysłać powiadomienie
               </p>
