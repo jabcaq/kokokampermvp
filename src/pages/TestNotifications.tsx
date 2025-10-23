@@ -63,9 +63,14 @@ const TestNotifications = () => {
   const returnsByDate = useMemo(() => {
     if (!returnBookings) return {};
     
+    console.log('returnBookings:', returnBookings);
+    
     return returnBookings.reduce((acc: Record<string, any[]>, returnBooking: any) => {
       const returnDate = returnBooking.scheduled_return_date ? 
         new Date(returnBooking.scheduled_return_date).toISOString().split('T')[0] : '';
+      
+      console.log('Processing return:', returnBooking.id, 'date:', returnDate);
+      
       if (returnDate) {
         if (!acc[returnDate]) {
           acc[returnDate] = [];
