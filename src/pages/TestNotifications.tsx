@@ -614,22 +614,19 @@ const TestNotifications = () => {
     if (!selectedReturnForReview) {
       toast({
         title: "Błąd",
-        description: "Wybierz protokół zwrotu.",
+        description: "Wybierz umowę.",
       });
       return;
     }
 
-    const returnRecord = vehicleReturns?.find(r => r.id === selectedReturnForReview);
-    if (!returnRecord) {
+    const contract = contracts?.find(c => c.id === selectedReturnForReview);
+    if (!contract) {
       toast({
         title: "Błąd",
-        description: "Nie znaleziono protokołu zwrotu.",
+        description: "Nie znaleziono umowy.",
       });
       return;
     }
-
-    const contract = contracts?.find(c => c.id === returnRecord.contract_id);
-    if (!contract) {
       toast({
         title: "Błąd",
         description: "Nie znaleziono umowy.",
@@ -1320,28 +1317,21 @@ const TestNotifications = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="return-select-review">Wybierz protokół zwrotu</Label>
+              <Label htmlFor="contract-select-review">Wybierz umowę</Label>
               <Select
                 value={selectedReturnForReview}
                 onValueChange={setSelectedReturnForReview}
-                disabled={vehicleReturnsLoading || isSendingReviewRequest}
+                disabled={contractsLoading || isSendingReviewRequest}
               >
-                <SelectTrigger id="return-select-review">
-                  <SelectValue placeholder="Wybierz protokół zwrotu..." />
+                <SelectTrigger id="contract-select-review">
+                  <SelectValue placeholder="Wybierz umowę..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {vehicleReturns
-                    ?.filter(r => r.deposit_refunded_cash || r.deposit_refunded_transfer)
-                    .map((returnRecord) => {
-                      const contract = contracts?.find(c => c.id === returnRecord.contract_id);
-                      return (
-                        <SelectItem key={returnRecord.id} value={returnRecord.id}>
-                          {contract?.contract_number || 'Nieznana umowa'} - {contract?.tenant_name || 'Nieznany klient'}
-                          {returnRecord.deposit_refunded_cash && ' (Gotówka)'}
-                          {returnRecord.deposit_refunded_transfer && ' (Przelew)'}
-                        </SelectItem>
-                      );
-                    })}
+                  {contracts?.map((contract) => (
+                    <SelectItem key={contract.id} value={contract.id}>
+                      {contract.contract_number} - {contract.tenant_name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

@@ -41,7 +41,7 @@ export const useVehicleReturns = (contractId?: string) => {
       if (error) throw error;
       return data as VehicleReturn[];
     },
-    enabled: !!contractId,
+    enabled: true,
   });
 };
 
