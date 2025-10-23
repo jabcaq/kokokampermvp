@@ -81,6 +81,22 @@ const TestNotifications = () => {
     }, {});
   }, [returnBookings]);
 
+  // Group contracts by end (expected return) date
+  const returnContractsByDate = useMemo(() => {
+    if (!contracts) return {};
+
+    return contracts.reduce((acc: Record<string, any[]>, contract: any) => {
+      const endDate = contract.end_date ? new Date(contract.end_date).toISOString().split('T')[0] : '';
+      if (endDate) {
+        if (!acc[endDate]) {
+          acc[endDate] = [];
+        }
+        acc[endDate].push(contract);
+      }
+      return acc;
+    }, {});
+  }, [contracts]);
+
   const handleSendInsuranceNotification = async () => {
     if (connectionStatusInsurance === "disconnected") {
       toast({
@@ -327,43 +343,33 @@ const TestNotifications = () => {
       return;
     }
 
-    const returnsForDate = returnsByDate[selectedReturnDate];
-    if (!returnsForDate || returnsForDate.length === 0) {
+    const contractsForDate = returnContractsByDate[selectedReturnDate];
+    if (!contractsForDate || contractsForDate.length === 0) {
       toast({
-        title: "Brak zwrotów",
-        description: "Brak zaplanowanych zwrotów na wybrany dzień.",
+        title: "Brak umów",
+        description: "Brak umów z zakończeniem wynajmu w wybranym dniu.",
       });
       return;
     }
 
     setIsSendingReturn(true);
     try {
-      for (const returnRecord of returnsForDate) {
-        // Pobierz dane umowy
-        const { data: contract } = await supabase
-          .from("contracts")
-          .select("*")
-          .eq("id", returnRecord.contract_id)
-          .single();
-
-        if (!contract) continue;
-
+      for (const contract of contractsForDate) {
         const response = await fetch("https://hook.eu2.make.com/hk044wt625t33gs2qyvusatijdcrsa30", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            return_id: returnRecord.id,
             contract_id: contract.id,
             contract_number: contract.contract_number,
             tenant_name: contract.tenant_name,
             tenant_email: contract.tenant_email,
             vehicle_model: contract.vehicle_model,
             registration_number: contract.registration_number,
-            scheduled_return_date: returnRecord.scheduled_return_date,
-            scheduled_return_time: returnRecord.scheduled_return_time,
-            employee_name: returnRecord.employee_name,
+            scheduled_return_date: contract.end_date,
+            scheduled_return_time: null,
+            employee_name: null,
             notification_type: "return_2days_prior",
             timestamp: new Date().toISOString(),
           }),
@@ -376,7 +382,7 @@ const TestNotifications = () => {
 
       toast({
         title: "Sukces",
-        description: `Powiadomienie wysłane dla ${returnsForDate.length} ${returnsForDate.length === 1 ? 'zwrotu' : returnsForDate.length < 5 ? 'zwrotów' : 'zwrotów'} z dnia ${new Date(selectedReturnDate).toLocaleDateString("pl-PL")}`,
+        description: `Powiadomienie wysłane dla ${contractsForDate.length} ${contractsForDate.length === 1 ? 'umowy' : contractsForDate.length < 5 ? 'umów' : 'umów'} z datą zwrotu ${new Date(selectedReturnDate).toLocaleDateString("pl-PL")}`,
       });
     } catch (error: any) {
       console.error("Error sending notification:", error);
@@ -838,17 +844,17 @@ const TestNotifications = () => {
               <Select
                 value={selectedReturnDate}
                 onValueChange={setSelectedReturnDate}
-                disabled={returnBookingsLoading || isSendingReturn}
+                disabled={contractsLoading || isSendingReturn}
               >
                 <SelectTrigger id="date-select-return">
                   <SelectValue placeholder="Wybierz datę..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(returnsByDate)
+                  {Object.entries(returnContractsByDate)
                     .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-                    .map(([date, returns]) => (
+                    .map(([date, contracts]) => (
                       <SelectItem key={date} value={date}>
-                        {new Date(date).toLocaleDateString("pl-PL")} - {returns.length} {returns.length === 1 ? 'zwrot' : returns.length < 5 ? 'zwroty' : 'zwrotów'}
+                        {new Date(date).toLocaleDateString("pl-PL")} - {contracts.length} {contracts.length === 1 ? 'umowa' : contracts.length < 5 ? 'umowy' : 'umów'}
                       </SelectItem>
                     ))}
                 </SelectContent>
