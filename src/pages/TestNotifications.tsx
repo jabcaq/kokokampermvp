@@ -7,9 +7,11 @@ import { useVehicles } from "@/hooks/useVehicles";
 import { useContracts } from "@/hooks/useContracts";
 import { useReturnBookings } from "@/hooks/useReturnBookings";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, Loader2, Unplug, Plug } from "lucide-react";
+import { Bell, Loader2, Unplug, Plug, Calendar as CalendarIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const TestNotifications = () => {
   const { data: vehicles, isLoading: vehiclesLoading } = useVehicles();
@@ -38,6 +40,7 @@ const TestNotifications = () => {
   
   // Return notification state (2 days)
   const [selectedReturnDate, setSelectedReturnDate] = useState<string>("");
+  const [returnDate, setReturnDate] = useState<Date>();
   const [connectionStatusReturn, setConnectionStatusReturn] = useState<"disconnected" | "connected">("disconnected");
   const [isSendingReturn, setIsSendingReturn] = useState(false);
   
@@ -313,7 +316,7 @@ const TestNotifications = () => {
       return;
     }
 
-    if (!selectedReturnDate) {
+    if (!returnDate) {
       toast({
         title: "Błąd",
         description: "Wybierz datę",
@@ -322,13 +325,32 @@ const TestNotifications = () => {
       return;
     }
 
-    const returnsForDate = returnsByDate[selectedReturnDate];
-    if (!returnsForDate || returnsForDate.length === 0) return;
+    const start = new Date(returnDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
 
     setIsSendingReturn(true);
     try {
+      const { data: returnsForDate, error: returnsError } = await supabase
+        .from('vehicle_returns')
+        .select('*')
+        .gte('scheduled_return_date', start.toISOString())
+        .lt('scheduled_return_date', end.toISOString())
+        .eq('return_completed', false);
+
+      if (returnsError) throw returnsError;
+
+      if (!returnsForDate || returnsForDate.length === 0) {
+        toast({
+          title: "Brak zwrotów",
+          description: "Brak zaplanowanych zwrotów na wybrany dzień.",
+        });
+        return;
+      }
+
       for (const returnRecord of returnsForDate) {
-        // Fetch contract details
+        // Pobierz dane umowy
         const { data: contract } = await supabase
           .from("contracts")
           .select("*")
@@ -365,7 +387,7 @@ const TestNotifications = () => {
 
       toast({
         title: "Sukces",
-        description: `Powiadomienie wysłane dla ${returnsForDate.length} ${returnsForDate.length === 1 ? 'zwrotu' : returnsForDate.length < 5 ? 'zwrotów' : 'zwrotów'} z dnia ${new Date(selectedReturnDate).toLocaleDateString("pl-PL")}`,
+        description: `Powiadomienie wysłane dla ${returnsForDate.length} ${returnsForDate.length === 1 ? 'zwrotu' : returnsForDate.length < 5 ? 'zwrotów' : 'zwrotów'} z dnia ${start.toLocaleDateString("pl-PL")}`,
       });
     } catch (error: any) {
       console.error("Error sending notification:", error);
@@ -824,24 +846,33 @@ const TestNotifications = () => {
 
             <div className="space-y-2">
               <Label htmlFor="date-select-return">Wybierz datę zwrotu</Label>
-              <Select
-                value={selectedReturnDate}
-                onValueChange={setSelectedReturnDate}
-                disabled={returnBookingsLoading || isSendingReturn}
-              >
-                <SelectTrigger id="date-select-return">
-                  <SelectValue placeholder="Wybierz datę..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(returnsByDate)
-                    .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-                    .map(([date, returns]) => (
-                      <SelectItem key={date} value={date}>
-                        {new Date(date).toLocaleDateString("pl-PL")} - {returns.length} {returns.length === 1 ? 'zwrot' : returns.length < 5 ? 'zwroty' : 'zwrotów'}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className="w-[240px] justify-start text-left font-normal"
+                  >
+                    {returnDate ? (
+                      new Date(returnDate).toLocaleDateString("pl-PL")
+                    ) : (
+                      <span>Wybierz datę...</span>
+                    )}
+                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={returnDate}
+                    onSelect={(d) => {
+                      setReturnDate(d);
+                      setSelectedReturnDate(d ? new Date(d).toISOString().split('T')[0] : "");
+                    }}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <Button 
