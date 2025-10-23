@@ -93,7 +93,7 @@ const handler = async (req: Request): Promise<Response> => {
         };
 
         // Send webhook to Make.com
-        const webhookUrl = 'https://hook.eu2.make.com/YOUR_WEBHOOK_URL_FOR_REVIEW_REQUEST';
+        const webhookUrl = 'https://hook.eu2.make.com/sl64c2jcq2el9cdeiq6boszjd0upunow';
         
         const webhookResponse = await fetch(webhookUrl, {
           method: 'POST',

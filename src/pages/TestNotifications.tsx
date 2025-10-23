@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useVehicles } from "@/hooks/useVehicles";
 import { useContracts } from "@/hooks/useContracts";
 import { useReturnBookings } from "@/hooks/useReturnBookings";
+import { useVehicleReturns } from "@/hooks/useVehicleReturns";
 import { useToast } from "@/hooks/use-toast";
 import { Bell, Loader2, Unplug, Plug } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,7 @@ const TestNotifications = () => {
   const { data: vehicles, isLoading: vehiclesLoading } = useVehicles();
   const { data: contracts, isLoading: contractsLoading } = useContracts();
   const { data: returnBookings, isLoading: returnBookingsLoading } = useReturnBookings();
+  const { data: vehicleReturns, isLoading: vehicleReturnsLoading } = useVehicleReturns();
   
   // Insurance notification state
   const [selectedVehicleInsurance, setSelectedVehicleInsurance] = useState<string>("");
@@ -50,6 +52,10 @@ const TestNotifications = () => {
   // Return 3 days prior notification state
   const [selectedReturn3DaysDate, setSelectedReturn3DaysDate] = useState("");
   const [isSendingReturn3Days, setIsSendingReturn3Days] = useState(false);
+  
+  // Review request notification state
+  const [selectedReturnForReview, setSelectedReturnForReview] = useState("");
+  const [isSendingReviewRequest, setIsSendingReviewRequest] = useState(false);
   
   const { toast } = useToast();
 
@@ -601,6 +607,71 @@ const TestNotifications = () => {
       });
     } finally {
       setIsSendingReturn3Days(false);
+    }
+  };
+
+  const handleSendReviewRequestNotification = async () => {
+    if (!selectedReturnForReview) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz protokół zwrotu.",
+      });
+      return;
+    }
+
+    const returnRecord = vehicleReturns?.find(r => r.id === selectedReturnForReview);
+    if (!returnRecord) {
+      toast({
+        title: "Błąd",
+        description: "Nie znaleziono protokołu zwrotu.",
+      });
+      return;
+    }
+
+    const contract = contracts?.find(c => c.id === returnRecord.contract_id);
+    if (!contract) {
+      toast({
+        title: "Błąd",
+        description: "Nie znaleziono umowy.",
+      });
+      return;
+    }
+
+    setIsSendingReviewRequest(true);
+    try {
+      const response = await fetch("https://hook.eu2.make.com/sl64c2jcq2el9cdeiq6boszjd0upunow", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          notification_type: "review_request",
+          contract_id: contract.id,
+          contract_number: contract.contract_number,
+          tenant_email: contract.tenant_email || "",
+          tenant_name: contract.tenant_name || "",
+          vehicle_model: contract.vehicle_model || "",
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send notification");
+      }
+
+      toast({
+        title: "Sukces",
+        description: `Prośba o opinię wysłana dla umowy ${contract.contract_number}`,
+      });
+    } catch (error: any) {
+      console.error("Error sending notification:", error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się wysłać powiadomienia.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingReviewRequest(false);
     }
   };
 
@@ -1228,6 +1299,60 @@ const TestNotifications = () => {
             >
               {isSendingReturn3Days && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Wyślij powiadomienie (bundel)
+            </Button>
+          </div>
+
+          {/* Review Request Notification Test */}
+          <div className="space-y-4 pt-8 border-t">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">
+                Prośba o opinię (8h po zwrocie kaucji)
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Test powiadomienia wysyłanego automatycznie 8 godzin po zwrocie kaucji (gotówką lub przelewem)
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-sm text-muted-foreground">
+                  Webhook: https://hook.eu2.make.com/sl64c2jcq2el9cdeiq6boszjd0upunow
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="return-select-review">Wybierz protokół zwrotu</Label>
+              <Select
+                value={selectedReturnForReview}
+                onValueChange={setSelectedReturnForReview}
+                disabled={vehicleReturnsLoading || isSendingReviewRequest}
+              >
+                <SelectTrigger id="return-select-review">
+                  <SelectValue placeholder="Wybierz protokół zwrotu..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {vehicleReturns
+                    ?.filter(r => r.deposit_refunded_cash || r.deposit_refunded_transfer)
+                    .map((returnRecord) => {
+                      const contract = contracts?.find(c => c.id === returnRecord.contract_id);
+                      return (
+                        <SelectItem key={returnRecord.id} value={returnRecord.id}>
+                          {contract?.contract_number || 'Nieznana umowa'} - {contract?.tenant_name || 'Nieznany klient'}
+                          {returnRecord.deposit_refunded_cash && ' (Gotówka)'}
+                          {returnRecord.deposit_refunded_transfer && ' (Przelew)'}
+                        </SelectItem>
+                      );
+                    })}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleSendReviewRequestNotification}
+              disabled={!selectedReturnForReview || isSendingReviewRequest}
+              className="w-full sm:w-auto"
+            >
+              {isSendingReviewRequest && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Wyślij prośbę o opinię
             </Button>
           </div>
         </CardContent>
