@@ -151,6 +151,7 @@ export type Database = {
           contract_number: string
           created_at: string | null
           driver_submission_link: string | null
+          employee_return_link: string | null
           end_date: string
           handover_link: string | null
           has_trailer: boolean | null
@@ -208,6 +209,7 @@ export type Database = {
           contract_number: string
           created_at?: string | null
           driver_submission_link?: string | null
+          employee_return_link?: string | null
           end_date: string
           handover_link?: string | null
           has_trailer?: boolean | null
@@ -265,6 +267,7 @@ export type Database = {
           contract_number?: string
           created_at?: string | null
           driver_submission_link?: string | null
+          employee_return_link?: string | null
           end_date?: string
           handover_link?: string | null
           has_trailer?: boolean | null
@@ -986,14 +989,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      check_expiring_documents: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      generate_inquiry_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      check_expiring_documents: { Args: never; Returns: undefined }
+      generate_inquiry_number: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

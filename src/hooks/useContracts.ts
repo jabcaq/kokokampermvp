@@ -44,6 +44,7 @@ export interface Contract {
   notes?: string;
   handover_link?: string;
   return_link?: string;
+  employee_return_link?: string;
   driver_submission_link?: string;
   invoice_type?: 'receipt' | 'invoice';
   inquiry_id?: string | null;
@@ -167,7 +168,8 @@ export const useAddContract = () => {
       // Generate links for handover, return, and driver submission
       const baseUrl = 'https://app.kokokamper.pl';
       const handoverLink = `${baseUrl}/vehicle-handover/${newContract.id}`;
-      const returnLink = `${baseUrl}/vehicle-return/${newContract.id}`;
+      const returnLink = `${baseUrl}/return-booking?contractId=${newContract.id}&contractNumber=${encodeURIComponent(newContract.contract_number)}&startDate=${newContract.start_date}&endDate=${newContract.end_date}`;
+      const employeeReturnLink = `${baseUrl}/vehicle-return?contractId=${newContract.id}&contractNumber=${encodeURIComponent(newContract.contract_number)}&vehicleModel=${encodeURIComponent(newContract.vehicle_model)}&registrationNumber=${newContract.registration_number}&startDate=${newContract.start_date}&endDate=${newContract.end_date}`;
       const driverSubmissionLink = `${baseUrl}/driver-submission/${newContract.id}`;
       
       // Update the contract with generated links
@@ -176,6 +178,7 @@ export const useAddContract = () => {
         .update({
           handover_link: handoverLink,
           return_link: returnLink,
+          employee_return_link: employeeReturnLink,
           driver_submission_link: driverSubmissionLink,
         })
         .eq('id', newContract.id)
