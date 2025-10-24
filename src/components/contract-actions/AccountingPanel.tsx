@@ -303,6 +303,9 @@ export const AccountingPanel = ({
                     </Label>
                   </div>
                 </RadioGroup>
+                <p className="text-sm text-muted-foreground">
+                  Jeśli klient nie ma NIPu, wybierz Paragon
+                </p>
               </div>
 
               <div className="space-y-2">
