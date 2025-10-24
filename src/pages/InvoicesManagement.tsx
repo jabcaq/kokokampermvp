@@ -7,12 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Search, FileText, Receipt, Eye, Trash2, CheckCircle, Clock, FileUp, Upload, Plus, Check, ChevronsUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Search, FileText, Receipt, Eye, Trash2, CheckCircle, Clock, FileUp, Upload, Plus, Check, ChevronsUpDown, ChevronLeft, ChevronRight, Archive } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ContractInvoice, ContractInvoiceFile, useUpdateContractInvoice, useAddContractInvoice } from "@/hooks/useContractInvoices";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -52,6 +53,7 @@ const InvoicesManagement = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [showArchived, setShowArchived] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
   
   const updateInvoice = useUpdateContractInvoice();
   const addInvoice = useAddContractInvoice();
@@ -278,6 +280,81 @@ const InvoicesManagement = () => {
     }
   };
 
+  const handleBulkArchive = async () => {
+    try {
+      const { error } = await supabase
+        .from('contract_invoices')
+        .update({ is_archived: true })
+        .in('id', selectedInvoices);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['all-invoices'] });
+
+      toast({
+        title: "Sukces",
+        description: `Przeniesiono ${selectedInvoices.length} dokumentów do archiwum`,
+      });
+      
+      setSelectedInvoices([]);
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się zarchiwizować dokumentów",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkPermanentDelete = async () => {
+    if (!isAdmin) {
+      toast({
+        title: "Błąd",
+        description: "Tylko administrator może usunąć dokumenty permanentnie",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('contract_invoices')
+        .delete()
+        .in('id', selectedInvoices);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['all-invoices'] });
+
+      toast({
+        title: "Sukces",
+        description: `Trwale usunięto ${selectedInvoices.length} dokumentów`,
+      });
+      
+      setSelectedInvoices([]);
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się usunąć dokumentów",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedInvoices.length === paginatedInvoices?.length) {
+      setSelectedInvoices([]);
+    } else {
+      setSelectedInvoices(paginatedInvoices?.map(inv => inv.id) || []);
+    }
+  };
+
+  const toggleSelectInvoice = (id: string) => {
+    setSelectedInvoices(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
   const filteredInvoices = allInvoices?.filter(invoice => {
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -362,6 +439,44 @@ const InvoicesManagement = () => {
             </div>
           </CardHeader>
           <CardContent>
+            {selectedInvoices.length > 0 && (
+              <div className="mb-4 p-4 bg-muted rounded-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">
+                    Wybrano {selectedInvoices.length} {selectedInvoices.length === 1 ? 'dokument' : 'dokumentów'}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  {showArchived && isAdmin ? (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBulkPermanentDelete}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Usuń trwale
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkArchive}
+                    >
+                      <Archive className="h-4 w-4 mr-2" />
+                      Do archiwum
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedInvoices([])}
+                  >
+                    Anuluj
+                  </Button>
+                </div>
+              </div>
+            )}
+            
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Pokaż</span>
@@ -385,6 +500,12 @@ const InvoicesManagement = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedInvoices.length === paginatedInvoices?.length && paginatedInvoices?.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Numer umowy</TableHead>
                   <TableHead>Klient</TableHead>
                   <TableHead>Typ</TableHead>
@@ -403,6 +524,12 @@ const InvoicesManagement = () => {
                   
                   return (
                     <TableRow key={invoice.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedInvoices.includes(invoice.id)}
+                          onCheckedChange={() => toggleSelectInvoice(invoice.id)}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">
                         {invoice.contract?.contract_number || 'N/A'}
                       </TableCell>
