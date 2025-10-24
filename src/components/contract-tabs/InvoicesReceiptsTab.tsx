@@ -423,25 +423,6 @@ export const InvoicesReceiptsTab = ({
                         </div>
                       </div>
                     )}
-
-                    {(!invoice.files || invoice.files.length === 0) && (
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">Dodaj plik:</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            type="file"
-                            accept="*/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                handleFileUpload(invoice.id, file, invoice);
-                              }
-                            }}
-                            disabled={uploadingFile === invoice.id}
-                          />
-                        </div>
-                      </div>
-                    )}
                   </div>
                 );
               })}
