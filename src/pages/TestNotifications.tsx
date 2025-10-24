@@ -57,6 +57,14 @@ const TestNotifications = () => {
   const [selectedReturnForReview, setSelectedReturnForReview] = useState("");
   const [isSendingReviewRequest, setIsSendingReviewRequest] = useState(false);
   
+  // Deposit received notification state
+  const [selectedContractForDeposit, setSelectedContractForDeposit] = useState("");
+  const [isSendingDepositNotification, setIsSendingDepositNotification] = useState(false);
+  
+  // Receipt uploaded notification state
+  const [selectedContractForReceipt, setSelectedContractForReceipt] = useState("");
+  const [isSendingReceiptNotification, setIsSendingReceiptNotification] = useState(false);
+  
   const { toast } = useToast();
 
   // Group contracts by start date
@@ -607,6 +615,117 @@ const TestNotifications = () => {
       });
     } finally {
       setIsSendingReturn3Days(false);
+    }
+  };
+
+  const handleSendDepositNotification = async () => {
+    if (!selectedContractForDeposit) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz umowę.",
+      });
+      return;
+    }
+
+    const contract = contracts?.find(c => c.id === selectedContractForDeposit);
+    if (!contract) {
+      toast({
+        title: "Błąd",
+        description: "Nie znaleziono umowy.",
+      });
+      return;
+    }
+
+    setIsSendingDepositNotification(true);
+    try {
+      const response = await fetch("https://hook.eu2.make.com/8lb97jeybom44bgvdx8c5jsf2976yeex", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          notification_type: "deposit_received",
+          contract_id: contract.id,
+          contract_number: contract.contract_number,
+          tenant_name: contract.tenant_name || "",
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send notification");
+      }
+
+      toast({
+        title: "Sukces",
+        description: `Powiadomienie o przyjęciu kaucji wysłane dla umowy ${contract.contract_number}`,
+      });
+    } catch (error: any) {
+      console.error("Error sending notification:", error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się wysłać powiadomienia.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingDepositNotification(false);
+    }
+  };
+
+  const handleSendReceiptNotification = async () => {
+    if (!selectedContractForReceipt) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz umowę.",
+      });
+      return;
+    }
+
+    const contract = contracts?.find(c => c.id === selectedContractForReceipt);
+    if (!contract) {
+      toast({
+        title: "Błąd",
+        description: "Nie znaleziono umowy.",
+      });
+      return;
+    }
+
+    setIsSendingReceiptNotification(true);
+    try {
+      const response = await fetch("https://hook.eu2.make.com/vj28pea85sho49qrlhyv7vni16s7kmgg", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          notification_type: "receipt_uploaded",
+          invoice_id: "test-invoice-id",
+          contract_id: contract.id,
+          contract_number: contract.contract_number,
+          tenant_name: contract.tenant_name || "",
+          invoice_type: "reservation",
+          document_url: "https://example.com/test-receipt.pdf",
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send notification");
+      }
+
+      toast({
+        title: "Sukces",
+        description: `Powiadomienie o wgraniu paragonu wysłane dla umowy ${contract.contract_number}`,
+      });
+    } catch (error: any) {
+      console.error("Error sending notification:", error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się wysłać powiadomienia.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingReceiptNotification(false);
     }
   };
 
@@ -1337,6 +1456,100 @@ const TestNotifications = () => {
             >
               {isSendingReviewRequest && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Wyślij prośbę o opinię
+            </Button>
+          </div>
+
+          {/* Deposit Received Notification Test */}
+          <div className="space-y-4 pt-8 border-t">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">
+                Powiadomienie o przyjęciu kaucji
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Test powiadomienia wysyłanego po zaznaczeniu checkboxa "Kaucja przyjęta" w panelu księgowości
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-sm text-muted-foreground">
+                  Webhook: https://hook.eu2.make.com/8lb97jeybom44bgvdx8c5jsf2976yeex
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contract-select-deposit">Wybierz umowę</Label>
+              <Select
+                value={selectedContractForDeposit}
+                onValueChange={setSelectedContractForDeposit}
+                disabled={contractsLoading || isSendingDepositNotification}
+              >
+                <SelectTrigger id="contract-select-deposit">
+                  <SelectValue placeholder="Wybierz umowę..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {contracts?.map((contract) => (
+                    <SelectItem key={contract.id} value={contract.id}>
+                      {contract.contract_number} - {contract.tenant_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleSendDepositNotification}
+              disabled={!selectedContractForDeposit || isSendingDepositNotification}
+              className="w-full sm:w-auto"
+            >
+              {isSendingDepositNotification && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Wyślij powiadomienie o kaucji
+            </Button>
+          </div>
+
+          {/* Receipt Uploaded Notification Test */}
+          <div className="space-y-4 pt-8 border-t">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">
+                Powiadomienie o wgraniu paragonu/faktury
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Test powiadomienia wysyłanego automatycznie po wgraniu paragonu/faktury przez księgowość
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-sm text-muted-foreground">
+                  Webhook: https://hook.eu2.make.com/vj28pea85sho49qrlhyv7vni16s7kmgg
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contract-select-receipt">Wybierz umowę</Label>
+              <Select
+                value={selectedContractForReceipt}
+                onValueChange={setSelectedContractForReceipt}
+                disabled={contractsLoading || isSendingReceiptNotification}
+              >
+                <SelectTrigger id="contract-select-receipt">
+                  <SelectValue placeholder="Wybierz umowę..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {contracts?.map((contract) => (
+                    <SelectItem key={contract.id} value={contract.id}>
+                      {contract.contract_number} - {contract.tenant_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleSendReceiptNotification}
+              disabled={!selectedContractForReceipt || isSendingReceiptNotification}
+              className="w-full sm:w-auto"
+            >
+              {isSendingReceiptNotification && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Wyślij powiadomienie o paragonie
             </Button>
           </div>
         </CardContent>
