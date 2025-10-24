@@ -367,19 +367,19 @@ const ContractDetails = () => {
                 </SelectContent>
               </Select>
             ) : (
-              <>
+          <>
                 <Badge variant="outline" className={statusConfig[displayData?.status as keyof typeof statusConfig]?.className}>
                   {statusConfig[displayData?.status as keyof typeof statusConfig]?.label}
                 </Badge>
-                <Badge 
-                  variant="outline" 
-                  className={displayData?.invoice_type === 'invoice' 
-                    ? "bg-blue-500/10 text-blue-500 border-blue-500/20" 
-                    : "bg-green-500/10 text-green-500 border-green-500/20"
-                  }
-                >
-                  {displayData?.invoice_type === 'invoice' ? 'Faktura' : 'Paragon'}
-                </Badge>
+                <Select value={displayData?.invoice_type || 'receipt'} onValueChange={(value) => updateField('invoice_type', value)}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="receipt">Paragon</SelectItem>
+                    <SelectItem value="invoice">Faktura</SelectItem>
+                  </SelectContent>
+                </Select>
               </>
             )}
           </div>
@@ -439,7 +439,7 @@ const ContractDetails = () => {
           </TabsTrigger>
           <TabsTrigger value="invoices" className="gap-2">
             <CreditCard className="h-4 w-4" />
-            {displayData?.tenant_nip ? 'Faktury' : 'Paragony'}
+            {displayData?.invoice_type === 'invoice' ? 'Faktury' : 'Paragony'}
           </TabsTrigger>
           <TabsTrigger value="handover" className="gap-2">
             <Truck className="h-4 w-4" />
