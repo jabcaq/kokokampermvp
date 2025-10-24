@@ -153,6 +153,8 @@ export type Database = {
           client_id: string
           contract_number: string
           created_at: string | null
+          deposit_received: boolean | null
+          deposit_received_at: string | null
           driver_submission_link: string | null
           employee_return_link: string | null
           end_date: string
@@ -211,6 +213,8 @@ export type Database = {
           client_id: string
           contract_number: string
           created_at?: string | null
+          deposit_received?: boolean | null
+          deposit_received_at?: string | null
           driver_submission_link?: string | null
           employee_return_link?: string | null
           end_date: string
@@ -269,6 +273,8 @@ export type Database = {
           client_id?: string
           contract_number?: string
           created_at?: string | null
+          deposit_received?: boolean | null
+          deposit_received_at?: string | null
           driver_submission_link?: string | null
           employee_return_link?: string | null
           end_date?: string

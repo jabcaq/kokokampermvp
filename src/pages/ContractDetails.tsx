@@ -418,6 +418,7 @@ const ContractDetails = () => {
           contractNumber={contract.contract_number}
           payments={contract.payments}
           tenantName={contract.tenant_name}
+          depositReceived={contract.deposit_received}
         />
       </div>
 

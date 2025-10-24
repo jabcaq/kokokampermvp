@@ -192,6 +192,40 @@ const InvoicesManagement = () => {
         }
       });
 
+      // Get contract details for webhook
+      const { data: contractData } = await supabase
+        .from('contracts')
+        .select('contract_number, tenant_name')
+        .eq('id', selectedContractId)
+        .single();
+
+      // Send webhook notification to accounting
+      try {
+        const webhookResponse = await fetch('https://hook.eu2.make.com/vj28pea85sho49qrlhyv7vni16s7kmgg', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            notification_type: 'receipt_uploaded',
+            invoice_id: newInvoice.id,
+            contract_id: selectedContractId,
+            contract_number: contractData?.contract_number || '',
+            tenant_name: contractData?.tenant_name || '',
+            invoice_type: selectedInvoiceType,
+            document_url: publicUrl,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+
+        if (!webhookResponse.ok) {
+          console.error('Webhook notification failed:', await webhookResponse.text());
+        }
+      } catch (webhookError) {
+        console.error('Error sending webhook:', webhookError);
+        // Don't fail the upload if webhook fails
+      }
+
       // Invalidate all-invoices query to refresh the list
       queryClient.invalidateQueries({ queryKey: ['all-invoices'] });
 

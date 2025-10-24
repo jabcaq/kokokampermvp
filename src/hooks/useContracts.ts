@@ -49,6 +49,8 @@ export interface Contract {
   invoice_type?: 'receipt' | 'invoice';
   inquiry_id?: string | null;
   inquiry_number?: string | null;
+  deposit_received?: boolean;
+  deposit_received_at?: string | null;
   created_at?: string;
   updated_at?: string;
 }

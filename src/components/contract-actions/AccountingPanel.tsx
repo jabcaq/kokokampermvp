@@ -12,17 +12,21 @@ import { useAddContractInvoice, useContractInvoices } from "@/hooks/useContractI
 import { Send, ExternalLink, FileCheck, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useUpdateContract } from "@/hooks/useContracts";
 interface AccountingPanelProps {
   contractId: string;
   contractNumber: string;
   payments?: any;
   tenantName?: string;
+  depositReceived?: boolean;
 }
 export const AccountingPanel = ({
   contractId,
   contractNumber,
   payments,
-  tenantName
+  tenantName,
+  depositReceived = false
 }: AccountingPanelProps) => {
   const {
     toast
@@ -33,10 +37,17 @@ export const AccountingPanel = ({
   const [notes, setNotes] = useState('');
   const [selectedDocumentType, setSelectedDocumentType] = useState<'paragon' | 'faktura'>('paragon');
   const [isSending, setIsSending] = useState(false);
+  const [isDepositReceived, setIsDepositReceived] = useState(depositReceived);
+  const [isSendingDepositNotification, setIsSendingDepositNotification] = useState(false);
   const addInvoice = useAddContractInvoice();
+  const updateContract = useUpdateContract();
   const {
     data: invoices
   } = useContractInvoices(contractId);
+
+  useEffect(() => {
+    setIsDepositReceived(depositReceived);
+  }, [depositReceived]);
   const invoiceTypeLabels = {
     reservation: 'Kwota rezerwacyjna',
     main_payment: 'Kwota zasadnicza',
@@ -154,6 +165,58 @@ export const AccountingPanel = ({
       setIsSending(false);
     }
   };
+  const handleDepositReceivedChange = async (checked: boolean) => {
+    setIsSendingDepositNotification(true);
+    try {
+      // Update contract in database
+      await updateContract.mutateAsync({
+        id: contractId,
+        updates: {
+          deposit_received: checked,
+          deposit_received_at: checked ? new Date().toISOString() : null,
+        }
+      });
+
+      if (checked) {
+        // Send webhook notification
+        const response = await supabase.functions.invoke('send-deposit-notification', {
+          body: {
+            contract_id: contractId,
+            contract_number: contractNumber,
+            tenant_name: tenantName || 'Klient',
+            timestamp: new Date().toISOString(),
+          }
+        });
+
+        if (response.error) {
+          console.error('Webhook error:', response.error);
+          throw new Error('Nie udało się wysłać powiadomienia');
+        }
+
+        toast({
+          title: "Sukces",
+          description: "Wysłano powiadomienie o przyjęciu kaucji"
+        });
+      } else {
+        toast({
+          title: "Zaktualizowano",
+          description: "Status kaucji został zmieniony"
+        });
+      }
+
+      setIsDepositReceived(checked);
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie udało się zaktualizować statusu kaucji",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSendingDepositNotification(false);
+    }
+  };
+
   const copyAccountingLink = (invoiceId: string) => {
     const link = `https://app.kokokamper.pl/accounting-upload/${invoiceId}`;
     navigator.clipboard.writeText(link);
@@ -168,6 +231,24 @@ export const AccountingPanel = ({
         <CardDescription>Nr umowy: {contractNumber}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="flex items-center space-x-2 p-3 bg-muted/50 rounded-lg">
+          <Checkbox 
+            id="deposit-received" 
+            checked={isDepositReceived}
+            onCheckedChange={handleDepositReceivedChange}
+            disabled={isSendingDepositNotification}
+          />
+          <Label 
+            htmlFor="deposit-received" 
+            className="text-sm font-medium cursor-pointer"
+          >
+            Kaucja przyjęta
+          </Label>
+          {isSendingDepositNotification && (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-2" />
+          )}
+        </div>
+
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button size="sm">
