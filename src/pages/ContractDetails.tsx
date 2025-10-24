@@ -416,6 +416,7 @@ const ContractDetails = () => {
         <AccountingPanel 
           contractId={contract.id}
           contractNumber={contract.contract_number}
+          payments={contract.payments}
         />
       </div>
 

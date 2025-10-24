@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,10 +13,12 @@ import { Badge } from "@/components/ui/badge";
 interface AccountingPanelProps {
   contractId: string;
   contractNumber: string;
+  payments?: any;
 }
 export const AccountingPanel = ({
   contractId,
-  contractNumber
+  contractNumber,
+  payments
 }: AccountingPanelProps) => {
   const {
     toast
@@ -40,6 +42,45 @@ export const AccountingPanel = ({
     invoice_uploaded: 'Faktura wgrana',
     completed: 'Zakończono'
   };
+
+  const getAmountForType = (type: 'reservation' | 'main_payment' | 'final') => {
+    if (!payments) return '';
+    try {
+      let amount = '';
+      switch (type) {
+        case 'reservation':
+          amount = payments.rezerwacyjna?.wysokosc || '';
+          break;
+        case 'main_payment':
+          amount = payments.zasadnicza?.wysokosc || '';
+          break;
+        case 'final':
+          amount = payments.kaucja?.wysokosc || '';
+          break;
+      }
+      if (typeof amount === 'string') {
+        const numericValue = amount.replace(/[^\d.]/g, '');
+        return numericValue;
+      }
+      return String(amount);
+    } catch (error) {
+      return '';
+    }
+  };
+
+  const handleTypeChange = (type: 'reservation' | 'main_payment' | 'final') => {
+    setInvoiceType(type);
+    const amountValue = getAmountForType(type);
+    setAmount(amountValue);
+  };
+
+  useEffect(() => {
+    const initialAmount = getAmountForType('reservation');
+    if (initialAmount && !amount) {
+      setAmount(initialAmount);
+    }
+  }, [payments]);
+
   const handleSubmitToAccounting = async () => {
     if (!amount || parseFloat(amount) <= 0) {
       toast({
@@ -115,7 +156,7 @@ export const AccountingPanel = ({
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Typ płatności</Label>
-                <Select value={invoiceType} onValueChange={(value: any) => setInvoiceType(value)}>
+                <Select value={invoiceType} onValueChange={(value: any) => handleTypeChange(value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
