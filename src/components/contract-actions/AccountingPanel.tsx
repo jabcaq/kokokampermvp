@@ -109,7 +109,8 @@ export const AccountingPanel = ({
         invoice_file_url: null,
         invoice_uploaded_at: null,
         notes: notes || null,
-        files: []
+        files: [],
+        is_archived: false
       });
 
       const uploadLink = `https://app.kokokamper.pl/invoice-upload/${result.id}`;

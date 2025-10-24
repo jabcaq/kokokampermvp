@@ -222,7 +222,8 @@ export const InvoicesReceiptsTab = ({
         invoice_file_url: null,
         invoice_uploaded_at: null,
         notes: newInvoice.notes || null,
-        files: []
+        files: [],
+        is_archived: false
       };
       const newInvoiceRecord = await addInvoice.mutateAsync(invoiceData);
 

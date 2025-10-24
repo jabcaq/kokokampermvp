@@ -101,6 +101,7 @@ export type Database = {
           invoice_file_url: string | null
           invoice_type: string
           invoice_uploaded_at: string | null
+          is_archived: boolean
           notes: string | null
           status: string
           submitted_at: string | null
@@ -115,6 +116,7 @@ export type Database = {
           invoice_file_url?: string | null
           invoice_type: string
           invoice_uploaded_at?: string | null
+          is_archived?: boolean
           notes?: string | null
           status?: string
           submitted_at?: string | null
@@ -129,6 +131,7 @@ export type Database = {
           invoice_file_url?: string | null
           invoice_type?: string
           invoice_uploaded_at?: string | null
+          is_archived?: boolean
           notes?: string | null
           status?: string
           submitted_at?: string | null

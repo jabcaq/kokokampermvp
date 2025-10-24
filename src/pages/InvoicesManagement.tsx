@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,14 +50,32 @@ const InvoicesManagement = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [showArchived, setShowArchived] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   const updateInvoice = useUpdateContractInvoice();
   const addInvoice = useAddContractInvoice();
 
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+        
+        setIsAdmin(roles?.some(r => r.role === 'admin') || false);
+      }
+    };
+    checkAdminStatus();
+  }, []);
+
   const { data: allInvoices, isLoading } = useQuery({
-    queryKey: ['all-invoices'],
+    queryKey: ['all-invoices', showArchived],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('contract_invoices')
         .select(`
           *,
@@ -67,8 +85,13 @@ const InvoicesManagement = () => {
             tenant_company_name,
             invoice_type
           )
-        `)
-        .order('created_at', { ascending: false });
+        `);
+      
+      if (!showArchived) {
+        query = query.eq('is_archived', false);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;
       return data.map(invoice => ({
@@ -131,6 +154,7 @@ const InvoicesManagement = () => {
         invoice_file_url: null,
         invoice_uploaded_at: null,
         files: [],
+        is_archived: false,
       });
 
       // Upload file to storage
@@ -193,7 +217,42 @@ const InvoicesManagement = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleArchive = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('contract_invoices')
+        .update({ is_archived: true })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['all-invoices'] });
+
+      toast({
+        title: "Sukces",
+        description: "Dokument został przeniesiony do archiwum",
+      });
+      
+      setDeleteInvoiceId(null);
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się zarchiwizować dokumentu",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePermanentDelete = async (id: string) => {
+    if (!isAdmin) {
+      toast({
+        title: "Błąd",
+        description: "Tylko administrator może usunąć dokument permanentnie",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('contract_invoices')
@@ -202,9 +261,11 @@ const InvoicesManagement = () => {
 
       if (error) throw error;
 
+      queryClient.invalidateQueries({ queryKey: ['all-invoices'] });
+
       toast({
         title: "Sukces",
-        description: "Dokument został usunięty",
+        description: "Dokument został trwale usunięty",
       });
       
       setDeleteInvoiceId(null);
@@ -268,10 +329,20 @@ const InvoicesManagement = () => {
               <p className="text-muted-foreground">Zarządzaj wszystkimi dokumentami rozliczeniowymi</p>
             </div>
           </div>
-          <Button onClick={() => setUploadDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Wgraj paragon
-          </Button>
+            <div className="flex gap-2">
+              {isAdmin && (
+                <Button
+                  variant={showArchived ? "default" : "outline"}
+                  onClick={() => setShowArchived(!showArchived)}
+                >
+                  {showArchived ? "Ukryj archiwum" : "Pokaż archiwum"}
+                </Button>
+              )}
+              <Button onClick={() => setUploadDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Wgraj paragon
+              </Button>
+            </div>
         </div>
 
         <Card>
@@ -682,19 +753,32 @@ const InvoicesManagement = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Archive/Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteInvoiceId} onOpenChange={() => setDeleteInvoiceId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Czy na pewno chcesz usunąć ten dokument?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {showArchived && isAdmin ? "Trwale usuń dokument?" : "Przenieś do archiwum?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Ta akcja jest nieodwracalna. Dokument zostanie trwale usunięty.
+              {showArchived && isAdmin 
+                ? "Ta akcja jest nieodwracalna. Dokument zostanie trwale usunięty z bazy danych."
+                : "Dokument zostanie przeniesiony do archiwum. Administrator będzie mógł go przywrócić lub trwale usunąć."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Anuluj</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteInvoiceId && handleDelete(deleteInvoiceId)}>
-              Usuń
+            <AlertDialogAction 
+              onClick={() => {
+                if (!deleteInvoiceId) return;
+                if (showArchived && isAdmin) {
+                  handlePermanentDelete(deleteInvoiceId);
+                } else {
+                  handleArchive(deleteInvoiceId);
+                }
+              }}
+            >
+              {showArchived && isAdmin ? "Usuń trwale" : "Do archiwum"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

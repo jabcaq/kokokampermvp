@@ -20,20 +20,26 @@ export interface ContractInvoice {
   invoice_uploaded_at: string | null;
   notes: string | null;
   files: ContractInvoiceFile[];
+  is_archived: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export const useContractInvoices = (contractId: string | undefined) => {
+export const useContractInvoices = (contractId: string | undefined, includeArchived: boolean = false) => {
   return useQuery({
-    queryKey: ['contract-invoices', contractId],
+    queryKey: ['contract-invoices', contractId, includeArchived],
     queryFn: async () => {
       if (!contractId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from('contract_invoices')
         .select('*')
-        .eq('contract_id', contractId)
-        .order('created_at', { ascending: false });
+        .eq('contract_id', contractId);
+      
+      if (!includeArchived) {
+        query = query.eq('is_archived', false);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;
       return data.map(invoice => ({
