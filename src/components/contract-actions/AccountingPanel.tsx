@@ -281,24 +281,6 @@ export const AccountingPanel = ({
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Typ płatności</Label>
-                <Select value={invoiceType} onValueChange={(value: any) => handleTypeChange(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="reservation">Kwota rezerwacyjna</SelectItem>
-                    <SelectItem value="main_payment">Kwota zasadnicza</SelectItem>
-                    <SelectItem value="final">Faktura końcowa</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Kwota (PLN)</Label>
-                <Input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" />
-              </div>
-
               <div className="space-y-3">
                 <Label>Wybierz typ dokumentu:</Label>
                 <RadioGroup value={selectedDocumentType} onValueChange={(value: 'paragon' | 'faktura' | 'internal_invoice') => setSelectedDocumentType(value)}>
@@ -321,6 +303,24 @@ export const AccountingPanel = ({
                     </Label>
                   </div>
                 </RadioGroup>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Typ płatności</Label>
+                <Select value={invoiceType} onValueChange={(value: any) => handleTypeChange(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="reservation">Kwota rezerwacyjna</SelectItem>
+                    <SelectItem value="main_payment">Kwota zasadnicza</SelectItem>
+                    <SelectItem value="final">Faktura końcowa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Kwota (PLN)</Label>
+                <Input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" />
               </div>
 
               {selectedDocumentType === 'internal_invoice' && (
