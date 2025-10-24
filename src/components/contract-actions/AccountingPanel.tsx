@@ -35,7 +35,9 @@ export const AccountingPanel = ({
   const [invoiceType, setInvoiceType] = useState<'reservation' | 'main_payment' | 'final'>('reservation');
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
-  const [selectedDocumentType, setSelectedDocumentType] = useState<'paragon' | 'faktura'>('paragon');
+  const [selectedDocumentType, setSelectedDocumentType] = useState<'paragon' | 'faktura' | 'internal_invoice'>('paragon');
+  const [invoiceTitle, setInvoiceTitle] = useState('');
+  const [serviceDescription, setServiceDescription] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isDepositReceived, setIsDepositReceived] = useState(depositReceived);
   const [isSendingDepositNotification, setIsSendingDepositNotification] = useState(false);
@@ -126,19 +128,28 @@ export const AccountingPanel = ({
 
       const uploadLink = `https://app.kokokamper.pl/invoice-upload/${result.id}`;
 
+      // Przygotowanie danych do wysłania
+      const webhookData: any = {
+        invoice_id: result.id,
+        contract_id: contractId,
+        contract_number: contractNumber,
+        tenant_name: tenantName || 'Klient',
+        invoice_type: invoiceType,
+        amount: parseFloat(amount),
+        document_type: selectedDocumentType,
+        upload_link: uploadLink,
+        timestamp: new Date().toISOString()
+      };
+
+      // Dodaj dodatkowe pola dla faktury wewnętrznej
+      if (selectedDocumentType === 'internal_invoice') {
+        webhookData.invoice_title = invoiceTitle || null;
+        webhookData.service_description = serviceDescription || null;
+      }
+
       // Wysyłanie webhooka do księgowości
       const response = await supabase.functions.invoke('send-accounting-request', {
-        body: {
-          invoice_id: result.id,
-          contract_id: contractId,
-          contract_number: contractNumber,
-          tenant_name: tenantName || 'Klient',
-          invoice_type: invoiceType,
-          amount: parseFloat(amount),
-          document_type: selectedDocumentType,
-          upload_link: uploadLink,
-          timestamp: new Date().toISOString()
-        }
+        body: webhookData
       });
 
       if (response.error) {
@@ -148,11 +159,17 @@ export const AccountingPanel = ({
 
       toast({
         title: "Sukces",
-        description: `Wysłano prośbę o ${selectedDocumentType} do księgowości`
+        description: `Wysłano prośbę o ${
+          selectedDocumentType === 'internal_invoice' 
+            ? 'fakturę wewnętrzną' 
+            : selectedDocumentType
+        } do księgowości`
       });
 
       setAmount('');
       setNotes('');
+      setInvoiceTitle('');
+      setServiceDescription('');
       setIsOpen(false);
     } catch (error) {
       console.error('Error:', error);
@@ -281,14 +298,10 @@ export const AccountingPanel = ({
                 <Label>Kwota (PLN)</Label>
                 <Input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" />
               </div>
-              <div className="space-y-2">
-                <Label>Uwagi (opcjonalnie)</Label>
-                <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Dodatkowe informacje..." rows={3} />
-              </div>
 
               <div className="space-y-3">
                 <Label>Wybierz typ dokumentu:</Label>
-                <RadioGroup value={selectedDocumentType} onValueChange={(value: 'paragon' | 'faktura') => setSelectedDocumentType(value)}>
+                <RadioGroup value={selectedDocumentType} onValueChange={(value: 'paragon' | 'faktura' | 'internal_invoice') => setSelectedDocumentType(value)}>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="paragon" id="acc-paragon" />
                     <Label htmlFor="acc-paragon" className="cursor-pointer font-normal">
@@ -301,7 +314,41 @@ export const AccountingPanel = ({
                       Faktura
                     </Label>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="internal_invoice" id="acc-internal" />
+                    <Label htmlFor="acc-internal" className="cursor-pointer font-normal">
+                      Faktura wewnętrzna (JDG → Spółka)
+                    </Label>
+                  </div>
                 </RadioGroup>
+              </div>
+
+              {selectedDocumentType === 'internal_invoice' && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Tytuł faktury (opcjonalnie)</Label>
+                    <Input 
+                      value={invoiceTitle} 
+                      onChange={e => setInvoiceTitle(e.target.value)} 
+                      placeholder="np. Wynajem kampera Mercedes Sprinter"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Opis usługi (opcjonalnie)</Label>
+                    <Textarea 
+                      value={serviceDescription} 
+                      onChange={e => setServiceDescription(e.target.value)} 
+                      placeholder="np. Wynajem pojazdu w okresie 01.01-07.01.2024"
+                      rows={3}
+                    />
+                  </div>
+                </>
+              )}
+              
+              <div className="space-y-2">
+                <Label>Uwagi (opcjonalnie)</Label>
+                <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Dodatkowe informacje..." rows={3} />
               </div>
 
               <Button onClick={handleSubmitToAccounting} disabled={isSending || addInvoice.isPending} className="w-full">
