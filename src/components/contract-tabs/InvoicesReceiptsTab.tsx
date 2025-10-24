@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, Upload, Download, CheckCircle, Clock, FileUp, Receipt, Loader2, X, Eye, FileIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { FileText, Upload, Download, CheckCircle, Clock, FileUp, Receipt, Loader2, X, Eye, FileIcon, Send } from "lucide-react";
 import { useContractInvoices, useAddContractInvoice, useUpdateContractInvoice, ContractInvoiceFile } from "@/hooks/useContractInvoices";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,6 +77,10 @@ export const InvoicesReceiptsTab = ({
   const [previewFile, setPreviewFile] = useState<ContractInvoiceFile | null>(null);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [accountingDialogOpen, setAccountingDialogOpen] = useState(false);
+  const [selectedInvoiceForAccounting, setSelectedInvoiceForAccounting] = useState<any>(null);
+  const [selectedDocumentType, setSelectedDocumentType] = useState<'paragon' | 'faktura'>('paragon');
+  const [isSendingToAccounting, setIsSendingToAccounting] = useState(false);
   const getAmountForType = (type: 'reservation' | 'main_payment' | 'final') => {
     if (!payments) return '';
     try {
@@ -279,48 +284,52 @@ export const InvoicesReceiptsTab = ({
       setIsSaving(false);
     }
   };
-  const copyLinkForNewInvoice = async () => {
+  const openAccountingDialog = async (invoice: any) => {
+    setSelectedInvoiceForAccounting(invoice);
+    setSelectedDocumentType('paragon');
+    setAccountingDialogOpen(true);
+  };
+
+  const sendToAccounting = async () => {
+    if (!selectedInvoiceForAccounting) return;
+
+    setIsSendingToAccounting(true);
     try {
-      const invoiceData = {
-        contract_id: contractId,
-        invoice_type: newInvoice.type,
-        amount: newInvoice.amount && parseFloat(newInvoice.amount) > 0 ? parseFloat(newInvoice.amount) : 0.01,
-        status: 'pending' as 'pending' | 'submitted' | 'invoice_uploaded' | 'completed',
-        submitted_at: null,
-        invoice_file_url: null,
-        invoice_uploaded_at: null,
-        notes: newInvoice.notes || null,
-        files: []
-      };
-      const newInvoiceRecord = await addInvoice.mutateAsync(invoiceData);
-      if (newInvoiceRecord) {
-        const uploadLink = `https://app.kokokamper.pl/invoice-upload/${newInvoiceRecord.id}`;
-        await navigator.clipboard.writeText(uploadLink);
-        setNewInvoice({
-          type: 'reservation',
-          amount: '',
-          notes: ''
-        });
-        toast({
-          title: "Link skopiowany",
-          description: "Link do wgrania dokumentu został skopiowany. Dokument został zapisany."
-        });
-      }
+      const uploadLink = `https://app.kokokamper.pl/invoice-upload/${selectedInvoiceForAccounting.id}`;
+      
+      const response = await supabase.functions.invoke('send-accounting-request', {
+        body: {
+          invoice_id: selectedInvoiceForAccounting.id,
+          contract_id: contractId,
+          contract_number: contractNumber,
+          tenant_name: tenantName,
+          invoice_type: selectedInvoiceForAccounting.invoice_type,
+          amount: selectedInvoiceForAccounting.amount,
+          document_type: selectedDocumentType,
+          upload_link: uploadLink,
+          timestamp: new Date().toISOString()
+        }
+      });
+
+      if (response.error) throw response.error;
+
+      toast({
+        title: "Wysłano do księgowości",
+        description: `Prośba o ${selectedDocumentType} została wysłana do księgowości`
+      });
+
+      setAccountingDialogOpen(false);
+      setSelectedInvoiceForAccounting(null);
     } catch (error) {
+      console.error('Error sending to accounting:', error);
       toast({
         title: "Błąd",
-        description: "Nie udało się utworzyć linku",
+        description: "Nie udało się wysłać prośby do księgowości",
         variant: "destructive"
       });
+    } finally {
+      setIsSendingToAccounting(false);
     }
-  };
-  const copyLinkToClipboard = async (invoiceId: string) => {
-    const uploadLink = `https://app.kokokamper.pl/invoice-upload/${invoiceId}`;
-    await navigator.clipboard.writeText(uploadLink);
-    toast({
-      title: "Link skopiowany",
-      description: "Link do wgrania dokumentu został skopiowany do schowka"
-    });
   };
   if (isLoading) {
     return <div className="flex items-center justify-center p-8">Ładowanie...</div>;
@@ -366,10 +375,10 @@ export const InvoicesReceiptsTab = ({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => copyLinkToClipboard(invoice.id)}
+                        onClick={() => openAccountingDialog(invoice)}
                       >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Kopiuj link
+                        <Send className="h-4 w-4 mr-2" />
+                        Wyślij do księgowości
                       </Button>
                     </div>
 
@@ -530,10 +539,6 @@ export const InvoicesReceiptsTab = ({
                     Zapisywanie...
                   </> : <>Zapisz dokument</>}
               </Button>
-              <Button onClick={copyLinkForNewInvoice} variant="outline" disabled={isSaving || addInvoice.isPending}>
-                <Upload className="h-4 w-4 mr-2" />
-                Skopiuj link
-              </Button>
             </div>
           </div>
         </CardContent>
@@ -567,6 +572,84 @@ export const InvoicesReceiptsTab = ({
                   </Button>
                 </div>
               </>}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Accounting Request Dialog */}
+      <Dialog open={accountingDialogOpen} onOpenChange={setAccountingDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Wyślij do księgowości</DialogTitle>
+            <DialogDescription>
+              Wybierz typ dokumentu, o który chcesz poprosić księgowość
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-3">
+              <Label>Wybierz typ dokumentu:</Label>
+              <RadioGroup value={selectedDocumentType} onValueChange={(value: 'paragon' | 'faktura') => setSelectedDocumentType(value)}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="paragon" id="paragon" />
+                  <Label htmlFor="paragon" className="cursor-pointer font-normal">
+                    Paragon
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="faktura" id="faktura" />
+                  <Label htmlFor="faktura" className="cursor-pointer font-normal">
+                    Faktura
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {selectedInvoiceForAccounting && (
+              <div className="bg-muted/50 p-3 rounded-lg space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Typ płatności:</span>
+                  <span className="font-medium">
+                    {invoiceTypeLabels[selectedInvoiceForAccounting.invoice_type as keyof typeof invoiceTypeLabels]}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Kwota:</span>
+                  <span className="font-medium">{selectedInvoiceForAccounting.amount.toFixed(2)} PLN</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Umowa:</span>
+                  <span className="font-medium">{contractNumber}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setAccountingDialogOpen(false)}
+              className="flex-1"
+              disabled={isSendingToAccounting}
+            >
+              Anuluj
+            </Button>
+            <Button
+              onClick={sendToAccounting}
+              className="flex-1"
+              disabled={isSendingToAccounting}
+            >
+              {isSendingToAccounting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Wysyłanie...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Wyślij
+                </>
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
