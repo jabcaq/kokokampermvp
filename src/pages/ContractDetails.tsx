@@ -419,6 +419,7 @@ const ContractDetails = () => {
           payments={contract.payments}
           tenantName={contract.tenant_name}
           depositReceived={contract.deposit_received}
+          tenantNip={contract.tenant_nip}
         />
       </div>
 
@@ -438,7 +439,7 @@ const ContractDetails = () => {
           </TabsTrigger>
           <TabsTrigger value="invoices" className="gap-2">
             <CreditCard className="h-4 w-4" />
-            {displayData?.invoice_type === 'invoice' ? 'Faktury' : 'Paragony'}
+            {displayData?.tenant_nip ? 'Faktury' : 'Paragony'}
           </TabsTrigger>
           <TabsTrigger value="handover" className="gap-2">
             <Truck className="h-4 w-4" />
@@ -1273,6 +1274,7 @@ const ContractDetails = () => {
             startDate={contract.start_date}
             endDate={contract.end_date}
             payments={contract.payments}
+            tenantNip={contract.tenant_nip}
           />
         </TabsContent>
 

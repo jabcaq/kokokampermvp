@@ -20,13 +20,15 @@ interface AccountingPanelProps {
   payments?: any;
   tenantName?: string;
   depositReceived?: boolean;
+  tenantNip?: string;
 }
 export const AccountingPanel = ({
   contractId,
   contractNumber,
   payments,
   tenantName,
-  depositReceived = false
+  depositReceived = false,
+  tenantNip
 }: AccountingPanelProps) => {
   const {
     toast
@@ -35,7 +37,7 @@ export const AccountingPanel = ({
   const [invoiceType, setInvoiceType] = useState<'reservation' | 'main_payment' | 'final'>('reservation');
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
-  const [selectedDocumentType, setSelectedDocumentType] = useState<'paragon' | 'faktura' | 'internal_invoice'>('paragon');
+  const [selectedDocumentType, setSelectedDocumentType] = useState<'paragon' | 'faktura' | 'internal_invoice'>(tenantNip ? 'faktura' : 'paragon');
   const [invoiceTitle, setInvoiceTitle] = useState('');
   const [serviceDescription, setServiceDescription] = useState('');
   const [isSending, setIsSending] = useState(false);

@@ -21,6 +21,7 @@ interface InvoicesReceiptsTabProps {
   startDate: string;
   endDate: string;
   payments?: any;
+  tenantNip?: string;
 }
 const statusConfig = {
   pending: {
@@ -56,7 +57,8 @@ export const InvoicesReceiptsTab = ({
   tenantName,
   startDate,
   endDate,
-  payments
+  payments,
+  tenantNip
 }: InvoicesReceiptsTabProps) => {
   const {
     toast
@@ -79,7 +81,7 @@ export const InvoicesReceiptsTab = ({
   const [isSaving, setIsSaving] = useState(false);
   const [accountingDialogOpen, setAccountingDialogOpen] = useState(false);
   const [selectedInvoiceForAccounting, setSelectedInvoiceForAccounting] = useState<any>(null);
-  const [selectedDocumentType, setSelectedDocumentType] = useState<'paragon' | 'faktura'>('paragon');
+  const [selectedDocumentType, setSelectedDocumentType] = useState<'paragon' | 'faktura'>(tenantNip ? 'faktura' : 'paragon');
   const [isSendingToAccounting, setIsSendingToAccounting] = useState(false);
   const getAmountForType = (type: 'reservation' | 'main_payment' | 'final') => {
     if (!payments) return '';
@@ -287,7 +289,7 @@ export const InvoicesReceiptsTab = ({
   };
   const openAccountingDialog = async (invoice: any) => {
     setSelectedInvoiceForAccounting(invoice);
-    setSelectedDocumentType('paragon');
+    setSelectedDocumentType(tenantNip ? 'faktura' : 'paragon');
     setAccountingDialogOpen(true);
   };
 
