@@ -334,9 +334,15 @@ export const InvoicesReceiptsTab = ({
   if (isLoading) {
     return <div className="flex items-center justify-center p-8">Ładowanie...</div>;
   }
+
+  // Filtruj faktury - pokazuj tylko te, które mają wgrane pliki
+  const visibleInvoices = invoices?.filter(invoice => 
+    invoice.status === 'invoice_uploaded' || invoice.status === 'completed'
+  ) || [];
+
   return <div className="space-y-6">
       {/* Existing invoices table */}
-      {invoices && invoices.length > 0 && (
+      {visibleInvoices.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -349,7 +355,7 @@ export const InvoicesReceiptsTab = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {invoices.map((invoice) => {
+              {visibleInvoices.map((invoice) => {
                 const StatusIcon = statusConfig[invoice.status as keyof typeof statusConfig]?.icon || Clock;
                 const statusLabel = statusConfig[invoice.status as keyof typeof statusConfig]?.label || invoice.status;
                 const statusClass = statusConfig[invoice.status as keyof typeof statusConfig]?.className || '';

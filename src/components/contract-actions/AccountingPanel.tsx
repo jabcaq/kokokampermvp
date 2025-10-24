@@ -6,19 +6,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { useAddContractInvoice, useContractInvoices } from "@/hooks/useContractInvoices";
-import { Send, ExternalLink, FileCheck } from "lucide-react";
+import { Send, ExternalLink, FileCheck, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 interface AccountingPanelProps {
   contractId: string;
   contractNumber: string;
   payments?: any;
+  tenantName?: string;
 }
 export const AccountingPanel = ({
   contractId,
   contractNumber,
-  payments
+  payments,
+  tenantName
 }: AccountingPanelProps) => {
   const {
     toast
@@ -27,6 +31,8 @@ export const AccountingPanel = ({
   const [invoiceType, setInvoiceType] = useState<'reservation' | 'main_payment' | 'final'>('reservation');
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
+  const [selectedDocumentType, setSelectedDocumentType] = useState<'paragon' | 'faktura'>('paragon');
+  const [isSending, setIsSending] = useState(false);
   const addInvoice = useAddContractInvoice();
   const {
     data: invoices
@@ -90,39 +96,61 @@ export const AccountingPanel = ({
       });
       return;
     }
+
+    setIsSending(true);
     try {
+      // Tworzenie faktury w bazie
       const result = await addInvoice.mutateAsync({
         contract_id: contractId,
         invoice_type: invoiceType,
         amount: parseFloat(amount),
-        status: 'submitted',
-        submitted_at: new Date().toISOString(),
+        status: 'pending',
+        submitted_at: null,
         invoice_file_url: null,
         invoice_uploaded_at: null,
         notes: notes || null,
         files: []
       });
-      const accountingLink = `https://app.kokokamper.pl/accounting-upload/${result.id}`;
-      toast({
-        title: "Sukces",
-        description: "Wysłano do księgowości"
+
+      const uploadLink = `https://app.kokokamper.pl/invoice-upload/${result.id}`;
+
+      // Wysyłanie webhooka do księgowości
+      const response = await supabase.functions.invoke('send-accounting-request', {
+        body: {
+          invoice_id: result.id,
+          contract_id: contractId,
+          contract_number: contractNumber,
+          tenant_name: tenantName || 'Klient',
+          invoice_type: invoiceType,
+          amount: parseFloat(amount),
+          document_type: selectedDocumentType,
+          upload_link: uploadLink,
+          timestamp: new Date().toISOString()
+        }
       });
 
-      // Copy link to clipboard
-      navigator.clipboard.writeText(accountingLink);
+      if (response.error) {
+        console.error('Webhook error:', response.error);
+        throw new Error('Nie udało się wysłać prośby do księgowości');
+      }
+
       toast({
-        title: "Link skopiowany",
-        description: "Link dla księgowości został skopiowany do schowka"
+        title: "Sukces",
+        description: `Wysłano prośbę o ${selectedDocumentType} do księgowości`
       });
+
       setAmount('');
       setNotes('');
       setIsOpen(false);
     } catch (error) {
+      console.error('Error:', error);
       toast({
         title: "Błąd",
         description: "Nie udało się wysłać do księgowości",
         variant: "destructive"
       });
+    } finally {
+      setIsSending(false);
     }
   };
   const copyAccountingLink = (invoiceId: string) => {
@@ -172,11 +200,40 @@ export const AccountingPanel = ({
                 <Input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" />
               </div>
               <div className="space-y-2">
-                <Label>Notatki</Label>
+                <Label>Uwagi (opcjonalnie)</Label>
                 <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Dodatkowe informacje..." rows={3} />
               </div>
-              <Button onClick={handleSubmitToAccounting} disabled={addInvoice.isPending} className="w-full">
-                Wyślij
+
+              <div className="space-y-3">
+                <Label>Wybierz typ dokumentu:</Label>
+                <RadioGroup value={selectedDocumentType} onValueChange={(value: 'paragon' | 'faktura') => setSelectedDocumentType(value)}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="paragon" id="acc-paragon" />
+                    <Label htmlFor="acc-paragon" className="cursor-pointer font-normal">
+                      Paragon
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="faktura" id="acc-faktura" />
+                    <Label htmlFor="acc-faktura" className="cursor-pointer font-normal">
+                      Faktura
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <Button onClick={handleSubmitToAccounting} disabled={isSending || addInvoice.isPending} className="w-full">
+                {isSending || addInvoice.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Wysyłanie...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Wyślij
+                  </>
+                )}
               </Button>
             </div>
           </DialogContent>
