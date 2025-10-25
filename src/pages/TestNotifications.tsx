@@ -487,6 +487,31 @@ const TestNotifications = () => {
   };
 
   const handleSendHandoverDayNotification = async () => {
+    setIsSendingHandoverDay(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('check-handover-day');
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Powiadomienie wysłane",
+        description: `Wysłano powiadomienia dla ${data.count} kontraktów`,
+      });
+      
+      console.log('Handover notification result:', data);
+    } catch (error: any) {
+      toast({
+        title: "Błąd",
+        description: error.message,
+        variant: "destructive",
+      });
+      console.error('Error:', error);
+    } finally {
+      setIsSendingHandoverDay(false);
+    }
+  };
+
+  const handleSendHandoverDayNotificationOld = async () => {
     if (!selectedHandoverDayDate) {
       toast({
         title: "Błąd",

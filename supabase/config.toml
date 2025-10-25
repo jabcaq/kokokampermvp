@@ -1,1 +1,22 @@
 project_id = "qfnptknanxyfxvcuhgck"
+
+[functions.check-handover-day]
+verify_jwt = false
+
+[functions.check-return-day]
+verify_jwt = false
+
+[functions.check-return-2days]
+verify_jwt = false
+
+[functions.check-upcoming-rentals]
+verify_jwt = false
+
+[functions.check-rental-2days]
+verify_jwt = false
+
+[functions.check-expiring-insurance]
+verify_jwt = false
+
+[functions.check-expiring-inspection]
+verify_jwt = false
