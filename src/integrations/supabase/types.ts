@@ -16,30 +16,63 @@ export type Database = {
     Tables: {
       clients: {
         Row: {
+          address: string | null
+          company_name: string | null
           contracts_count: number | null
           created_at: string | null
           email: string
           id: string
+          id_issuer: string | null
+          id_number: string | null
+          id_type: string | null
+          license_category: string | null
+          license_date: string | null
+          license_number: string | null
           name: string
+          nip: string | null
+          pesel: string | null
           phone: string | null
+          trailer_license_category: string | null
           updated_at: string | null
         }
         Insert: {
+          address?: string | null
+          company_name?: string | null
           contracts_count?: number | null
           created_at?: string | null
           email: string
           id?: string
+          id_issuer?: string | null
+          id_number?: string | null
+          id_type?: string | null
+          license_category?: string | null
+          license_date?: string | null
+          license_number?: string | null
           name: string
+          nip?: string | null
+          pesel?: string | null
           phone?: string | null
+          trailer_license_category?: string | null
           updated_at?: string | null
         }
         Update: {
+          address?: string | null
+          company_name?: string | null
           contracts_count?: number | null
           created_at?: string | null
           email?: string
           id?: string
+          id_issuer?: string | null
+          id_number?: string | null
+          id_type?: string | null
+          license_category?: string | null
+          license_date?: string | null
+          license_number?: string | null
           name?: string
+          nip?: string | null
+          pesel?: string | null
           phone?: string | null
+          trailer_license_category?: string | null
           updated_at?: string | null
         }
         Relationships: []
