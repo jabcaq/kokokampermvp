@@ -25,8 +25,12 @@ export default function ReturnBooking() {
   const contractNumber = searchParams.get("contractNumber") || "";
   const tenantName = searchParams.get("tenantName") || "";
   const vehicleModel = searchParams.get("vehicleModel") || "";
-  const startDate = searchParams.get("startDate") || "";
-  const endDate = searchParams.get("endDate") || "";
+  
+  // Safely parse dates from URL params
+  const startDateStr = searchParams.get("startDate");
+  const endDateStr = searchParams.get("endDate");
+  const startDateParsed = startDateStr ? new Date(startDateStr) : null;
+  const endDateParsed = endDateStr ? new Date(endDateStr) : null;
 
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState<string>();
@@ -44,11 +48,13 @@ export default function ReturnBooking() {
   const hasAvailableStaff = availableEmployees && availableEmployees.length > 0;
 
   // Calculate minimum date (contract end date)
-  const minDate = endDate ? startOfDay(new Date(endDate)) : new Date();
+  const minDate = endDateParsed && !isNaN(endDateParsed.getTime()) 
+    ? startOfDay(endDateParsed) 
+    : new Date();
   
   // Check if selected date is after contract end date
-  const isLateReturn = selectedDate && endDate 
-    ? isAfter(startOfDay(selectedDate), startOfDay(new Date(endDate)))
+  const isLateReturn = selectedDate && endDateParsed && !isNaN(endDateParsed.getTime())
+    ? isAfter(startOfDay(selectedDate), startOfDay(endDateParsed))
     : false;
 
   const handleConfirm = () => {
@@ -146,9 +152,9 @@ export default function ReturnBooking() {
                     <p><span className="text-muted-foreground">Numer:</span> <strong>{contractNumber}</strong></p>
                     <p><span className="text-muted-foreground">Najemca:</span> {tenantName}</p>
                     <p><span className="text-muted-foreground">Pojazd:</span> {vehicleModel}</p>
-                    {startDate && endDate && (
+                    {startDateParsed && endDateParsed && !isNaN(startDateParsed.getTime()) && !isNaN(endDateParsed.getTime()) && (
                       <p className="text-xs text-muted-foreground pt-2">
-                        Okres najmu: {format(new Date(startDate), "dd.MM.yyyy")} - {format(new Date(endDate), "dd.MM.yyyy")}
+                        Okres najmu: {format(startDateParsed, "dd.MM.yyyy")} - {format(endDateParsed, "dd.MM.yyyy")}
                       </p>
                     )}
                   </div>
