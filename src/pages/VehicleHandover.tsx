@@ -59,16 +59,19 @@ const VehicleHandover = () => {
     photos: [],
   });
 
-  // Load contract meta when only ID is provided
+  // Load contract meta when contractId is provided
   useEffect(() => {
     const loadContractMeta = async () => {
-      if (contractId && (!contractNumber || !tenantName || !vehicleModel || !startDate || !endDate)) {
+      if (contractId) {
         const { data, error } = await supabase
           .from('contracts')
           .select('contract_number, tenant_name, vehicle_model, start_date, end_date')
           .eq('id', contractId)
           .maybeSingle();
-        if (!error && data) setContractMeta(data);
+        if (!error && data) {
+          console.log('Loaded contract meta:', data);
+          setContractMeta(data);
+        }
       }
     };
     loadContractMeta();
