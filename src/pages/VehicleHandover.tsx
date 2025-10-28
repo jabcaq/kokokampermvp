@@ -10,6 +10,7 @@ import { useAddVehicleHandover, useUpdateVehicleHandover, useVehicleHandovers, u
 import { useCreateNotification } from "@/hooks/useNotifications";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format, isValid, parseISO } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { supabase } from "@/integrations/supabase/client";
 
 const VehicleHandover = () => {
@@ -321,8 +322,8 @@ const VehicleHandover = () => {
                   };
                   const s = toDate(startRaw);
                   const e = toDate(endRaw);
-                  const startFormatted = s ? format(s, 'dd.MM.yyyy') : '—';
-                  const endFormatted = e ? format(e, 'dd.MM.yyyy') : '—';
+                  const startFormatted = s ? formatInTimeZone(s, 'Europe/Warsaw', 'dd.MM.yyyy HH:mm') : '—';
+                  const endFormatted = e ? formatInTimeZone(e, 'Europe/Warsaw', 'dd.MM.yyyy HH:mm') : '—';
                   return `${startFormatted} - ${endFormatted}`;
                 })()}</p>
               </div>
