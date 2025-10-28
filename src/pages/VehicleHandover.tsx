@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAddVehicleHandover, useUpdateVehicleHandover, useVehicleHandovers, useDeleteVehicleHandover } from "@/hooks/useVehicleHandovers";
 import { useCreateNotification } from "@/hooks/useNotifications";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { format } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 const VehicleHandover = () => {
@@ -306,10 +306,17 @@ const VehicleHandover = () => {
                 <p><span className="font-medium">Najemca:</span> {tenantName || contractMeta?.tenant_name || '—'}</p>
                 <p><span className="font-medium">Pojazd:</span> {vehicleModel || contractMeta?.vehicle_model || '—'}</p>
                 <p><span className="font-medium">Okres najmu:</span> {(() => {
-                  const start = startDate || contractMeta?.start_date;
-                  const end = endDate || contractMeta?.end_date;
-                  const startFormatted = start ? format(new Date(start), 'dd.MM.yyyy') : '—';
-                  const endFormatted = end ? format(new Date(end), 'dd.MM.yyyy') : '—';
+                  const startRaw = startDate || contractMeta?.start_date;
+                  const endRaw = endDate || contractMeta?.end_date;
+                  const toDate = (v?: string) => {
+                    if (!v) return undefined;
+                    const d = parseISO(v);
+                    return isValid(d) ? d : undefined;
+                  };
+                  const s = toDate(startRaw);
+                  const e = toDate(endRaw);
+                  const startFormatted = s ? format(s, 'dd.MM.yyyy') : '—';
+                  const endFormatted = e ? format(e, 'dd.MM.yyyy') : '—';
                   return `${startFormatted} - ${endFormatted}`;
                 })()}</p>
               </div>
