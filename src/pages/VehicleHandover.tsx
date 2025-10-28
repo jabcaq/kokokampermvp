@@ -305,7 +305,13 @@ const VehicleHandover = () => {
                 <p><span className="font-medium">Numer umowy:</span> {contractNumber || contractMeta?.contract_number || '—'}</p>
                 <p><span className="font-medium">Najemca:</span> {tenantName || contractMeta?.tenant_name || '—'}</p>
                 <p><span className="font-medium">Pojazd:</span> {vehicleModel || contractMeta?.vehicle_model || '—'}</p>
-                <p><span className="font-medium">Okres najmu:</span> {(startDate || contractMeta?.start_date) ? format(new Date(startDate || contractMeta!.start_date!), 'dd.MM.yyyy') : '—'} - {(endDate || contractMeta?.end_date) ? format(new Date(endDate || contractMeta!.end_date!), 'dd.MM.yyyy') : '—'}</p>
+                <p><span className="font-medium">Okres najmu:</span> {(() => {
+                  const start = startDate || contractMeta?.start_date;
+                  const end = endDate || contractMeta?.end_date;
+                  const startFormatted = start ? format(new Date(start), 'dd.MM.yyyy') : '—';
+                  const endFormatted = end ? format(new Date(end), 'dd.MM.yyyy') : '—';
+                  return `${startFormatted} - ${endFormatted}`;
+                })()}</p>
               </div>
             </div>
 
