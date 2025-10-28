@@ -41,6 +41,7 @@ const VehicleHandover = () => {
   const existingHandover = existingHandovers?.[0];
 
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     mileage: "",
@@ -121,7 +122,10 @@ const VehicleHandover = () => {
       });
       return;
     }
+
+    if (isSubmitting) return;
     
+    setIsSubmitting(true);
     try {
       // Upload new files to storage
       const newProtocolUrls = formData.handoverProtocol 
@@ -178,6 +182,8 @@ const VehicleHandover = () => {
         description: "Nie udało się przesłać danych.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -540,8 +546,8 @@ const VehicleHandover = () => {
                   >
                     Clear form
                   </Button>
-                  <Button type="submit" disabled={addHandoverMutation.isPending || updateHandoverMutation.isPending}>
-                    {(addHandoverMutation.isPending || updateHandoverMutation.isPending) ? 'Zapisywanie...' : (existingHandover ? 'Zaktualizuj' : 'Wyślij')}
+                  <Button type="submit" disabled={isSubmitting || addHandoverMutation.isPending || updateHandoverMutation.isPending}>
+                    {(isSubmitting || addHandoverMutation.isPending || updateHandoverMutation.isPending) ? 'Zapisywanie...' : (existingHandover ? 'Zaktualizuj' : 'Wyślij')}
                   </Button>
                 </div>
               </form>
