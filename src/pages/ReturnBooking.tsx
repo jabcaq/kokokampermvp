@@ -152,6 +152,9 @@ export default function ReturnBooking() {
                     <p><span className="text-muted-foreground">Numer:</span> <strong>{contractNumber}</strong></p>
                     <p><span className="text-muted-foreground">Najemca:</span> {tenantName}</p>
                     <p><span className="text-muted-foreground">Pojazd:</span> {vehicleModel}</p>
+                    {endDateParsed && !isNaN(endDateParsed.getTime()) && (
+                      <p><span className="text-muted-foreground">Data zwrotu:</span> <strong>{format(endDateParsed, "dd.MM.yyyy HH:mm")}</strong></p>
+                    )}
                     {startDateParsed && endDateParsed && !isNaN(startDateParsed.getTime()) && !isNaN(endDateParsed.getTime()) && (
                       <p className="text-xs text-muted-foreground pt-2">
                         Okres najmu: {format(startDateParsed, "dd.MM.yyyy")} - {format(endDateParsed, "dd.MM.yyyy")}
