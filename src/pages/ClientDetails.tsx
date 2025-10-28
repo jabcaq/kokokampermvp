@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Mail, Phone, FileText, Calendar, MapPin, Loader2, Trash2, Edit } from "lucide-react";
+import { ArrowLeft, Mail, Phone, FileText, Calendar, MapPin, Loader2, Trash2, Edit, IdCard, CreditCard, Car } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -192,6 +192,21 @@ const ClientDetails = () => {
               <p className="text-sm text-muted-foreground">Telefon</p>
               <p className="font-medium">{client.phone || 'Brak danych'}</p>
             </div>
+            {client.address && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Adres
+                </p>
+                <p className="font-medium">{client.address}</p>
+              </div>
+            )}
+            {client.company_name && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Nazwa firmy</p>
+                <p className="font-medium">{client.company_name}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -226,6 +241,91 @@ const ClientDetails = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dane osobowe i dokumenty */}
+      {(client.id_type || client.pesel || client.nip || client.license_number) && (
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Dokumenty tożsamości */}
+          {(client.id_type || client.pesel || client.nip) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <IdCard className="h-5 w-5" />
+                  Dokumenty tożsamości
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {client.id_type && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Rodzaj dokumentu</p>
+                    <p className="font-medium">{client.id_type}</p>
+                  </div>
+                )}
+                {client.id_number && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Numer dokumentu</p>
+                    <p className="font-medium">{client.id_number}</p>
+                  </div>
+                )}
+                {client.id_issuer && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Wydany przez</p>
+                    <p className="font-medium">{client.id_issuer}</p>
+                  </div>
+                )}
+                {client.pesel && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">PESEL</p>
+                    <p className="font-medium">{client.pesel}</p>
+                  </div>
+                )}
+                {client.nip && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">NIP</p>
+                    <p className="font-medium">{client.nip}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Prawo jazdy */}
+          {client.license_number && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Car className="h-5 w-5" />
+                  Prawo jazdy
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Numer prawa jazdy</p>
+                  <p className="font-medium">{client.license_number}</p>
+                </div>
+                {client.license_date && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Data wydania</p>
+                    <p className="font-medium">{format(new Date(client.license_date), 'dd.MM.yyyy')}</p>
+                  </div>
+                )}
+                {client.license_category && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Kategoria</p>
+                    <p className="font-medium">{client.license_category}</p>
+                  </div>
+                )}
+                {client.trailer_license_category && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Kategoria z przyczepą</p>
+                    <p className="font-medium">{client.trailer_license_category}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* Lista umów */}
       <Card>

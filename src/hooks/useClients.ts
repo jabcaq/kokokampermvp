@@ -9,6 +9,17 @@ export interface Client {
   contracts_count: number;
   created_at?: string;
   updated_at?: string;
+  address?: string | null;
+  id_type?: string | null;
+  id_number?: string | null;
+  id_issuer?: string | null;
+  pesel?: string | null;
+  nip?: string | null;
+  license_number?: string | null;
+  license_date?: string | null;
+  license_category?: string | null;
+  trailer_license_category?: string | null;
+  company_name?: string | null;
 }
 
 export const useClients = () => {
