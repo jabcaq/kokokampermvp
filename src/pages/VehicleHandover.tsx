@@ -320,8 +320,13 @@ const VehicleHandover = () => {
                   const endRaw = endDate || contractMeta?.end_date;
                   const toDate = (v?: string) => {
                     if (!v) return undefined;
-                    const d = parseISO(v);
-                    return isValid(d) ? d : undefined;
+                    let s = v;
+                    // Normalize "YYYY-MM-DD HH:mm:ss+ZZ" to ISO by replacing space with "T"
+                    if (typeof s === 'string' && s.includes(' ') && !s.includes('T')) {
+                      s = s.replace(' ', 'T');
+                    }
+                    const d = new Date(s);
+                    return isNaN(d.getTime()) ? undefined : d;
                   };
                   const s = toDate(startRaw);
                   const e = toDate(endRaw);
