@@ -97,6 +97,14 @@ const DriverSubmission = () => {
     
     if (!contract?.id) return;
 
+    // Validate license category is selected
+    if (!formData.licenseCategory || formData.licenseCategory.length === 0) {
+      toast.error("Błąd walidacji", {
+        description: "Musisz wybrać przynajmniej jedną kategorię prawa jazdy"
+      });
+      return;
+    }
+
     // Validate number of travelers
     if (!formData.numberOfTravelers || Number(formData.numberOfTravelers) < 1) {
       toast.error("Błąd walidacji", {
@@ -245,9 +253,12 @@ const DriverSubmission = () => {
         description: `Dziękujemy za przesłanie danych ${driversCount} ${driversCount === 1 ? 'kierowcy' : 'kierowców'}`,
       });
       setSubmitted(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting driver data:', error);
-      toast.error("Wystąpił błąd podczas zapisywania danych");
+      const errorMessage = error?.message || 'Nieznany błąd';
+      toast.error("Wystąpił błąd podczas zapisywania danych", {
+        description: errorMessage
+      });
     }
   };
 
@@ -909,9 +920,16 @@ const DriverSubmission = () => {
                 ))}
               </div>
 
-              <Button type="submit" className="w-full gap-2 shadow-md">
+              <Button 
+                type="submit" 
+                className="w-full gap-2 shadow-md"
+                disabled={updateContract.isPending || createNotificationMutation.isPending}
+              >
                 <Send className="h-4 w-4" />
-                Wyślij zgłoszenie {additionalDrivers.length > 0 && `(${1 + additionalDrivers.length} ${additionalDrivers.length === 1 ? 'kierowca' : 'kierowców'})`}
+                {(updateContract.isPending || createNotificationMutation.isPending) 
+                  ? 'Wysyłanie...' 
+                  : `Wyślij zgłoszenie ${additionalDrivers.length > 0 ? `(${1 + additionalDrivers.length} ${additionalDrivers.length === 1 ? 'kierowca' : 'kierowców'})` : ''}`
+                }
               </Button>
             </form>
           </CardContent>
