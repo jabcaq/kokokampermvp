@@ -166,6 +166,25 @@ const ContractDetails = () => {
         updates,
       });
       
+      // Aktualizuj dane firmowe w profilu klienta jeśli zostały uzupełnione
+      if (contract?.client_id && updates.tenant_company_name) {
+        try {
+          const { error: clientError } = await supabase
+            .from('clients')
+            .update({
+              company_name: updates.tenant_company_name,
+              nip: updates.tenant_nip || null,
+            })
+            .eq('id', contract.client_id);
+          
+          if (clientError) {
+            console.error('Error updating client company info:', clientError);
+          }
+        } catch (clientErr) {
+          console.error('Failed to update client:', clientErr);
+        }
+      }
+      
       // Wyślij webhook jeśli status zmienił się na 'active'
       if (statusChangedToActive && contract) {
         try {
