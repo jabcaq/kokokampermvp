@@ -60,7 +60,7 @@ const DriverSubmission = () => {
     trailerO1Mass: "",
   });
 
-  const [additionalDriversLicenseCategories, setAdditionalDriversLicenseCategories] = useState<Record<number, string[]>>({});
+  const [additionalDriversHasCategoryB, setAdditionalDriversHasCategoryB] = useState<Record<number, boolean>>({});
 
   // Pre-fill form with contract tenant data when contract loads
   useEffect(() => {
@@ -188,7 +188,7 @@ const DriverSubmission = () => {
         tel: form[`add_driver_${driverIndex}_phone`].value,
         prawo_jazdy_numer: form[`add_driver_${driverIndex}_license`].value,
         prawo_jazdy_data: form[`add_driver_${driverIndex}_license_date`].value,
-        prawo_jazdy_kategoria: (additionalDriversLicenseCategories[driverIndex] || []).join(', '),
+        prawo_jazdy_kategoria: 'B',
         dokument_rodzaj: form[`add_driver_${driverIndex}_doc_type`].value,
         dokument_numer: form[`add_driver_${driverIndex}_doc_number`].value,
         dokument_organ: form[`add_driver_${driverIndex}_doc_issued`].value,
@@ -927,42 +927,32 @@ const DriverSubmission = () => {
                         </div>
 
                         <div className="space-y-3 sm:col-span-2">
-                          <Label>Kategoria prawa jazdy *</Label>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 border rounded-lg bg-background">
-                            {['B', 'B1', 'B96', 'B+E', 'BE'].map((category) => (
-                              <div key={category} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`add-driver-${driverIndex}-category-${category}`}
-                                  checked={(additionalDriversLicenseCategories[driverIndex] || []).includes(category)}
-                                  onCheckedChange={(checked) => {
-                                    const currentCategories = additionalDriversLicenseCategories[driverIndex] || [];
-                                    if (checked) {
-                                      setAdditionalDriversLicenseCategories({
-                                        ...additionalDriversLicenseCategories,
-                                        [driverIndex]: [...currentCategories, category]
-                                      });
-                                    } else {
-                                      setAdditionalDriversLicenseCategories({
-                                        ...additionalDriversLicenseCategories,
-                                        [driverIndex]: currentCategories.filter(c => c !== category)
-                                      });
-                                    }
-                                  }}
-                                />
+                          <Label>Prawo jazdy - kategoria dla kampera *</Label>
+                          <div className="p-4 border rounded-lg bg-muted/30">
+                            <div className="flex items-start gap-3">
+                              <Checkbox
+                                id={`add-driver-${driverIndex}-category-b`}
+                                checked={additionalDriversHasCategoryB[driverIndex] || false}
+                                onCheckedChange={(checked) => {
+                                  setAdditionalDriversHasCategoryB({
+                                    ...additionalDriversHasCategoryB,
+                                    [driverIndex]: checked === true
+                                  });
+                                }}
+                              />
+                              <div className="space-y-1">
                                 <label
-                                  htmlFor={`add-driver-${driverIndex}-category-${category}`}
-                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                  htmlFor={`add-driver-${driverIndex}-category-b`}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
                                 >
-                                  {category}
+                                  Potwierdzam posiadanie prawa jazdy kategorii B
                                 </label>
+                                <p className="text-xs text-muted-foreground">
+                                  Do prowadzenia kampera wymagana jest kategoria B
+                                </p>
                               </div>
-                            ))}
+                            </div>
                           </div>
-                          {(additionalDriversLicenseCategories[driverIndex] || []).length > 0 && (
-                            <p className="text-xs text-muted-foreground">
-                              Wybrano: {(additionalDriversLicenseCategories[driverIndex] || []).join(', ')}
-                            </p>
-                          )}
                         </div>
                       </div>
 
