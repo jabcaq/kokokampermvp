@@ -20,3 +20,9 @@ verify_jwt = false
 
 [functions.check-expiring-inspection]
 verify_jwt = false
+
+[functions.check-deposit-3days]
+verify_jwt = false
+
+[functions.check-deposit-5days]
+verify_jwt = false
