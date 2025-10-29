@@ -66,9 +66,11 @@ const TestNotifications = () => {
   const [isSendingReceiptNotification, setIsSendingReceiptNotification] = useState(false);
   
   // Deposit check 3 days before start notification state
+  const [selectedContractDeposit3Days, setSelectedContractDeposit3Days] = useState("");
   const [isSendingDepositCheck3Days, setIsSendingDepositCheck3Days] = useState(false);
   
   // Deposit check 5 days before start notification state
+  const [selectedContractDeposit5Days, setSelectedContractDeposit5Days] = useState("");
   const [isSendingDepositCheck5Days, setIsSendingDepositCheck5Days] = useState(false);
   
   const { toast } = useToast();
@@ -817,50 +819,118 @@ const TestNotifications = () => {
   };
 
   const handleSendDepositCheck3Days = async () => {
-    setIsSendingDepositCheck3Days(true);
-    try {
-      const response = await supabase.functions.invoke('check-deposit-3days');
-      
-      if (response.error) throw response.error;
-      
-      toast({
-        title: "Powiadomienie wysłane",
-        description: `Sprawdzono ${response.data.contracts_checked} umów, wysłano ${response.data.notifications_sent} powiadomień`,
-      });
-      
-      console.log('Deposit check 3 days result:', response.data);
-    } catch (error: any) {
+    if (!selectedContractDeposit3Days) {
       toast({
         title: "Błąd",
-        description: error.message,
+        description: "Wybierz umowę.",
+      });
+      return;
+    }
+
+    const contract = contracts?.find(c => c.id === selectedContractDeposit3Days);
+    if (!contract) {
+      toast({
+        title: "Błąd",
+        description: "Nie znaleziono umowy.",
+      });
+      return;
+    }
+
+    setIsSendingDepositCheck3Days(true);
+    try {
+      const payments = contract.payments as any;
+      const depositAmount = payments?.kaucja?.wysokosc || 5000;
+
+      const response = await fetch("https://hook.eu2.make.com/l85qhj1o29x7ie0kp4t83277i15l4f1b", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contract_id: contract.id,
+          contract_number: contract.contract_number,
+          tenant_name: contract.tenant_name || "",
+          deposit_amount: depositAmount,
+          start_date: contract.start_date,
+          days_before: 3,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send notification");
+      }
+
+      toast({
+        title: "Sukces",
+        description: `Testowe powiadomienie wysłane dla umowy ${contract.contract_number}`,
+      });
+    } catch (error: any) {
+      console.error("Error sending notification:", error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się wysłać powiadomienia.",
         variant: "destructive",
       });
-      console.error('Error:', error);
     } finally {
       setIsSendingDepositCheck3Days(false);
     }
   };
 
   const handleSendDepositCheck5Days = async () => {
-    setIsSendingDepositCheck5Days(true);
-    try {
-      const response = await supabase.functions.invoke('check-deposit-5days');
-      
-      if (response.error) throw response.error;
-      
-      toast({
-        title: "Powiadomienie wysłane",
-        description: `Sprawdzono ${response.data.contracts_checked} umów, wysłano ${response.data.notifications_sent} powiadomień`,
-      });
-      
-      console.log('Deposit check 5 days result:', response.data);
-    } catch (error: any) {
+    if (!selectedContractDeposit5Days) {
       toast({
         title: "Błąd",
-        description: error.message,
+        description: "Wybierz umowę.",
+      });
+      return;
+    }
+
+    const contract = contracts?.find(c => c.id === selectedContractDeposit5Days);
+    if (!contract) {
+      toast({
+        title: "Błąd",
+        description: "Nie znaleziono umowy.",
+      });
+      return;
+    }
+
+    setIsSendingDepositCheck5Days(true);
+    try {
+      const payments = contract.payments as any;
+      const depositAmount = payments?.kaucja?.wysokosc || 5000;
+
+      const response = await fetch("https://hook.eu2.make.com/l85qhj1o29x7ie0kp4t83277i15l4f1b", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contract_id: contract.id,
+          contract_number: contract.contract_number,
+          tenant_name: contract.tenant_name || "",
+          deposit_amount: depositAmount,
+          start_date: contract.start_date,
+          days_before: 5,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send notification");
+      }
+
+      toast({
+        title: "Sukces",
+        description: `Testowe powiadomienie wysłane dla umowy ${contract.contract_number}`,
+      });
+    } catch (error: any) {
+      console.error("Error sending notification:", error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się wysłać powiadomienia.",
         variant: "destructive",
       });
-      console.error('Error:', error);
     } finally {
       setIsSendingDepositCheck5Days(false);
     }
@@ -1547,7 +1617,7 @@ const TestNotifications = () => {
                 Sprawdzenie kaucji 3 dni przed rozpoczęciem najmu
               </h3>
               <p className="text-sm text-muted-foreground">
-                Test automatycznego sprawdzenia umów rozpoczynających się za 3 dni, gdzie kaucja nie została przyjęta
+                Test powiadomienia wysyłanego dla umowy, gdzie kaucja nie została przyjęta 3 dni przed rozpoczęciem
               </p>
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
@@ -1557,13 +1627,33 @@ const TestNotifications = () => {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="contract-select-deposit-3days">Wybierz umowę</Label>
+              <Select
+                value={selectedContractDeposit3Days}
+                onValueChange={setSelectedContractDeposit3Days}
+                disabled={contractsLoading || isSendingDepositCheck3Days}
+              >
+                <SelectTrigger id="contract-select-deposit-3days">
+                  <SelectValue placeholder="Wybierz umowę..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {contracts?.filter(c => !c.deposit_received).map((contract) => (
+                    <SelectItem key={contract.id} value={contract.id}>
+                      {contract.contract_number} - {contract.tenant_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button
               onClick={handleSendDepositCheck3Days}
-              disabled={isSendingDepositCheck3Days}
+              disabled={!selectedContractDeposit3Days || isSendingDepositCheck3Days}
               className="w-full sm:w-auto"
             >
               {isSendingDepositCheck3Days && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sprawdź kaucje (3 dni przed)
+              Wyślij testowe powiadomienie
             </Button>
           </div>
 
@@ -1574,7 +1664,7 @@ const TestNotifications = () => {
                 Sprawdzenie kaucji 5 dni przed rozpoczęciem najmu
               </h3>
               <p className="text-sm text-muted-foreground">
-                Test automatycznego sprawdzenia umów rozpoczynających się za 5 dni, gdzie kaucja nie została przyjęta
+                Test powiadomienia wysyłanego dla umowy, gdzie kaucja nie została przyjęta 5 dni przed rozpoczęciem
               </p>
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
@@ -1584,13 +1674,33 @@ const TestNotifications = () => {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="contract-select-deposit-5days">Wybierz umowę</Label>
+              <Select
+                value={selectedContractDeposit5Days}
+                onValueChange={setSelectedContractDeposit5Days}
+                disabled={contractsLoading || isSendingDepositCheck5Days}
+              >
+                <SelectTrigger id="contract-select-deposit-5days">
+                  <SelectValue placeholder="Wybierz umowę..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {contracts?.filter(c => !c.deposit_received).map((contract) => (
+                    <SelectItem key={contract.id} value={contract.id}>
+                      {contract.contract_number} - {contract.tenant_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button
               onClick={handleSendDepositCheck5Days}
-              disabled={isSendingDepositCheck5Days}
+              disabled={!selectedContractDeposit5Days || isSendingDepositCheck5Days}
               className="w-full sm:w-auto"
             >
               {isSendingDepositCheck5Days && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sprawdź kaucje (5 dni przed)
+              Wyślij testowe powiadomienie
             </Button>
           </div>
 
