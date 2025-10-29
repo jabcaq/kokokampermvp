@@ -223,20 +223,41 @@ const DriverSubmission = () => {
         } as any,
       });
 
-      // Sprawdź czy dane email lub telefon się różnią od danych klienta i zaktualizuj klienta
+      // Synchronizuj wszystkie dane najemcy z profilem klienta
       if (contract.client_id) {
-        const emailChanged = formData.driverEmail !== contract.tenant_email;
-        const phoneChanged = formData.driverPhone !== contract.tenant_phone;
+        const clientUpdates: any = {};
         
-        if (emailChanged || phoneChanged) {
-          const clientUpdates: any = {};
-          if (emailChanged) clientUpdates.email = formData.driverEmail;
-          if (phoneChanged) clientUpdates.phone = formData.driverPhone;
-          
+        // Podstawowe dane kontaktowe
+        if (formData.driverName) clientUpdates.name = formData.driverName;
+        if (formData.driverEmail) clientUpdates.email = formData.driverEmail;
+        if (formData.driverPhone) clientUpdates.phone = formData.driverPhone;
+        if (formData.driverAddress) clientUpdates.address = formData.driverAddress;
+        
+        // Dokumenty tożsamości
+        if (formData.documentType) clientUpdates.id_type = formData.documentType;
+        if (formData.documentNumber) clientUpdates.id_number = formData.documentNumber;
+        if (formData.documentIssuedBy) clientUpdates.id_issuer = formData.documentIssuedBy;
+        if (formData.driverPesel) clientUpdates.pesel = formData.driverPesel;
+        if (formData.nip) clientUpdates.nip = formData.nip;
+        
+        // Prawo jazdy
+        if (formData.licenseNumber) clientUpdates.license_number = formData.licenseNumber;
+        if (formData.licenseCategory && formData.licenseCategory.length > 0) {
+          clientUpdates.license_category = formData.licenseCategory.join(', ');
+        }
+        if (formData.licenseIssueDate) clientUpdates.license_date = formData.licenseIssueDate;
+        if (formData.trailerLicenseCategory) clientUpdates.trailer_license_category = formData.trailerLicenseCategory;
+        
+        // Dane firmowe
+        if (formData.companyName) clientUpdates.company_name = formData.companyName;
+        
+        // Aktualizuj tylko jeśli są jakieś zmiany
+        if (Object.keys(clientUpdates).length > 0) {
           await updateClient.mutateAsync({
             id: contract.client_id,
             updates: clientUpdates,
           });
+          console.log('Client profile updated with:', clientUpdates);
         }
       }
 
