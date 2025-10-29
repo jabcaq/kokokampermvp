@@ -65,6 +65,12 @@ const TestNotifications = () => {
   const [selectedContractForReceipt, setSelectedContractForReceipt] = useState("");
   const [isSendingReceiptNotification, setIsSendingReceiptNotification] = useState(false);
   
+  // Deposit check 3 days before start notification state
+  const [isSendingDepositCheck3Days, setIsSendingDepositCheck3Days] = useState(false);
+  
+  // Deposit check 5 days before start notification state
+  const [isSendingDepositCheck5Days, setIsSendingDepositCheck5Days] = useState(false);
+  
   const { toast } = useToast();
 
   // Group contracts by start date
@@ -810,6 +816,56 @@ const TestNotifications = () => {
     }
   };
 
+  const handleSendDepositCheck3Days = async () => {
+    setIsSendingDepositCheck3Days(true);
+    try {
+      const response = await supabase.functions.invoke('check-deposit-3days');
+      
+      if (response.error) throw response.error;
+      
+      toast({
+        title: "Powiadomienie wysłane",
+        description: `Sprawdzono ${response.data.contracts_checked} umów, wysłano ${response.data.notifications_sent} powiadomień`,
+      });
+      
+      console.log('Deposit check 3 days result:', response.data);
+    } catch (error: any) {
+      toast({
+        title: "Błąd",
+        description: error.message,
+        variant: "destructive",
+      });
+      console.error('Error:', error);
+    } finally {
+      setIsSendingDepositCheck3Days(false);
+    }
+  };
+
+  const handleSendDepositCheck5Days = async () => {
+    setIsSendingDepositCheck5Days(true);
+    try {
+      const response = await supabase.functions.invoke('check-deposit-5days');
+      
+      if (response.error) throw response.error;
+      
+      toast({
+        title: "Powiadomienie wysłane",
+        description: `Sprawdzono ${response.data.contracts_checked} umów, wysłano ${response.data.notifications_sent} powiadomień`,
+      });
+      
+      console.log('Deposit check 5 days result:', response.data);
+    } catch (error: any) {
+      toast({
+        title: "Błąd",
+        description: error.message,
+        variant: "destructive",
+      });
+      console.error('Error:', error);
+    } finally {
+      setIsSendingDepositCheck5Days(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
       <Card>
@@ -1484,6 +1540,60 @@ const TestNotifications = () => {
             </Button>
           </div>
 
+          {/* Deposit Check 3 Days Notification Test */}
+          <div className="space-y-4 pt-8 border-t">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">
+                Sprawdzenie kaucji 3 dni przed rozpoczęciem najmu
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Test automatycznego sprawdzenia umów rozpoczynających się za 3 dni, gdzie kaucja nie została przyjęta
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-sm text-muted-foreground">
+                  Webhook: https://hook.eu2.make.com/l85qhj1o29x7ie0kp4t83277i15l4f1b
+                </span>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleSendDepositCheck3Days}
+              disabled={isSendingDepositCheck3Days}
+              className="w-full sm:w-auto"
+            >
+              {isSendingDepositCheck3Days && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Sprawdź kaucje (3 dni przed)
+            </Button>
+          </div>
+
+          {/* Deposit Check 5 Days Notification Test */}
+          <div className="space-y-4 pt-8 border-t">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">
+                Sprawdzenie kaucji 5 dni przed rozpoczęciem najmu
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Test automatycznego sprawdzenia umów rozpoczynających się za 5 dni, gdzie kaucja nie została przyjęta
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-sm text-muted-foreground">
+                  Webhook: https://hook.eu2.make.com/l85qhj1o29x7ie0kp4t83277i15l4f1b
+                </span>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleSendDepositCheck5Days}
+              disabled={isSendingDepositCheck5Days}
+              className="w-full sm:w-auto"
+            >
+              {isSendingDepositCheck5Days && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Sprawdź kaucje (5 dni przed)
+            </Button>
+          </div>
+
           {/* Deposit Received Notification Test */}
           <div className="space-y-4 pt-8 border-t">
             <div className="space-y-4">
@@ -1496,7 +1606,7 @@ const TestNotifications = () => {
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
                 <span className="text-sm text-muted-foreground">
-                  Webhook: https://hook.eu2.make.com/8lb97jeybom44bgvdx8c5jsf2976yeex
+                  Webhook: https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp
                 </span>
               </div>
             </div>
