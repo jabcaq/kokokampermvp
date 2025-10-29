@@ -620,13 +620,13 @@ const DriverSubmission = () => {
                     <div className="grid gap-4 lg:grid-cols-2">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 min-h-[48px]">
-                          <Label htmlFor="trailerF1Mass">F1 - Maksymalna masa całkowita *</Label>
+                          <Label htmlFor="trailerF1Mass">F1 - Maksymalna masa całkowita pojazdu (kamper) *</Label>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
-                              <p>Maksymalna masa całkowita pojazdu znajduje się w dowodzie rejestracyjnym w polu F1. Jest to maksymalna dopuszczalna masa całkowita pojazdu wraz z ładunkiem.</p>
+                              <p>Wartość z dowodu rejestracyjnego <strong>kempera</strong> w polu F1. Określa maksymalną dopuszczalną masę całkowitą pojazdu wraz z ładunkiem.</p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -640,18 +640,18 @@ const DriverSubmission = () => {
                           placeholder="np. 3500"
                           required
                         />
-                        <p className="text-xs text-muted-foreground">Podaj wartość w kg z dowodu rejestracyjnego</p>
+                        <p className="text-xs text-muted-foreground">Wartość w kg z dowodu rejestracyjnego <strong>kempera</strong></p>
                       </div>
 
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 min-h-[48px]">
-                          <Label htmlFor="trailerO1Mass">O1 - Maks. masa przyczepy z hamulcem *</Label>
+                          <Label htmlFor="trailerO1Mass">O1 - Maksymalna masa przyczepy z hamulcem *</Label>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
-                              <p>Maksymalna masa przyczepy z hamulcem znajduje się w dowodzie rejestracyjnym w polu O1. Jest to maksymalna dopuszczalna masa przyczepy wyposażonej w hamulce, którą może holować dany pojazd.</p>
+                              <p>Wartość z dowodu rejestracyjnego <strong>kempera</strong> w polu O1. Określa maksymalną dopuszczalną masę przyczepy wyposażonej w hamulce, którą może holować dany pojazd.</p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -665,7 +665,7 @@ const DriverSubmission = () => {
                           placeholder="np. 750"
                           required
                         />
-                        <p className="text-xs text-muted-foreground">Podaj wartość w kg z dowodu rejestracyjnego</p>
+                        <p className="text-xs text-muted-foreground">Wartość w kg z dowodu rejestracyjnego <strong>kempera</strong></p>
                       </div>
                     </div>
                   </TooltipProvider>
@@ -673,13 +673,29 @@ const DriverSubmission = () => {
               </div>
 
               {contract?.has_trailer && (
-                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                  <h4 className="font-semibold text-sm">Dane dla przyczepy</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Ta umowa obejmuje przyczepę. Wymagane są dodatkowe informacje o prawie jazdy.
-                  </p>
+                <div className="space-y-4 p-4 border rounded-lg bg-primary/5 border-primary/20">
+                  <div className="flex items-start gap-3">
+                    <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm">Informacja o przyczepach</h4>
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        <p className="font-medium">Dla kamperów wystarczające jest prawo jazdy kategorii B.</p>
+                        <p>Jeśli wynajem obejmuje przyczepę, musisz podać dane z dowodu rejestracyjnego kempera:</p>
+                        <ul className="list-disc list-inside ml-2 space-y-0.5">
+                          <li><strong>F1</strong> - maksymalna masa całkowita pojazdu (kamper)</li>
+                          <li><strong>O1</strong> - maksymalna masa przyczepy z hamulcem</li>
+                        </ul>
+                        <p className="pt-1 font-medium">Wymagana kategoria prawa jazdy dla przyczepy:</p>
+                        <ul className="list-disc list-inside ml-2 space-y-0.5">
+                          <li><strong>B</strong> - przyczepy do 750 kg (bez dodatkowego szkolenia)</li>
+                          <li><strong>B96</strong> - gdy F1 + masa przyczepy ≤ 4250 kg</li>
+                          <li><strong>B+E</strong> - gdy F1 + masa przyczepy ≤ 3500 kg</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
                   
-                   <div className="space-y-2">
+                  <div className="space-y-2 pt-2">
                     <Label htmlFor="trailerLicenseCategory">Kategoria prawa jazdy dla przyczepy *</Label>
                     <Select
                       value={formData.trailerLicenseCategory}
@@ -692,40 +708,96 @@ const DriverSubmission = () => {
                         <SelectValue placeholder="Wybierz kategorię" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="B">Kat. B</SelectItem>
-                        <SelectItem value="B96">Kat. B96</SelectItem>
-                        <SelectItem value="B+E">Kat. B+E</SelectItem>
+                        <SelectItem value="B">Kat. B (przyczepy do 750 kg)</SelectItem>
+                        <SelectItem value="B96">Kat. B96 (F1 + masa przyczepy ≤ 4250 kg)</SelectItem>
+                        <SelectItem value="B+E">Kat. B+E (F1 + masa przyczepy ≤ 3500 kg)</SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
-                      Wybierz odpowiednią kategorię zgodnie z wymaganiami poniżej
+                      System automatycznie sprawdzi czy wybrana kategoria jest odpowiednia dla masy przyczepy
                     </p>
                   </div>
 
                   {formData.trailerLicenseCategory && (
-                    <div className="p-3 bg-background rounded border text-xs space-y-2">
-                      <p className="font-semibold">Wymagania dla kategorii {formData.trailerLicenseCategory}:</p>
-                      <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                        {(formData.trailerLicenseCategory === 'B' || formData.trailerLicenseCategory === 'B+E') && (
-                          <>
-                            <li>F1 + masa przyczepy nie może być wyższa niż 3500 kg</li>
-                            <li>Masa wynajmowanej przyczepy nie może być wyższa niż wartość O1 z dowodu rejestracyjnego holownika</li>
-                          </>
-                        )}
-                        {formData.trailerLicenseCategory === 'B96' && (
-                          <>
-                            <li>F1 + masa przyczepy nie może być wyższa niż 4250 kg</li>
-                            <li>Masa wynajmowanej przyczepy nie może być wyższa niż wartość O1 z dowodu rejestracyjnego holownika</li>
-                          </>
-                        )}
-                      </ul>
+                    <div className="p-4 bg-background rounded-lg border-2 border-primary/20 text-xs space-y-3">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-semibold text-sm mb-1">Weryfikacja wybranej kategorii: {formData.trailerLicenseCategory}</p>
+                          <p className="text-muted-foreground mb-2">System automatycznie sprawdzi czy kategoria jest odpowiednia</p>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-muted/50 p-3 rounded space-y-2">
+                        <p className="font-semibold">Wymagania dla kategorii {formData.trailerLicenseCategory}:</p>
+                        <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                          {(formData.trailerLicenseCategory === 'B' || formData.trailerLicenseCategory === 'B+E') && (
+                            <>
+                              <li>F1 + masa przyczepy nie może przekraczać 3500 kg</li>
+                              <li>Masa przyczepy nie może przekraczać wartości O1 z dowodu rejestracyjnego kempera</li>
+                            </>
+                          )}
+                          {formData.trailerLicenseCategory === 'B96' && (
+                            <>
+                              <li>F1 + masa przyczepy nie może przekraczać 4250 kg</li>
+                              <li>Masa przyczepy nie może przekraczać wartości O1 z dowodu rejestracyjnego kempera</li>
+                            </>
+                          )}
+                        </ul>
+                      </div>
+                      
                       {formData.trailerF1Mass && contract?.trailer_mass && formData.trailerO1Mass && (
-                        <div className="mt-2 pt-2 border-t space-y-1">
-                          <p className="font-semibold">Dane wprowadzone:</p>
-                          <p>F1 (masa pojazdu): {formData.trailerF1Mass} kg</p>
-                          <p>Masa przyczepy: {contract.trailer_mass} kg</p>
-                          <p>O1 (maks. masa przyczepy z hamulcem): {formData.trailerO1Mass} kg</p>
-                          <p className="font-semibold mt-1">Suma F1 + masa przyczepy: {Number(formData.trailerF1Mass) + Number(contract.trailer_mass)} kg</p>
+                        <div className="bg-primary/5 p-3 rounded space-y-1.5">
+                          <p className="font-semibold">Wprowadzone dane:</p>
+                          <div className="grid grid-cols-2 gap-2 text-muted-foreground">
+                            <div>
+                              <p className="text-xs opacity-75">F1 (masa kempera):</p>
+                              <p className="font-semibold text-foreground">{formData.trailerF1Mass} kg</p>
+                            </div>
+                            <div>
+                              <p className="text-xs opacity-75">Masa przyczepy:</p>
+                              <p className="font-semibold text-foreground">{contract.trailer_mass} kg</p>
+                            </div>
+                            <div>
+                              <p className="text-xs opacity-75">O1 (maks. dla przyczepy):</p>
+                              <p className="font-semibold text-foreground">{formData.trailerO1Mass} kg</p>
+                            </div>
+                            <div>
+                              <p className="text-xs opacity-75">Suma F1 + przyczepa:</p>
+                              <p className="font-semibold text-primary">{Number(formData.trailerF1Mass) + Number(contract.trailer_mass)} kg</p>
+                            </div>
+                          </div>
+                          
+                          {(() => {
+                            const totalMass = Number(formData.trailerF1Mass) + Number(contract.trailer_mass);
+                            const trailerMass = Number(contract.trailer_mass);
+                            const o1 = Number(formData.trailerO1Mass);
+                            const limit = formData.trailerLicenseCategory === 'B96' ? 4250 : 3500;
+                            
+                            const isWithinLimit = totalMass <= limit;
+                            const isTrailerValid = trailerMass <= o1;
+                            
+                            if (isWithinLimit && isTrailerValid) {
+                              return (
+                                <div className="mt-2 p-2 bg-green-500/10 border border-green-500/20 rounded flex items-center gap-2">
+                                  <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                                  <p className="text-green-700 dark:text-green-400 font-medium">
+                                    ✓ Dane są poprawne dla kategorii {formData.trailerLicenseCategory}
+                                  </p>
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <div className="mt-2 p-2 bg-destructive/10 border border-destructive/20 rounded">
+                                  <p className="text-destructive font-medium text-xs">
+                                    ⚠ Uwaga: {!isWithinLimit && `Suma przekracza limit ${limit} kg dla kategorii ${formData.trailerLicenseCategory}`}
+                                    {!isWithinLimit && !isTrailerValid && ' oraz '}
+                                    {!isTrailerValid && `Masa przyczepy przekracza O1 (${o1} kg)`}
+                                  </p>
+                                </div>
+                              );
+                            }
+                          })()}
                         </div>
                       )}
                     </div>
