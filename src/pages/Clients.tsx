@@ -2,9 +2,10 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Loader2, Trash2, ArrowUpDown, Eye, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, Loader2, Trash2, ArrowUpDown, Eye, AlertTriangle, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -36,6 +37,7 @@ const Clients = () => {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
   
   const { data: clients = [], isLoading } = useClients();
@@ -224,6 +226,41 @@ const Clients = () => {
     setShowBulkDeleteDialog(false);
   };
 
+  const handleSyncClientsFromContracts = async () => {
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-clients-from-contracts');
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast({
+          title: "Synchronizacja zakończona",
+          description: `Zaktualizowano ${data.stats.updated} klientów. Pominięto: ${data.stats.skipped}`,
+        });
+        
+        if (data.stats.errors > 0 && data.errors) {
+          console.error('Synchronization errors:', data.errors);
+          toast({
+            title: "Ostrzeżenie",
+            description: `${data.stats.errors} klientów nie udało się zaktualizować. Sprawdź konsolę.`,
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error('Error syncing clients:', error);
+      toast({
+        title: "Błąd",
+        description: error?.message || "Nie udało się zsynchronizować danych klientów.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -231,14 +268,28 @@ const Clients = () => {
           <h1 className="text-4xl font-bold text-foreground mb-2">Klienci</h1>
           <p className="text-muted-foreground">Zarządzaj bazą klientów</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 shadow-md">
-              <Plus className="h-4 w-4" />
-              Dodaj klienta
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleSyncClientsFromContracts} 
+            disabled={isSyncing}
+            variant="outline"
+            className="gap-2"
+          >
+            {isSyncing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            {isSyncing ? 'Synchronizacja...' : 'Synchronizuj z umów'}
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 shadow-md">
+                <Plus className="h-4 w-4" />
+                Dodaj klienta
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
             <DialogHeader>
               <DialogTitle>Dodaj nowego klienta</DialogTitle>
               <DialogDescription>
@@ -261,7 +312,8 @@ const Clients = () => {
               <Button type="submit" className="w-full">Dodaj klienta</Button>
             </form>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
