@@ -25,17 +25,17 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Calculate date 3 days from now (not accounting moment, just rental start check)
+    // Calculate date 5 days from now (not accounting moment, just rental start check)
     const targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() + 3);
+    targetDate.setDate(targetDate.getDate() + 5);
     targetDate.setHours(0, 0, 0, 0);
     
     const nextDay = new Date(targetDate);
     nextDay.setDate(nextDay.getDate() + 1);
 
-    console.log('Checking contracts starting on:', targetDate.toISOString());
+    console.log('Checking contracts starting on (5 days ahead):', targetDate.toISOString());
 
-    // Fetch contracts starting in 3 days where deposit is not received
+    // Fetch contracts starting in 5 days where deposit is not received
     const { data: contracts, error } = await supabase
       .from('contracts')
       .select('id, contract_number, tenant_name, start_date, deposit_received, payments')
@@ -51,7 +51,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (!contracts || contracts.length === 0) {
-      console.log('No contracts found with unreceived deposits starting in 3 days');
+      console.log('No contracts found with unreceived deposits starting in 5 days');
       return new Response(
         JSON.stringify({ 
           message: 'No contracts found',
@@ -64,7 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log(`Found ${contracts.length} contract(s) with unreceived deposits`);
+    console.log(`Found ${contracts.length} contract(s) with unreceived deposits (5 days ahead)`);
 
     let notificationsSent = 0;
 
@@ -84,7 +84,7 @@ const handler = async (req: Request): Promise<Response> => {
             tenant_name: contract.tenant_name,
             deposit_amount: depositAmount,
             start_date: contract.start_date,
-            days_before: 3,
+            days_before: 5,
             timestamp: new Date().toISOString(),
           }),
         });
@@ -92,7 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
         if (!webhookResponse.ok) {
           console.error(`Webhook failed for contract ${contract.contract_number}:`, await webhookResponse.text());
         } else {
-          console.log(`Webhook sent successfully for contract ${contract.contract_number}`);
+          console.log(`Webhook sent successfully for contract ${contract.contract_number} (5 days before)`);
           notificationsSent++;
         }
       } catch (webhookError) {
@@ -102,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(
       JSON.stringify({ 
-        message: 'Deposit check completed',
+        message: 'Deposit check completed (5 days before)',
         contracts_checked: contracts.length,
         notifications_sent: notificationsSent
       }),
@@ -112,7 +112,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
   } catch (error: any) {
-    console.error('Error in check-deposit-3days function:', error);
+    console.error('Error in check-deposit-5days function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
