@@ -197,6 +197,9 @@ export const AccountingPanel = ({
       });
 
       if (checked) {
+        // Get deposit amount from payments
+        const depositAmount = payments?.kaucja?.wysokosc || 0;
+        
         // Send webhook notification
         const webhookResponse = await fetch('https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp', {
           method: 'POST',
@@ -207,6 +210,7 @@ export const AccountingPanel = ({
             contract_id: contractId,
             contract_number: contractNumber,
             tenant_name: tenantName || 'Klient',
+            deposit_amount: depositAmount,
             timestamp: new Date().toISOString(),
           }),
         });
