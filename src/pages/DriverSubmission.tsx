@@ -51,7 +51,7 @@ const DriverSubmission = () => {
     driverPesel: "",
     licenseNumber: "",
     licenseIssueDate: "",
-    licenseCategory: [] as string[],
+    hasCategoryB: false,
     documentType: "dowod",
     documentNumber: "",
     documentIssuedBy: "",
@@ -68,6 +68,7 @@ const DriverSubmission = () => {
       const existingCategories = contract.tenant_license_category 
         ? contract.tenant_license_category.split(',').map(c => c.trim()).filter(Boolean)
         : [];
+      const hasBCategory = existingCategories.includes('B');
       
       setFormData({
         invoiceType: (contract.invoice_type as "receipt" | "invoice") || "receipt",
@@ -81,7 +82,7 @@ const DriverSubmission = () => {
         driverPesel: contract.tenant_pesel || "",
         licenseNumber: contract.tenant_license_number || "",
         licenseIssueDate: contract.tenant_license_date || "",
-        licenseCategory: existingCategories,
+        hasCategoryB: hasBCategory,
         documentType: contract.tenant_id_type || "dowod",
         documentNumber: contract.tenant_id_number || "",
         documentIssuedBy: contract.tenant_id_issuer || "",
@@ -97,10 +98,10 @@ const DriverSubmission = () => {
     
     if (!contract?.id) return;
 
-    // Validate license category is selected
-    if (!formData.licenseCategory || formData.licenseCategory.length === 0) {
+    // Validate category B confirmation
+    if (!formData.hasCategoryB) {
       toast.error("Błąd walidacji", {
-        description: "Musisz wybrać przynajmniej jedną kategorię prawa jazdy"
+        description: "Musisz potwierdzić posiadanie prawa jazdy kategorii B"
       });
       return;
     }
@@ -173,7 +174,7 @@ const DriverSubmission = () => {
         pesel: formData.driverPesel,
         prawo_jazdy_numer: formData.licenseNumber,
         prawo_jazdy_data: formData.licenseIssueDate,
-        prawo_jazdy_kategoria: formData.licenseCategory.join(', '),
+        prawo_jazdy_kategoria: 'B',
         dokument_rodzaj: formData.documentType,
         dokument_numer: formData.documentNumber,
         dokument_organ: formData.documentIssuedBy,
@@ -213,7 +214,7 @@ const DriverSubmission = () => {
           tenant_pesel: formData.driverPesel,
           tenant_license_number: formData.licenseNumber,
           tenant_license_date: formData.licenseIssueDate,
-          tenant_license_category: formData.licenseCategory.join(', '),
+          tenant_license_category: 'B',
           tenant_id_type: formData.documentType,
           tenant_id_number: formData.documentNumber,
           tenant_id_issuer: formData.documentIssuedBy,
@@ -242,8 +243,8 @@ const DriverSubmission = () => {
         
         // Prawo jazdy
         if (formData.licenseNumber) clientUpdates.license_number = formData.licenseNumber;
-        if (formData.licenseCategory && formData.licenseCategory.length > 0) {
-          clientUpdates.license_category = formData.licenseCategory.join(', ');
+        if (formData.hasCategoryB) {
+          clientUpdates.license_category = 'B';
         }
         if (formData.licenseIssueDate) clientUpdates.license_date = formData.licenseIssueDate;
         if (formData.trailerLicenseCategory) clientUpdates.trailer_license_category = formData.trailerLicenseCategory;
@@ -578,41 +579,32 @@ const DriverSubmission = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Kategoria prawa jazdy *</Label>
-                  <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/30">
-                    {['B', 'B1', 'B96', 'B+E', 'BE'].map((category) => (
-                      <div key={category} className="flex items-center space-x-3">
-                        <Checkbox
-                          id={`category-${category}`}
-                          checked={formData.licenseCategory.includes(category)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setFormData({
-                                ...formData,
-                                licenseCategory: [...formData.licenseCategory, category]
-                              });
-                            } else {
-                              setFormData({
-                                ...formData,
-                                licenseCategory: formData.licenseCategory.filter(c => c !== category)
-                              });
-                            }
-                          }}
-                        />
+                  <Label>Prawo jazdy - kategoria dla kampera *</Label>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id="category-b-confirm"
+                        checked={formData.hasCategoryB}
+                        onCheckedChange={(checked) => {
+                          setFormData({
+                            ...formData,
+                            hasCategoryB: checked === true
+                          });
+                        }}
+                      />
+                      <div className="space-y-1">
                         <label
-                          htmlFor={`category-${category}`}
+                          htmlFor="category-b-confirm"
                           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
                         >
-                          {category}
+                          Potwierdzam posiadanie prawa jazdy kategorii B
                         </label>
+                        <p className="text-xs text-muted-foreground">
+                          Do prowadzenia kampera wymagana jest kategoria B
+                        </p>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                  {formData.licenseCategory.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Wybrano: {formData.licenseCategory.join(', ')}
-                    </p>
-                  )}
                 </div>
 
                 {contract?.has_trailer && (
