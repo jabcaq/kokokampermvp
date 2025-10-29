@@ -166,19 +166,45 @@ const ContractDetails = () => {
         updates,
       });
       
-      // Aktualizuj dane firmowe w profilu klienta jeśli zostały uzupełnione
-      if (contract?.client_id && updates.tenant_company_name) {
+      // Synchronizuj wszystkie dane najemcy z profilem klienta
+      if (contract?.client_id) {
         try {
-          const { error: clientError } = await supabase
-            .from('clients')
-            .update({
-              company_name: updates.tenant_company_name,
-              nip: updates.tenant_nip || null,
-            })
-            .eq('id', contract.client_id);
+          const clientUpdates: any = {};
           
-          if (clientError) {
-            console.error('Error updating client company info:', clientError);
+          // Podstawowe dane kontaktowe
+          if (updates.tenant_name !== undefined) clientUpdates.name = updates.tenant_name;
+          if (updates.tenant_email !== undefined) clientUpdates.email = updates.tenant_email;
+          if (updates.tenant_phone !== undefined) clientUpdates.phone = updates.tenant_phone;
+          if (updates.tenant_address !== undefined) clientUpdates.address = updates.tenant_address;
+          
+          // Dokumenty tożsamości
+          if (updates.tenant_id_type !== undefined) clientUpdates.id_type = updates.tenant_id_type;
+          if (updates.tenant_id_number !== undefined) clientUpdates.id_number = updates.tenant_id_number;
+          if (updates.tenant_id_issuer !== undefined) clientUpdates.id_issuer = updates.tenant_id_issuer;
+          if (updates.tenant_pesel !== undefined) clientUpdates.pesel = updates.tenant_pesel;
+          if (updates.tenant_nip !== undefined) clientUpdates.nip = updates.tenant_nip;
+          
+          // Prawo jazdy
+          if (updates.tenant_license_number !== undefined) clientUpdates.license_number = updates.tenant_license_number;
+          if (updates.tenant_license_category !== undefined) clientUpdates.license_category = updates.tenant_license_category;
+          if (updates.tenant_license_date !== undefined) clientUpdates.license_date = updates.tenant_license_date;
+          if (updates.tenant_trailer_license_category !== undefined) clientUpdates.trailer_license_category = updates.tenant_trailer_license_category;
+          
+          // Dane firmowe
+          if (updates.tenant_company_name !== undefined) clientUpdates.company_name = updates.tenant_company_name;
+          
+          // Aktualizuj tylko jeśli są jakieś zmiany
+          if (Object.keys(clientUpdates).length > 0) {
+            const { error: clientError } = await supabase
+              .from('clients')
+              .update(clientUpdates)
+              .eq('id', contract.client_id);
+            
+            if (clientError) {
+              console.error('Error updating client info:', clientError);
+            } else {
+              console.log('Client profile updated with:', clientUpdates);
+            }
           }
         } catch (clientErr) {
           console.error('Failed to update client:', clientErr);
