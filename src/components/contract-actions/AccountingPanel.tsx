@@ -198,17 +198,21 @@ export const AccountingPanel = ({
 
       if (checked) {
         // Send webhook notification
-        const response = await supabase.functions.invoke('send-deposit-notification', {
-          body: {
+        const webhookResponse = await fetch('https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             contract_id: contractId,
             contract_number: contractNumber,
             tenant_name: tenantName || 'Klient',
             timestamp: new Date().toISOString(),
-          }
+          }),
         });
 
-        if (response.error) {
-          console.error('Webhook error:', response.error);
+        if (!webhookResponse.ok) {
+          console.error('Webhook error:', await webhookResponse.text());
           throw new Error('Nie udało się wysłać powiadomienia');
         }
 
