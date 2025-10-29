@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { UserPlus, Send, CheckCircle2, FileText, Plus, Info } from "lucide-react";
 import { toast } from "sonner";
-import { useContractByNumber, useUpdateContract } from "@/hooks/useContracts";
+import { useContractByNumber, useUpdateContract, useContract } from "@/hooks/useContracts";
 import { useCreateNotification } from "@/hooks/useNotifications";
 import { useUpdateClient } from "@/hooks/useClients";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -22,7 +22,18 @@ const DriverSubmission = () => {
   const { contractId } = useParams<{ contractId: string }>();
   const navigate = useNavigate();
   const decodedId = contractId ? decodeURIComponent(contractId) : undefined;
-  const { data: contract, isLoading, isError } = useContractByNumber(decodedId);
+  
+  // Check if contractId is UUID (contains hyphens) or contract number
+  const isUUID = decodedId?.includes('-');
+  
+  // Fetch contract by UUID or by number
+  const { data: contractByUUID, isLoading: isLoadingByUUID, isError: isErrorByUUID } = useContract(isUUID ? decodedId : undefined);
+  const { data: contractByNumber, isLoading: isLoadingByNumber, isError: isErrorByNumber } = useContractByNumber(!isUUID ? decodedId : undefined);
+  
+  // Use the appropriate contract data
+  const contract = isUUID ? contractByUUID : contractByNumber;
+  const isLoading = isUUID ? isLoadingByUUID : isLoadingByNumber;
+  const isError = isUUID ? isErrorByUUID : isErrorByNumber;
   const updateContract = useUpdateContract();
   const createNotificationMutation = useCreateNotification();
   const updateClient = useUpdateClient();
