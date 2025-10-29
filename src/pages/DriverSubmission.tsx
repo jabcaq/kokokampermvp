@@ -548,7 +548,7 @@ const DriverSubmission = () => {
                 <div className="space-y-3">
                   <Label>Kategoria prawa jazdy *</Label>
                   <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/30">
-                    {['AM', 'A1', 'A2', 'A', 'B', 'B96', 'B+E', 'C1', 'C', 'C+E', 'D1', 'D', 'D+E', 'T'].map((category) => (
+                    {['B', 'B1', 'B96', 'B+E', 'BE'].map((category) => (
                       <div key={category} className="flex items-center space-x-3">
                         <Checkbox
                           id={`category-${category}`}
@@ -832,8 +832,8 @@ const DriverSubmission = () => {
 
                         <div className="space-y-3 sm:col-span-2">
                           <Label>Kategoria prawa jazdy *</Label>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 border rounded-lg bg-background">
-                            {['AM', 'A1', 'A2', 'A', 'B', 'B+E', 'C1', 'C', 'C+E', 'D1', 'D', 'D+E', 'T'].map((category) => (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 border rounded-lg bg-background">
+                            {['B', 'B1', 'B96', 'B+E', 'BE'].map((category) => (
                               <div key={category} className="flex items-center space-x-2">
                                 <Checkbox
                                   id={`add-driver-${driverIndex}-category-${category}`}
