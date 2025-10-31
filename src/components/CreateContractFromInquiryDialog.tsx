@@ -155,13 +155,20 @@ export const CreateContractFromInquiryDialog = ({
 
       const contractNumber = `${typePrefix}/${nextNumber}/${year}`;
 
-      // Konwertuj daty na czas warszawski
+      // Konwertuj datetime-local (Warsaw time) do UTC ISO string
+      const parseWarsawToUTC = (dateTimeLocal: string) => {
+        // datetime-local format: "2025-02-10T10:00"
+        // Treat this as Warsaw time and convert to UTC
+        const warsawDate = new Date(dateTimeLocal);
+        return fromZonedTime(warsawDate, WARSAW_TZ).toISOString();
+      };
+
       const startDate = formData.departureDate 
-        ? toZonedTime(new Date(formData.departureDate + 'T12:00:00'), WARSAW_TZ).toISOString()
-        : toZonedTime(new Date(), WARSAW_TZ).toISOString();
+        ? parseWarsawToUTC(formData.departureDate)
+        : fromZonedTime(new Date(), WARSAW_TZ).toISOString();
       const endDate = formData.returnDate 
-        ? toZonedTime(new Date(formData.returnDate + 'T12:00:00'), WARSAW_TZ).toISOString()
-        : toZonedTime(new Date(), WARSAW_TZ).toISOString();
+        ? parseWarsawToUTC(formData.returnDate)
+        : fromZonedTime(new Date(), WARSAW_TZ).toISOString();
 
       // Calculate payment amounts
       const total = parseFloat(totalAmount);
@@ -391,20 +398,20 @@ export const CreateContractFromInquiryDialog = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="departureDate">Data wyjazdu</Label>
+              <Label htmlFor="departureDate">Data i godzina wydania</Label>
               <Input
                 id="departureDate"
-                type="date"
+                type="datetime-local"
                 value={formData.departureDate}
                 onChange={(e) => updateFormData('departureDate', e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="returnDate">Data powrotu</Label>
+              <Label htmlFor="returnDate">Data i godzina zwrotu</Label>
               <Input
                 id="returnDate"
-                type="date"
+                type="datetime-local"
                 value={formData.returnDate}
                 onChange={(e) => updateFormData('returnDate', e.target.value)}
               />
