@@ -162,9 +162,39 @@ export const InvoicesReceiptsTab = ({
           status: 'invoice_uploaded'
         }
       });
+
+      // Automatyczne wysłanie powiadomienia do księgowości o wgranym pliku
+      try {
+        const invoiceTypeLabels = {
+          reservation: "Rezerwacyjna",
+          main_payment: "Zasadnicza",
+          final: "Końcowa"
+        };
+
+        await supabase.functions.invoke('send-invoice-file-notification', {
+          body: {
+            invoice_id: invoiceId,
+            contract_id: contractId,
+            contract_number: contractNumber,
+            tenant_name: tenantName,
+            invoice_type: invoiceTypeLabels[invoice.invoice_type as keyof typeof invoiceTypeLabels] || invoice.invoice_type,
+            amount: invoice.amount,
+            file_url: publicUrl,
+            file_name: file.name,
+            file_type: file.type,
+            uploaded_at: new Date().toISOString()
+          }
+        });
+
+        console.log('Invoice file notification sent successfully');
+      } catch (notificationError) {
+        console.error('Failed to send invoice file notification:', notificationError);
+        // Nie przerywamy procesu - plik został wgrany pomyślnie
+      }
+
       toast({
         title: "Sukces",
-        description: "Plik został wgrany pomyślnie"
+        description: "Plik został wgrany pomyślnie i powiadomienie wysłane do księgowości"
       });
     } catch (error) {
       console.error('Upload error:', error);
