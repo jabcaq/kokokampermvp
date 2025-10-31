@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toZonedTime, fromZonedTime } from "date-fns-tz";
+import { addDays } from "date-fns";
 
 interface Inquiry {
   id: string;
@@ -175,14 +176,14 @@ export const CreateContractFromInquiryDialog = ({
       const reservationAmount = isFullPaymentAsReservation ? total : total * 0.30;
       const mainPaymentAmount = isFullPaymentAsReservation ? 0 : total * 0.70;
       
-      // Calculate payment dates
-      const today = new Date();
-      const reservationDate = new Date(today);
-      reservationDate.setDate(reservationDate.getDate() + 2);
+      // Calculate payment dates in Warsaw timezone
+      const todayWarsaw = toZonedTime(new Date(), WARSAW_TZ);
+      const reservationDate = addDays(todayWarsaw, 2);
       
-      const startDateObj = formData.departureDate ? new Date(formData.departureDate) : new Date();
-      const mainPaymentDate = new Date(startDateObj);
-      mainPaymentDate.setDate(mainPaymentDate.getDate() - 14);
+      const startDateObj = formData.departureDate 
+        ? toZonedTime(new Date(formData.departureDate), WARSAW_TZ)
+        : todayWarsaw;
+      const mainPaymentDate = addDays(startDateObj, -14);
 
       // Determine deposit amount
       let finalDepositAmount = 5000;
@@ -194,17 +195,17 @@ export const CreateContractFromInquiryDialog = ({
         finalDepositAmount = 8000;
       }
 
-      // Create payments object
+      // Create payments object - all dates in Warsaw timezone
       const payments = {
         rezerwacyjna: {
           wysokosc: reservationAmount.toFixed(2),
-          termin: toZonedTime(reservationDate, WARSAW_TZ).toISOString().split('T')[0],
+          termin: reservationDate.toISOString().split('T')[0],
           rachunek: "72 1140 2004 0000 3702 8191 5344"
         },
         ...(isFullPaymentAsReservation ? {} : {
           zasadnicza: {
             wysokosc: mainPaymentAmount.toFixed(2),
-            termin: toZonedTime(mainPaymentDate, WARSAW_TZ).toISOString().split('T')[0],
+            termin: mainPaymentDate.toISOString().split('T')[0],
             rachunek: "72 1140 2004 0000 3702 8191 5344"
           }
         }),
@@ -567,17 +568,16 @@ export const CreateContractFromInquiryDialog = ({
             )}
 
             <p className="text-xs text-muted-foreground space-y-1">
-              <span className="block font-medium">Daty płatności (automatyczne):</span>
+              <span className="block font-medium">Daty płatności (automatyczne, czas warszawski):</span>
               <span className="block">• Data opłaty rezerwacyjnej: {(() => {
-                const today = new Date();
-                today.setDate(today.getDate() + 2);
-                return today.toLocaleDateString('pl-PL');
+                const todayWarsaw = toZonedTime(new Date(), WARSAW_TZ);
+                const resDate = addDays(todayWarsaw, 2);
+                return resDate.toLocaleDateString('pl-PL');
               })()}</span>
               {!isFullPaymentAsReservation && (() => {
                 if (formData.departureDate) {
-                  const startDate = new Date(formData.departureDate);
-                  const mainPaymentDate = new Date(startDate);
-                  mainPaymentDate.setDate(mainPaymentDate.getDate() - 14);
+                  const startDate = toZonedTime(new Date(formData.departureDate), WARSAW_TZ);
+                  const mainPaymentDate = addDays(startDate, -14);
                   return <span className="block">• Data opłaty zasadniczej: {mainPaymentDate.toLocaleDateString('pl-PL')}</span>;
                 }
                 return <span className="block">• Data opłaty zasadniczej: zostanie obliczona po wybraniu daty wyjazdu</span>;
