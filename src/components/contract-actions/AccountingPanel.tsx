@@ -336,7 +336,7 @@ export const AccountingPanel = ({
                 <Input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" />
               </div>
 
-              {selectedDocumentType === 'internal_invoice' && (
+              {selectedDocumentType !== 'internal_invoice' && (
                 <>
                   <div className="space-y-2">
                     <Label>Tytuł faktury (opcjonalnie)</Label>

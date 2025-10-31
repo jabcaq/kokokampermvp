@@ -510,7 +510,7 @@ export const InvoicesReceiptsTab = ({
             }} />
             </div>
 
-            {selectedDocumentType === 'internal_invoice' && (
+            {selectedDocumentType !== 'internal_invoice' && (
               <>
                 <div className="space-y-2">
                   <Label>Tytuł faktury (opcjonalnie)</Label>
