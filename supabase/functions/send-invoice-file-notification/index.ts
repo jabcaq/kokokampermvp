@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Sending invoice file notification for invoice:', requestData.invoice_id);
 
     // Wysyłanie webhooka do Make.com z informacją o wgranym pliku faktury
-    const webhookResponse = await fetch('https://hook.eu2.make.com/sp68wiwihrnr7gqcu83rsbchtmy4s82y', {
+    const webhookResponse = await fetch('https://hook.eu2.make.com/gtbg718kxoqvlwmtdneag7t36blgvghi', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

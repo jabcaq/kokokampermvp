@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
           skippedCount++;
           console.log(`No data to update for contract ${contract.contract_number}`);
         }
-      } catch (err) {
+      } catch (err: any) {
         errors.push(`Contract ${contract.contract_number}: ${err.message}`);
         console.error(`Error processing contract ${contract.contract_number}:`, err);
       }
@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in sync-clients-from-contracts:', error);
     return new Response(
       JSON.stringify({
