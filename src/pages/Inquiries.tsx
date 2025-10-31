@@ -23,6 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const Inquiries = () => {
   const { data: inquiries = [], isLoading } = useInquiries();
@@ -752,28 +753,65 @@ const Inquiries = () => {
                 </div>
 
                 <div className="flex gap-2 justify-end flex-shrink-0 pt-2 border-t">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setIsDialogOpen(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Utwórz klienta i umowę
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={handleArchiveInquiry}
-                  >
-                    <Archive className="h-4 w-4 mr-2" />
-                    Archiwizuj
-                  </Button>
-                  <Button variant="outline" onClick={() => setReplyMessage("")}>
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Wyczyść
-                  </Button>
-                  <Button onClick={handleSendReply} disabled={!replyMessage.trim()}>
-                    <Send className="h-4 w-4 mr-2" />
-                    Wyślij odpowiedź
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        onClick={() => setIsDialogOpen(true)}
+                      >
+                        <Plus className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Utwórz klienta i umowę</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={handleArchiveInquiry}
+                      >
+                        <Archive className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Archiwizuj zapytanie</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => setReplyMessage("")}
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Wyczyść wiadomość</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        onClick={handleSendReply} 
+                        size="icon"
+                        disabled={!replyMessage.trim()}
+                      >
+                        <Send className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Wyślij odpowiedź</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             ) : (
