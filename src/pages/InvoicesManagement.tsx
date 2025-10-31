@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Search, FileText, Receipt, Eye, Trash2, CheckCircle, Clock, FileUp, Upload, Plus, Check, ChevronsUpDown, ChevronLeft, ChevronRight, Archive } from "lucide-react";
+import { ArrowLeft, Search, FileText, Receipt, Eye, Trash2, CheckCircle, Clock, FileUp, Upload, Plus, Check, ChevronsUpDown, ChevronLeft, ChevronRight, Archive, Send } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -54,6 +54,7 @@ const InvoicesManagement = () => {
   const [showArchived, setShowArchived] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
+  const [sendingWebhookId, setSendingWebhookId] = useState<string | null>(null);
   
   const updateInvoice = useUpdateContractInvoice();
   const addInvoice = useAddContractInvoice();
@@ -250,6 +251,56 @@ const InvoicesManagement = () => {
       });
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleTestWebhook = async (invoice: ContractInvoice) => {
+    if (!invoice.files || invoice.files.length === 0) {
+      toast({
+        title: "Błąd",
+        description: "Ta faktura nie ma wgrane go pliku",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSendingWebhookId(invoice.id);
+    try {
+      const file = invoice.files[0];
+      const invoiceTypeLabelsMap = {
+        reservation: "Rezerwacyjna",
+        main_payment: "Zasadnicza",
+        final: "Końcowa"
+      } as const;
+
+      await supabase.functions.invoke('send-invoice-file-notification', {
+        body: {
+          invoice_id: invoice.id,
+          contract_id: invoice.contract_id,
+          contract_number: (invoice as any).contract?.contract_number || '',
+          tenant_name: (invoice as any).contract?.tenant_name || '',
+          invoice_type: invoiceTypeLabelsMap[invoice.invoice_type as keyof typeof invoiceTypeLabelsMap] || invoice.invoice_type,
+          amount: invoice.amount,
+          file_url: file.url,
+          file_name: file.name,
+          file_type: file.type,
+          uploaded_at: file.uploadedAt,
+        }
+      });
+
+      toast({
+        title: "Sukces",
+        description: "Testowe powiadomienie wysłane do webhook",
+      });
+    } catch (error: any) {
+      console.error('Test webhook error:', error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się wysłać testowego powiadomienia",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingWebhookId(null);
     }
   };
 
@@ -597,24 +648,35 @@ const InvoicesManagement = () => {
                       <TableCell className="text-sm text-muted-foreground">
                         {format(new Date(invoice.created_at), 'dd.MM.yyyy')}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setPreviewInvoice(invoice)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDeleteInvoiceId(invoice.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                       <TableCell className="text-right">
+                         <div className="flex items-center justify-end gap-2">
+                           {invoice.files?.length > 0 && (
+                             <Button
+                               variant="ghost"
+                               size="sm"
+                               onClick={() => handleTestWebhook(invoice)}
+                               disabled={sendingWebhookId === invoice.id}
+                               title="Testuj webhook"
+                             >
+                               <Send className="h-4 w-4" />
+                             </Button>
+                           )}
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => setPreviewInvoice(invoice)}
+                           >
+                             <Eye className="h-4 w-4" />
+                           </Button>
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => setDeleteInvoiceId(invoice.id)}
+                           >
+                             <Trash2 className="h-4 w-4" />
+                           </Button>
+                         </div>
+                       </TableCell>
                     </TableRow>
                   );
                 })}
