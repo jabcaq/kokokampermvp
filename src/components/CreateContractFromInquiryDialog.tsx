@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAddClient, Client } from "@/hooks/useClients";
 import { useAddContract } from "@/hooks/useContracts";
 import { useVehicles } from "@/hooks/useVehicles";
@@ -14,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { toZonedTime } from "date-fns-tz";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
 
 interface Inquiry {
   id: string;
@@ -49,6 +50,13 @@ export const CreateContractFromInquiryDialog = ({
   const [vehicleSearchOpen, setVehicleSearchOpen] = useState(false);
   const [existingClient, setExistingClient] = useState<Client | null>(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
+  
+  // Payment states
+  const [totalAmount, setTotalAmount] = useState("");
+  const [isFullPaymentAsReservation, setIsFullPaymentAsReservation] = useState(false);
+  const [isPremiumCamper, setIsPremiumCamper] = useState(false);
+  const [customDepositAmount, setCustomDepositAmount] = useState(false);
+  const [depositAmount, setDepositAmount] = useState("5000");
 
   const [formData, setFormData] = useState({
     name: inquiry?.name || "",
@@ -57,6 +65,8 @@ export const CreateContractFromInquiryDialog = ({
     departureDate: inquiry?.departure_date || "",
     returnDate: inquiry?.return_date || "",
   });
+
+  const WARSAW_TZ = "Europe/Warsaw";
 
   const updateFormData = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -69,6 +79,15 @@ export const CreateContractFromInquiryDialog = ({
       toast({
         title: "Błąd",
         description: "Nazwa i email są wymagane.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!totalAmount) {
+      toast({
+        title: "Błąd",
+        description: "Wpisz kwotę całkowitą.",
         variant: "destructive",
       });
       return;
@@ -137,13 +156,57 @@ export const CreateContractFromInquiryDialog = ({
       const contractNumber = `${typePrefix}/${nextNumber}/${year}`;
 
       // Konwertuj daty na czas warszawski
-      const WARSAW_TZ = "Europe/Warsaw";
       const startDate = formData.departureDate 
         ? toZonedTime(new Date(formData.departureDate + 'T12:00:00'), WARSAW_TZ).toISOString()
         : toZonedTime(new Date(), WARSAW_TZ).toISOString();
       const endDate = formData.returnDate 
         ? toZonedTime(new Date(formData.returnDate + 'T12:00:00'), WARSAW_TZ).toISOString()
         : toZonedTime(new Date(), WARSAW_TZ).toISOString();
+
+      // Calculate payment amounts
+      const total = parseFloat(totalAmount);
+      const reservationAmount = isFullPaymentAsReservation ? total : total * 0.30;
+      const mainPaymentAmount = isFullPaymentAsReservation ? 0 : total * 0.70;
+      
+      // Calculate payment dates
+      const today = new Date();
+      const reservationDate = new Date(today);
+      reservationDate.setDate(reservationDate.getDate() + 2);
+      
+      const startDateObj = formData.departureDate ? new Date(formData.departureDate) : new Date();
+      const mainPaymentDate = new Date(startDateObj);
+      mainPaymentDate.setDate(mainPaymentDate.getDate() - 14);
+
+      // Determine deposit amount
+      let finalDepositAmount = 5000;
+      if (customDepositAmount) {
+        finalDepositAmount = parseFloat(depositAmount);
+      } else if (vehicleType.toLowerCase().includes('przyczepa') || vehicleType.toLowerCase().includes('trailer')) {
+        finalDepositAmount = 3000;
+      } else if (isPremiumCamper) {
+        finalDepositAmount = 8000;
+      }
+
+      // Create payments object
+      const payments = {
+        rezerwacyjna: {
+          wysokosc: reservationAmount.toFixed(2),
+          termin: toZonedTime(reservationDate, WARSAW_TZ).toISOString().split('T')[0],
+          rachunek: "72 1140 2004 0000 3702 8191 5344"
+        },
+        ...(isFullPaymentAsReservation ? {} : {
+          zasadnicza: {
+            wysokosc: mainPaymentAmount.toFixed(2),
+            termin: toZonedTime(mainPaymentDate, WARSAW_TZ).toISOString().split('T')[0],
+            rachunek: "72 1140 2004 0000 3702 8191 5344"
+          }
+        }),
+        kaucja: {
+          wysokosc: finalDepositAmount.toFixed(2),
+          termin: startDate.split('T')[0],
+          rachunek: "72 1140 2004 0000 3702 8191 5344"
+        }
+      };
 
       // Utwórz umowę
       const newContract = await addContract.mutateAsync({
@@ -155,7 +218,9 @@ export const CreateContractFromInquiryDialog = ({
         start_date: startDate,
         end_date: endDate,
         status: 'pending',
-        value: null,
+        value: total,
+        payments: payments,
+        is_full_payment_as_reservation: isFullPaymentAsReservation,
         vehicle_model: selectedVehicle.model,
         registration_number: selectedVehicle.registration_number,
         vehicle_vin: selectedVehicle.vin,
@@ -219,6 +284,24 @@ export const CreateContractFromInquiryDialog = ({
     return () => clearTimeout(timeoutId);
   }, [formData.email]);
 
+  // Update deposit amount when vehicle type changes
+  useEffect(() => {
+    if (selectedVehicleId && !customDepositAmount) {
+      const vehicle = vehicles.find(v => v.id === selectedVehicleId);
+      if (vehicle) {
+        const vehicleType = vehicle.type || '';
+        if (vehicleType.toLowerCase().includes('przyczepa') || vehicleType.toLowerCase().includes('trailer')) {
+          setDepositAmount("3000");
+          setIsPremiumCamper(false);
+        } else if (isPremiumCamper) {
+          setDepositAmount("8000");
+        } else {
+          setDepositAmount("5000");
+        }
+      }
+    }
+  }, [selectedVehicleId, isPremiumCamper, customDepositAmount, vehicles]);
+
   // Reset form when inquiry changes
   useEffect(() => {
     if (inquiry && open) {
@@ -231,6 +314,11 @@ export const CreateContractFromInquiryDialog = ({
       });
       setSelectedVehicleId("");
       setExistingClient(null);
+      setTotalAmount("");
+      setIsFullPaymentAsReservation(false);
+      setIsPremiumCamper(false);
+      setCustomDepositAmount(false);
+      setDepositAmount("5000");
     }
   }, [inquiry, open]);
 
@@ -383,6 +471,120 @@ export const CreateContractFromInquiryDialog = ({
                 </Command>
               </PopoverContent>
             </Popover>
+          </div>
+
+          <div className="space-y-4 pt-4 border-t">
+            <h4 className="text-sm font-semibold text-foreground">Opłaty</h4>
+            
+            <div className="space-y-2">
+              <Label htmlFor="totalAmount">Kwota całkowita *</Label>
+              <Input
+                id="totalAmount"
+                type="number"
+                step="0.01"
+                placeholder="10000.00"
+                value={totalAmount}
+                onChange={(e) => setTotalAmount(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="fullPaymentAsReservation"
+                checked={isFullPaymentAsReservation}
+                onCheckedChange={(checked) => setIsFullPaymentAsReservation(checked === true)}
+              />
+              <Label htmlFor="fullPaymentAsReservation" className="cursor-pointer text-sm">
+                Cała kwota jako opłata rezerwacyjna (bez opłaty zasadniczej)
+              </Label>
+            </div>
+
+            {selectedVehicle && selectedVehicle.type && (selectedVehicle.type.toLowerCase().includes('kamper') || selectedVehicle.type.toLowerCase().includes('van')) && (
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="premiumCamper"
+                  checked={isPremiumCamper}
+                  onCheckedChange={(checked) => {
+                    const isPremium = checked === true;
+                    setIsPremiumCamper(isPremium);
+                    if (!customDepositAmount) {
+                      setDepositAmount(isPremium ? "8000" : "5000");
+                    }
+                  }}
+                />
+                <Label htmlFor="premiumCamper" className="cursor-pointer text-sm">
+                  Kamper Premium+/Prestige+ (kaucja 8000 zł)
+                </Label>
+              </div>
+            )}
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="customDepositAmount"
+                checked={customDepositAmount}
+                onCheckedChange={(checked) => setCustomDepositAmount(checked === true)}
+              />
+              <Label htmlFor="customDepositAmount" className="cursor-pointer text-sm">
+                Niestandardowa kwota kaucji
+              </Label>
+            </div>
+
+            {customDepositAmount && (
+              <div className="space-y-2">
+                <Label htmlFor="depositAmount">Kwota kaucji *</Label>
+                <Input
+                  id="depositAmount"
+                  type="number"
+                  step="0.01"
+                  placeholder="5000.00"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                />
+              </div>
+            )}
+
+            {totalAmount && (
+              <div className="text-xs text-muted-foreground space-y-1 mt-2">
+                {isFullPaymentAsReservation ? (
+                  <>
+                    <p>• Opłata rezerwacyjna (100%): {parseFloat(totalAmount).toFixed(2)} zł</p>
+                    <p>• Opłata zasadnicza: brak (cała kwota w rezerwacji)</p>
+                  </>
+                ) : (
+                  <>
+                    <p>• Opłata rezerwacyjna (30%): {(parseFloat(totalAmount) * 0.30).toFixed(2)} zł</p>
+                    <p>• Opłata zasadnicza (70%): {(parseFloat(totalAmount) * 0.70).toFixed(2)} zł</p>
+                  </>
+                )}
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground space-y-1">
+              <span className="block font-medium">Daty płatności (automatyczne):</span>
+              <span className="block">• Data opłaty rezerwacyjnej: {(() => {
+                const today = new Date();
+                today.setDate(today.getDate() + 2);
+                return today.toLocaleDateString('pl-PL');
+              })()}</span>
+              {!isFullPaymentAsReservation && (() => {
+                if (formData.departureDate) {
+                  const startDate = new Date(formData.departureDate);
+                  const mainPaymentDate = new Date(startDate);
+                  mainPaymentDate.setDate(mainPaymentDate.getDate() - 14);
+                  return <span className="block">• Data opłaty zasadniczej: {mainPaymentDate.toLocaleDateString('pl-PL')}</span>;
+                }
+                return <span className="block">• Data opłaty zasadniczej: zostanie obliczona po wybraniu daty wyjazdu</span>;
+              })()}
+              <span className="block">• Data kaucji: dzień rozpoczęcia wynajmu</span>
+              <span className="block">• Kwota kaucji: {customDepositAmount 
+                ? `${depositAmount} zł (niestandardowa)` 
+                : selectedVehicle && (selectedVehicle.type?.toLowerCase().includes('przyczepa') || selectedVehicle.type?.toLowerCase().includes('trailer'))
+                  ? "3000 zł" 
+                  : isPremiumCamper 
+                    ? "8000 zł (Premium+/Prestige+)" 
+                    : "5000 zł"}</span>
+              <span className="block">• Rachunki bankowe są automatycznie przypisywane</span>
+            </p>
           </div>
         </div>
 
