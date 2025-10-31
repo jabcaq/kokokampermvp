@@ -72,6 +72,11 @@ const TestNotifications = () => {
   // Deposit check 5 days before start notification state
   const [selectedContractDeposit5Days, setSelectedContractDeposit5Days] = useState("");
   const [isSendingDepositCheck5Days, setIsSendingDepositCheck5Days] = useState(false);
+
+  // Invoice/Receipt file notification state
+  const [selectedContractForInvoiceFile, setSelectedContractForInvoiceFile] = useState("");
+  const [selectedInvoiceFileType, setSelectedInvoiceFileType] = useState("reservation");
+  const [isSendingInvoiceFileNotification, setIsSendingInvoiceFileNotification] = useState(false);
   
   const { toast } = useToast();
 
@@ -936,6 +941,67 @@ const TestNotifications = () => {
     }
   };
 
+  const handleSendInvoiceFileNotification = async () => {
+    if (!selectedContractForInvoiceFile) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz umowę.",
+      });
+      return;
+    }
+
+    const contract = contracts?.find(c => c.id === selectedContractForInvoiceFile);
+    if (!contract) {
+      toast({
+        title: "Błąd",
+        description: "Nie znaleziono umowy.",
+      });
+      return;
+    }
+
+    setIsSendingInvoiceFileNotification(true);
+    try {
+      const invoiceTypeLabels = {
+        reservation: "Rezerwacyjna",
+        main_payment: "Zasadnicza",
+        final: "Końcowa"
+      } as const;
+
+      const response = await supabase.functions.invoke('send-invoice-file-notification', {
+        body: {
+          invoice_id: "test-invoice-" + Date.now(),
+          contract_id: contract.id,
+          contract_number: contract.contract_number,
+          tenant_name: contract.tenant_name || '',
+          invoice_type: invoiceTypeLabels[selectedInvoiceFileType as keyof typeof invoiceTypeLabels] || selectedInvoiceFileType,
+          amount: 5000,
+          file_url: "https://qfnptknanxyfxvcuhgck.supabase.co/storage/v1/object/public/invoices/test-file.pdf",
+          file_name: "test-invoice.pdf",
+          file_type: "application/pdf",
+          uploaded_at: new Date().toISOString(),
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to send notification');
+      }
+
+      toast({
+        title: "Sukces",
+        description: `Powiadomienie o ${invoiceTypeLabels[selectedInvoiceFileType as keyof typeof invoiceTypeLabels]} wysłane dla umowy ${contract.contract_number}`,
+      });
+    } catch (error: any) {
+      console.error("Error sending notification:", error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się wysłać powiadomienia.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingInvoiceFileNotification(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
       <Card>
@@ -1795,6 +1861,71 @@ const TestNotifications = () => {
             >
               {isSendingReceiptNotification && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Wyślij powiadomienie o paragonie
+            </Button>
+          </div>
+
+          {/* Invoice/Receipt File Notification Test */}
+          <div className="space-y-4 pt-8 border-t">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">
+                Test wysyłania powiadomienia o fakturze/paragonie (nowa funkcja)
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Test powiadomienia wysyłanego automatycznie po wgraniu faktury/paragonu - używa funkcji send-invoice-file-notification z automatycznym podpisywaniem URL
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-sm text-muted-foreground">
+                  Edge Function: send-invoice-file-notification → Webhook: https://hook.eu2.make.com/gtbg718kxoqvlwmtdneag7t36blgvghi
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contract-select-invoice-file">Wybierz umowę</Label>
+              <Select
+                value={selectedContractForInvoiceFile}
+                onValueChange={setSelectedContractForInvoiceFile}
+                disabled={contractsLoading || isSendingInvoiceFileNotification}
+              >
+                <SelectTrigger id="contract-select-invoice-file">
+                  <SelectValue placeholder="Wybierz umowę..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {contracts?.map((contract) => (
+                    <SelectItem key={contract.id} value={contract.id}>
+                      {contract.contract_number} - {contract.tenant_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="invoice-type-select">Typ faktury/paragonu</Label>
+              <Select
+                value={selectedInvoiceFileType}
+                onValueChange={setSelectedInvoiceFileType}
+                disabled={isSendingInvoiceFileNotification}
+              >
+                <SelectTrigger id="invoice-type-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="reservation">Rezerwacyjna</SelectItem>
+                  <SelectItem value="main_payment">Zasadnicza</SelectItem>
+                  <SelectItem value="final">Końcowa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleSendInvoiceFileNotification}
+              disabled={!selectedContractForInvoiceFile || isSendingInvoiceFileNotification}
+              className="w-full sm:w-auto"
+            >
+              {isSendingInvoiceFileNotification && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Wyślij powiadomienie o fakturze/paragonie
             </Button>
           </div>
         </CardContent>
