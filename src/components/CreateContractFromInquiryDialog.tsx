@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { toZonedTime } from "date-fns-tz";
 
 interface Inquiry {
   id: string;
@@ -135,6 +136,15 @@ export const CreateContractFromInquiryDialog = ({
 
       const contractNumber = `${typePrefix}/${nextNumber}/${year}`;
 
+      // Konwertuj daty na czas warszawski
+      const WARSAW_TZ = "Europe/Warsaw";
+      const startDate = formData.departureDate 
+        ? toZonedTime(new Date(formData.departureDate + 'T12:00:00'), WARSAW_TZ).toISOString()
+        : toZonedTime(new Date(), WARSAW_TZ).toISOString();
+      const endDate = formData.returnDate 
+        ? toZonedTime(new Date(formData.returnDate + 'T12:00:00'), WARSAW_TZ).toISOString()
+        : toZonedTime(new Date(), WARSAW_TZ).toISOString();
+
       // Utwórz umowę
       const newContract = await addContract.mutateAsync({
         contract_number: contractNumber,
@@ -142,8 +152,8 @@ export const CreateContractFromInquiryDialog = ({
         tenant_name: formData.name,
         tenant_email: formData.email,
         tenant_phone: formData.phone || null,
-        start_date: formData.departureDate || new Date().toISOString().split('T')[0],
-        end_date: formData.returnDate || new Date().toISOString().split('T')[0],
+        start_date: startDate,
+        end_date: endDate,
         status: 'pending',
         value: null,
         vehicle_model: selectedVehicle.model,
