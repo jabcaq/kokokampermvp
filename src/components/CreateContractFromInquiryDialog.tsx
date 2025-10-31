@@ -46,6 +46,9 @@ export const CreateContractFromInquiryDialog = ({
   const addClient = useAddClient();
   const addContract = useAddContract();
   const { data: vehicles = [] } = useVehicles();
+  
+  // Filter out archived vehicles
+  const availableVehicles = vehicles.filter(v => v.status !== 'archived');
   const [isCreating, setIsCreating] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [vehicleSearchOpen, setVehicleSearchOpen] = useState(false);
@@ -120,7 +123,7 @@ export const CreateContractFromInquiryDialog = ({
       }
 
       // Znajdź wybrany pojazd
-      const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
+      const selectedVehicle = availableVehicles.find(v => v.id === selectedVehicleId);
       if (!selectedVehicle) {
         throw new Error("Nie znaleziono wybranego pojazdu");
       }
@@ -295,7 +298,7 @@ export const CreateContractFromInquiryDialog = ({
   // Update deposit amount when vehicle type changes
   useEffect(() => {
     if (selectedVehicleId && !customDepositAmount) {
-      const vehicle = vehicles.find(v => v.id === selectedVehicleId);
+      const vehicle = availableVehicles.find(v => v.id === selectedVehicleId);
       if (vehicle) {
         const vehicleType = vehicle.type || '';
         if (vehicleType.toLowerCase().includes('przyczepa') || vehicleType.toLowerCase().includes('trailer')) {
@@ -450,7 +453,7 @@ export const CreateContractFromInquiryDialog = ({
                   <CommandList>
                     <CommandEmpty>Nie znaleziono pojazdu.</CommandEmpty>
                     <CommandGroup>
-                      {vehicles.map((vehicle) => (
+                      {availableVehicles.map((vehicle) => (
                         <CommandItem
                           key={vehicle.id}
                           value={`${vehicle.registration_number} ${vehicle.model} ${vehicle.type || ''}`}
