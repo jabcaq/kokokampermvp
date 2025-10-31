@@ -16,8 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useVehicles } from "@/hooks/useVehicles";
 import { useVehicleHandovers, useAddVehicleHandover } from "@/hooks/useVehicleHandovers";
 import { useVehicleReturns, useAddVehicleReturn } from "@/hooks/useVehicleReturns";
-import { format } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
+import { format, addDays } from "date-fns";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { pl } from "date-fns/locale";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { DriversTab } from "@/components/contract-tabs/DriversTab";
@@ -257,6 +257,24 @@ const ContractDetails = () => {
     console.log('Updating field:', field, 'with value:', value);
     setEditedData(prev => {
       const updated = { ...prev, [field]: value };
+      
+      // Auto-update payment dates when start_date changes
+      if (field === 'start_date' && value) {
+        const startDateWarsaw = toZonedTime(new Date(value), WARSAW_TZ);
+        const mainPaymentDate = addDays(startDateWarsaw, -14);
+        
+        updated.payments = {
+          ...prev.payments,
+          zasadnicza: {
+            ...prev.payments?.zasadnicza,
+            data: mainPaymentDate.toISOString().split('T')[0],
+          },
+          kaucja: {
+            ...prev.payments?.kaucja,
+            data: startDateWarsaw.toISOString().split('T')[0],
+          },
+        };
+      }
       
       // Auto-update payment amounts when value changes
       if (field === 'value') {
@@ -1184,12 +1202,12 @@ const ContractDetails = () => {
               <div className="space-y-3">
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data</Label>
                 {isEditing ? (
-                  <Input type="date" value={displayData?.payments?.rezerwacyjna?.data || ''} onChange={(e) => {
-                    const newPayments = { ...displayData.payments, rezerwacyjna: { ...displayData.payments?.rezerwacyjna, data: e.target.value } };
+                  <Input type="date" value={displayData?.payments?.rezerwacyjna?.data || displayData?.payments?.rezerwacyjna?.termin || ''} onChange={(e) => {
+                    const newPayments = { ...displayData.payments, rezerwacyjna: { ...displayData.payments?.rezerwacyjna, data: e.target.value, termin: e.target.value } };
                     updateField('payments', newPayments);
                   }} />
                 ) : (
-                  <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.rezerwacyjna?.data || 'Nie podano'}</p>
+                  <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.rezerwacyjna?.data || displayData?.payments?.rezerwacyjna?.termin || 'Nie podano'}</p>
                 )}
               </div>
               <div className="space-y-3">
@@ -1216,12 +1234,12 @@ const ContractDetails = () => {
               <div className="space-y-3">
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data</Label>
                 {isEditing ? (
-                  <Input type="date" value={displayData?.payments?.zasadnicza?.data || ''} onChange={(e) => {
-                    const newPayments = { ...displayData.payments, zasadnicza: { ...displayData.payments?.zasadnicza, data: e.target.value } };
+                  <Input type="date" value={displayData?.payments?.zasadnicza?.data || displayData?.payments?.zasadnicza?.termin || ''} onChange={(e) => {
+                    const newPayments = { ...displayData.payments, zasadnicza: { ...displayData.payments?.zasadnicza, data: e.target.value, termin: e.target.value } };
                     updateField('payments', newPayments);
                   }} />
                 ) : (
-                  <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.zasadnicza?.data || 'Nie podano'}</p>
+                  <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.zasadnicza?.data || displayData?.payments?.zasadnicza?.termin || 'Nie podano'}</p>
                 )}
               </div>
               <div className="space-y-3">
