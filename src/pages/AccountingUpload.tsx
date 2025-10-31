@@ -79,6 +79,38 @@ const AccountingUpload = () => {
         },
       });
 
+      // Send standardized notification via edge function (creates signed URL)
+      try {
+        const { data: contractData } = await supabase
+          .from('contracts')
+          .select('contract_number, tenant_name')
+          .eq('id', invoice.contract_id)
+          .single();
+
+        const notificationTypeLabels = {
+          reservation: "Rezerwacyjna",
+          main_payment: "Zasadnicza",
+          final: "Końcowa"
+        } as const;
+
+        await supabase.functions.invoke('send-invoice-file-notification', {
+          body: {
+            invoice_id: invoiceId,
+            contract_id: invoice.contract_id,
+            contract_number: contractData?.contract_number || '',
+            tenant_name: contractData?.tenant_name || '',
+            invoice_type: notificationTypeLabels[(invoice.invoice_type as keyof typeof notificationTypeLabels) ?? 'reservation'] || (invoice.invoice_type ?? 'reservation'),
+            amount: 0,
+            file_url: publicUrl,
+            file_name: file.name,
+            file_type: file.type,
+            uploaded_at: new Date().toISOString(),
+          }
+        });
+      } catch (notificationError) {
+        console.error('Failed to send invoice file notification:', notificationError);
+      }
+
       toast({
         title: "Sukces",
         description: "Faktura została przesłana",

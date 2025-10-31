@@ -297,6 +297,33 @@ export const InvoicesReceiptsTab = ({
             status: 'invoice_uploaded'
           }
         });
+
+        // Send notifications for each uploaded file
+        try {
+          const invoiceTypeLabels = {
+            reservation: "Rezerwacyjna",
+            main_payment: "Zasadnicza",
+            final: "Końcowa"
+          } as const;
+          for (const f of uploadedFiles) {
+            await supabase.functions.invoke('send-invoice-file-notification', {
+              body: {
+                invoice_id: newInvoiceRecord.id,
+                contract_id: contractId,
+                contract_number: contractNumber,
+                tenant_name: tenantName,
+                invoice_type: invoiceTypeLabels[newInvoice.type as keyof typeof invoiceTypeLabels] || newInvoice.type,
+                amount: parseFloat(newInvoice.amount),
+                file_url: f.url,
+                file_name: f.name,
+                file_type: f.type,
+                uploaded_at: f.uploadedAt
+              }
+            });
+          }
+        } catch (notificationError) {
+          console.error('Failed to send invoice file notification(s):', notificationError);
+        }
       }
       setNewInvoice({
         type: 'reservation',

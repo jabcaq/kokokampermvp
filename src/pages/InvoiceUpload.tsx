@@ -120,6 +120,33 @@ const InvoiceUpload = () => {
 
       if (updateError) throw updateError;
 
+      // Send standardized notification via edge function (creates signed URL)
+      try {
+        const invoiceTypeLabels = {
+          reservation: "Rezerwacyjna",
+          main_payment: "Zasadnicza",
+          final: "Końcowa"
+        } as const;
+
+        await supabase.functions.invoke('send-invoice-file-notification', {
+          body: {
+            invoice_id: invoiceId,
+            contract_id: contract.id,
+            contract_number: contract.contract_number,
+            tenant_name: contract.tenant_name || '',
+            invoice_type: invoiceTypeLabels[selectedInvoiceType as keyof typeof invoiceTypeLabels] || selectedInvoiceType,
+            amount: invoice.amount,
+            file_url: publicUrl,
+            file_name: selectedFile.name,
+            file_type: selectedFile.type,
+            uploaded_at: new Date().toISOString(),
+          }
+        });
+        console.log('Invoice file notification sent successfully');
+      } catch (notificationError) {
+        console.error('Failed to send invoice file notification:', notificationError);
+      }
+
       setUploadSuccess(true);
       toast({
         title: "Sukces",

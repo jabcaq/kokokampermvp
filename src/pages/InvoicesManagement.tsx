@@ -199,30 +199,30 @@ const InvoicesManagement = () => {
         .eq('id', selectedContractId)
         .single();
 
-      // Send webhook notification to accounting
+      // Send standardized notification via edge function (creates signed URL)
       try {
-        const webhookResponse = await fetch('https://hook.eu2.make.com/vj28pea85sho49qrlhyv7vni16s7kmgg', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            notification_type: 'receipt_uploaded',
+        const invoiceTypeLabels = {
+          reservation: "Rezerwacyjna",
+          main_payment: "Zasadnicza",
+          final: "Końcowa"
+        } as const;
+
+        await supabase.functions.invoke('send-invoice-file-notification', {
+          body: {
             invoice_id: newInvoice.id,
             contract_id: selectedContractId,
             contract_number: contractData?.contract_number || '',
             tenant_name: contractData?.tenant_name || '',
-            invoice_type: selectedInvoiceType,
-            document_url: publicUrl,
-            timestamp: new Date().toISOString(),
-          }),
+            invoice_type: invoiceTypeLabels[selectedInvoiceType as keyof typeof invoiceTypeLabels] || selectedInvoiceType,
+            amount: 0,
+            file_url: publicUrl,
+            file_name: selectedFile.name,
+            file_type: selectedFile.type,
+            uploaded_at: new Date().toISOString(),
+          }
         });
-
-        if (!webhookResponse.ok) {
-          console.error('Webhook notification failed:', await webhookResponse.text());
-        }
-      } catch (webhookError) {
-        console.error('Error sending webhook:', webhookError);
+      } catch (notificationError) {
+        console.error('Failed to send invoice file notification:', notificationError);
         // Don't fail the upload if webhook fails
       }
 
