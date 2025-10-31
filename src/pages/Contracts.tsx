@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Calendar, Edit, Eye, Loader2, Trash2, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, Search, Calendar, Edit, Eye, Loader2, Trash2, Check, ChevronsUpDown, ArchiveRestore } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useContracts, useArchivedContracts, useArchiveContract, useDeleteContract, useAddContract } from "@/hooks/useContracts";
+import { useContracts, useArchivedContracts, useArchiveContract, useDeleteContract, useAddContract, useRestoreContract } from "@/hooks/useContracts";
 import { useClients } from "@/hooks/useClients";
 import { useVehicles } from "@/hooks/useVehicles";
 import { supabase } from "@/integrations/supabase/client";
@@ -81,6 +81,7 @@ const Contracts = () => {
   const archiveContractMutation = useArchiveContract();
   const deleteContractMutation = useDeleteContract();
   const addContractMutation = useAddContract();
+  const restoreContractMutation = useRestoreContract();
 
   // Check if user is admin
   useEffect(() => {
@@ -388,6 +389,24 @@ const Contracts = () => {
       toast({
         title: "Błąd",
         description: "Nie udało się usunąć umowy.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRestoreContract = async (id: string) => {
+    try {
+      const result = await restoreContractMutation.mutateAsync(id);
+      toast({
+        title: "Sukces",
+        description: result.numberChanged 
+          ? `Umowa przywrócona z nowym numerem: ${result.newNumber} (poprzedni: ${result.oldNumber})`
+          : "Umowa została przywrócona z oryginalnym numerem.",
+      });
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się przywrócić umowy.",
         variant: "destructive",
       });
     }
@@ -1055,6 +1074,17 @@ const Contracts = () => {
                       </div>
                     </div>
                     <div className="flex gap-2">
+                      {showArchived && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="shrink-0"
+                          onClick={() => handleRestoreContract(contract.id)}
+                          title="Przywróć z archiwum"
+                        >
+                          <ArchiveRestore className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Link to={`/contracts/${contract.id}`}>
                         <Button variant="outline" size="icon" className="shrink-0">
                           <Eye className="h-4 w-4" />

@@ -255,3 +255,92 @@ export const useDeleteContract = () => {
     },
   });
 };
+
+export const useRestoreContract = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (contractId: string) => {
+      // Get the archived contract
+      const { data: contract, error: fetchError } = await supabase
+        .from('contracts')
+        .select('*')
+        .eq('id', contractId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      if (!contract) throw new Error('Contract not found');
+      
+      // Check if documents were generated for this contract
+      const { data: documents, error: docsError } = await supabase
+        .from('contract_documents')
+        .select('id')
+        .eq('contract_id', contractId)
+        .limit(1);
+      
+      if (docsError) throw docsError;
+      
+      const hasDocuments = documents && documents.length > 0;
+      
+      // Check if contract number already exists in active contracts
+      const { data: existingContract, error: checkError } = await supabase
+        .from('contracts')
+        .select('id')
+        .eq('contract_number', contract.contract_number)
+        .eq('is_archived', false)
+        .maybeSingle();
+      
+      if (checkError) throw checkError;
+      
+      let newContractNumber = contract.contract_number;
+      
+      // If documents were generated OR contract number already exists, generate new number
+      if (hasDocuments || existingContract) {
+        // Extract type prefix from contract number (K or P)
+        const parts = contract.contract_number.split('/');
+        const typePrefix = parts[0]; // K or P
+        const year = new Date().getFullYear();
+        
+        // Get last contract number for this type and year
+        const { data: lastContracts } = await supabase
+          .from('contracts')
+          .select('contract_number')
+          .like('contract_number', `${typePrefix}/%/${year}`)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        let nextNumber = 1;
+        if (lastContracts && lastContracts.length > 0) {
+          const lastParts = lastContracts[0].contract_number.split('/');
+          if (lastParts.length === 3) {
+            nextNumber = parseInt(lastParts[1]) + 1;
+          }
+        }
+        
+        newContractNumber = `${typePrefix}/${nextNumber}/${year}`;
+      }
+      
+      // Restore the contract
+      const { error: updateError } = await supabase
+        .from('contracts')
+        .update({ 
+          is_archived: false,
+          contract_number: newContractNumber 
+        })
+        .eq('id', contractId);
+      
+      if (updateError) throw updateError;
+      
+      return { 
+        contractId, 
+        oldNumber: contract.contract_number, 
+        newNumber: newContractNumber,
+        numberChanged: newContractNumber !== contract.contract_number
+      };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['contracts', 'archived'] });
+    },
+  });
+};
