@@ -81,8 +81,10 @@ export const InvoicesReceiptsTab = ({
   const [isSaving, setIsSaving] = useState(false);
   const [accountingDialogOpen, setAccountingDialogOpen] = useState(false);
   const [selectedInvoiceForAccounting, setSelectedInvoiceForAccounting] = useState<any>(null);
-  const [selectedDocumentType, setSelectedDocumentType] = useState<'paragon' | 'faktura'>(tenantNip ? 'faktura' : 'paragon');
+  const [selectedDocumentType, setSelectedDocumentType] = useState<'paragon' | 'faktura' | 'internal_invoice'>(tenantNip ? 'faktura' : 'paragon');
   const [isSendingToAccounting, setIsSendingToAccounting] = useState(false);
+  const [invoiceTitle, setInvoiceTitle] = useState('');
+  const [serviceDescription, setServiceDescription] = useState('');
   const getAmountForType = (type: 'reservation' | 'main_payment' | 'final') => {
     if (!payments) return '';
     try {
@@ -272,6 +274,8 @@ export const InvoicesReceiptsTab = ({
         notes: ''
       });
       setSelectedFiles([]);
+      setInvoiceTitle('');
+      setServiceDescription('');
       toast({
         title: "Sukces",
         description: `Dodano ${invoiceType === 'invoice' ? 'fakturę' : 'paragon'}`
@@ -300,18 +304,26 @@ export const InvoicesReceiptsTab = ({
     try {
       const uploadLink = `https://app.kokokamper.pl/invoice-upload/${selectedInvoiceForAccounting.id}`;
       
+      const webhookData: any = {
+        invoice_id: selectedInvoiceForAccounting.id,
+        contract_id: contractId,
+        contract_number: contractNumber,
+        tenant_name: tenantName,
+        invoice_type: selectedInvoiceForAccounting.invoice_type,
+        amount: selectedInvoiceForAccounting.amount,
+        document_type: selectedDocumentType,
+        upload_link: uploadLink,
+        timestamp: new Date().toISOString()
+      };
+
+      // Dodaj dodatkowe pola dla faktury wewnętrznej
+      if (selectedDocumentType === 'internal_invoice') {
+        webhookData.invoice_title = invoiceTitle || null;
+        webhookData.service_description = serviceDescription || null;
+      }
+
       const response = await supabase.functions.invoke('send-accounting-request', {
-        body: {
-          invoice_id: selectedInvoiceForAccounting.id,
-          contract_id: contractId,
-          contract_number: contractNumber,
-          tenant_name: tenantName,
-          invoice_type: selectedInvoiceForAccounting.invoice_type,
-          amount: selectedInvoiceForAccounting.amount,
-          document_type: selectedDocumentType,
-          upload_link: uploadLink,
-          timestamp: new Date().toISOString()
-        }
+        body: webhookData
       });
 
       if (response.error) throw response.error;
@@ -498,6 +510,29 @@ export const InvoicesReceiptsTab = ({
             }} />
             </div>
 
+            {selectedDocumentType === 'internal_invoice' && (
+              <>
+                <div className="space-y-2">
+                  <Label>Tytuł faktury (opcjonalnie)</Label>
+                  <Input 
+                    value={invoiceTitle} 
+                    onChange={e => setInvoiceTitle(e.target.value)} 
+                    placeholder="np. Wynajem kampera Mercedes Sprinter"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Opis usługi (opcjonalnie)</Label>
+                  <Textarea 
+                    value={serviceDescription} 
+                    onChange={e => setServiceDescription(e.target.value)} 
+                    placeholder="np. Wynajem pojazdu w okresie 01.01-07.01.2024"
+                    rows={3}
+                  />
+                </div>
+              </>
+            )}
+
             <div className="space-y-2">
               <Label>Uwagi (opcjonalnie)</Label>
               <Textarea placeholder="Dodatkowe informacje..." value={newInvoice.notes} onChange={e => setNewInvoice({
@@ -578,7 +613,7 @@ export const InvoicesReceiptsTab = ({
           <div className="space-y-4 py-4">
             <div className="space-y-3">
               <Label>Wybierz typ dokumentu:</Label>
-              <RadioGroup value={selectedDocumentType} onValueChange={(value: 'paragon' | 'faktura') => setSelectedDocumentType(value)}>
+               <RadioGroup value={selectedDocumentType} onValueChange={(value: 'paragon' | 'faktura' | 'internal_invoice') => setSelectedDocumentType(value)}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="paragon" id="paragon" />
                   <Label htmlFor="paragon" className="cursor-pointer font-normal">
@@ -589,6 +624,12 @@ export const InvoicesReceiptsTab = ({
                   <RadioGroupItem value="faktura" id="faktura" />
                   <Label htmlFor="faktura" className="cursor-pointer font-normal">
                     Faktura
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="internal_invoice" id="internal_invoice" />
+                  <Label htmlFor="internal_invoice" className="cursor-pointer font-normal">
+                    Faktura wewnętrzna
                   </Label>
                 </div>
               </RadioGroup>
