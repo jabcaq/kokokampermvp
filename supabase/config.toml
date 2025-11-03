@@ -1,5 +1,8 @@
 project_id = "qfnptknanxyfxvcuhgck"
 
+[functions.check-deposit-rental-day]
+verify_jwt = false
+
 [functions.check-handover-day]
 verify_jwt = false
 
