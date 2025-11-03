@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, FileText, User, Car, CreditCard, Edit2, Save, X, Link2, Loader2, Users, Truck, Package, MessageCircle, Search, FolderOpen } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, User, Car, CreditCard, Edit2, Save, X, Link2, Loader2, Users, Truck, Package, MessageCircle, Search, FolderOpen, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useContract, useUpdateContract } from "@/hooks/useContracts";
 import { supabase } from "@/integrations/supabase/client";
 import { useVehicles } from "@/hooks/useVehicles";
@@ -47,6 +48,8 @@ const ContractDetails = () => {
   const [activeTab, setActiveTab] = useState("contract");
   const [vehicleFilter, setVehicleFilter] = useState("");
   const [previousStatus, setPreviousStatus] = useState<string | null>(null);
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [pendingStatusChange, setPendingStatusChange] = useState<string | null>(null);
   
   const { data: contract, isLoading } = useContract(id);
   const { data: vehicles } = useVehicles();
@@ -157,8 +160,16 @@ const ContractDetails = () => {
     const updates = sanitizeContractUpdates(editedData);
     console.log('Saving data (sanitized):', updates);
     
-    // Sprawdź czy status zmienia się na 'active'
+    // Check if status is being changed to cancelled, active, or completed
+    const statusChangedToCancelled = updates.status === 'cancelled' && contract?.status !== 'cancelled';
     const statusChangedToActive = updates.status === 'active' && contract?.status !== 'active';
+    const statusChangedToCompleted = updates.status === 'completed' && contract?.status !== 'completed';
+    
+    if (statusChangedToCancelled || statusChangedToActive || statusChangedToCompleted) {
+      setPendingStatusChange(updates.status);
+      setShowStatusDialog(true);
+      return;
+    }
     
     try {
       await updateContractMutation.mutateAsync({
@@ -211,32 +222,6 @@ const ContractDetails = () => {
         }
       }
       
-      // Wyślij webhook jeśli status zmienił się na 'active'
-      if (statusChangedToActive && contract) {
-        try {
-          console.log('Sending webhook notification for contract becoming active');
-          const { error: webhookError } = await supabase.functions.invoke('notify-contract-active', {
-            body: {
-              contractId: contract.id,
-              contractNumber: contract.contract_number,
-            },
-          });
-          
-          if (webhookError) {
-            console.error('Webhook error:', webhookError);
-            toast({
-              title: "Ostrzeżenie",
-              description: "Umowa zaktualizowana, ale nie udało się wysłać powiadomienia webhook.",
-              variant: "default",
-            });
-          } else {
-            console.log('Webhook sent successfully');
-          }
-        } catch (webhookErr) {
-          console.error('Failed to send webhook:', webhookErr);
-        }
-      }
-      
       toast({
         title: "Umowa zaktualizowana",
         description: "Zmiany zostały pomyślnie zapisane.",
@@ -250,6 +235,106 @@ const ContractDetails = () => {
         description: "Nie udało się zaktualizować umowy.",
         variant: "destructive",
       });
+    }
+  };
+
+  const confirmStatusChange = async () => {
+    if (!id) return;
+    
+    const updates = sanitizeContractUpdates(editedData);
+    
+    try {
+      await updateContractMutation.mutateAsync({
+        id,
+        updates,
+      });
+
+      // Wyślij webhook jeśli status zmienił się na 'active'
+      if (pendingStatusChange === 'active' && contract) {
+        try {
+          console.log('Sending webhook notification for contract becoming active');
+          await supabase.functions.invoke('notify-contract-active', {
+            body: {
+              contractId: contract.id,
+              contractNumber: contract.contract_number,
+            },
+          });
+        } catch (webhookErr) {
+          console.error('Failed to send webhook:', webhookErr);
+        }
+      }
+
+      // Handle cancellation
+      if (pendingStatusChange === 'cancelled' && contract) {
+        try {
+          await supabase.functions.invoke('notify-contract-cancelled', {
+            body: {
+              contractId: contract.id,
+              contractNumber: contract.contract_number,
+              tenantName: contract.tenant_name,
+              cancelledAt: new Date().toISOString(),
+              previousStatus: contract.status
+            }
+          });
+
+          await supabase.functions.invoke('update-contract-folder-name', {
+            body: {
+              contract_id: contract.id,
+              suffix: ' [ANULOWANA]'
+            }
+          });
+        } catch (funcError) {
+          console.error('Error calling edge functions:', funcError);
+        }
+      }
+
+      // Synchronizuj dane klienta
+      if (contract?.client_id) {
+        try {
+          const clientUpdates: any = {};
+          
+          if (updates.tenant_name !== undefined) clientUpdates.name = updates.tenant_name;
+          if (updates.tenant_email !== undefined) clientUpdates.email = updates.tenant_email;
+          if (updates.tenant_phone !== undefined) clientUpdates.phone = updates.tenant_phone;
+          if (updates.tenant_address !== undefined) clientUpdates.address = updates.tenant_address;
+          if (updates.tenant_id_type !== undefined) clientUpdates.id_type = updates.tenant_id_type;
+          if (updates.tenant_id_number !== undefined) clientUpdates.id_number = updates.tenant_id_number;
+          if (updates.tenant_id_issuer !== undefined) clientUpdates.id_issuer = updates.tenant_id_issuer;
+          if (updates.tenant_pesel !== undefined) clientUpdates.pesel = updates.tenant_pesel;
+          if (updates.tenant_nip !== undefined) clientUpdates.nip = updates.tenant_nip;
+          if (updates.tenant_license_number !== undefined) clientUpdates.license_number = updates.tenant_license_number;
+          if (updates.tenant_license_category !== undefined) clientUpdates.license_category = updates.tenant_license_category;
+          if (updates.tenant_license_date !== undefined) clientUpdates.license_date = updates.tenant_license_date;
+          if (updates.tenant_trailer_license_category !== undefined) clientUpdates.trailer_license_category = updates.tenant_trailer_license_category;
+          if (updates.tenant_company_name !== undefined) clientUpdates.company_name = updates.tenant_company_name;
+          
+          if (Object.keys(clientUpdates).length > 0) {
+            await supabase.from('clients').update(clientUpdates).eq('id', contract.client_id);
+          }
+        } catch (clientErr) {
+          console.error('Failed to update client:', clientErr);
+        }
+      }
+      
+      setIsEditing(false);
+      setEditedData({});
+      setPreviousStatus(null);
+      setShowStatusDialog(false);
+      setPendingStatusChange(null);
+      
+      toast({
+        title: "Sukces",
+        description: "Status umowy został zmieniony",
+      });
+    } catch (error) {
+      console.error('Update error:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie udało się zmienić statusu umowy",
+        variant: "destructive",
+      });
+      setShowStatusDialog(false);
+      setPendingStatusChange(null);
     }
   };
 
@@ -1359,6 +1444,39 @@ const ContractDetails = () => {
           </TabsContent>
         )}
       </Tabs>
+
+      {/* Status Change Confirmation Dialog */}
+      <AlertDialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              {pendingStatusChange === 'active' && 'Aktywacja umowy'}
+              {pendingStatusChange === 'cancelled' && 'Anulowanie umowy'}
+              {pendingStatusChange === 'completed' && 'Zakończenie umowy'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingStatusChange === 'active' && 
+                'Umowa zostanie aktywowana. Rozpoczną się automatyczne powiadomienia (wydanie, zwrot, kaucja).'}
+              {pendingStatusChange === 'cancelled' && 
+                'Umowa zostanie anulowana. Powiadomienia zostaną wyłączone, a folder w Google Drive otrzyma oznaczenie [ANULOWANA].'}
+              {pendingStatusChange === 'completed' && 
+                'Umowa zostanie oznaczona jako zakończona. Wszystkie automatyczne powiadomienia zostaną wyłączone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowStatusDialog(false);
+              setPendingStatusChange(null);
+            }}>
+              Anuluj
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmStatusChange}>
+              Potwierdź zmianę statusu
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -258,21 +258,33 @@ export const AccountingPanel = ({
         <CardDescription>Nr umowy: {contractNumber}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center space-x-2 p-3 bg-muted/50 rounded-lg">
-          <Checkbox 
-            id="deposit-received" 
-            checked={isDepositReceived}
-            onCheckedChange={handleDepositReceivedChange}
-            disabled={isSendingDepositNotification}
-          />
-          <Label 
-            htmlFor="deposit-received" 
-            className="text-sm font-medium cursor-pointer"
-          >
-            Kaucja przyjęta
-          </Label>
-          {isSendingDepositNotification && (
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-2" />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="deposit-received" 
+                checked={isDepositReceived}
+                onCheckedChange={handleDepositReceivedChange}
+                disabled={isSendingDepositNotification}
+              />
+              <Label 
+                htmlFor="deposit-received" 
+                className="text-sm font-medium cursor-pointer"
+              >
+                Kaucja przyjęta
+              </Label>
+              {isSendingDepositNotification && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-2" />
+              )}
+            </div>
+            <Badge variant={isDepositReceived ? "default" : "secondary"} className="ml-2">
+              {isDepositReceived ? '✓ Wpłacona' : '⏳ Oczekiwanie'}
+            </Badge>
+          </div>
+          {isDepositReceived && depositReceived && (
+            <p className="text-xs text-muted-foreground px-3">
+              Status kaucji może zostać również zaktualizowany przez Telegram
+            </p>
           )}
         </div>
 

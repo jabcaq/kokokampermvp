@@ -29,3 +29,9 @@ verify_jwt = false
 
 [functions.send-invoice-file-notification]
 verify_jwt = false
+
+[functions.check-rental-start-day]
+verify_jwt = false
+
+[functions.telegram-update-deposit]
+verify_jwt = false
