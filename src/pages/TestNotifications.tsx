@@ -1049,6 +1049,7 @@ const TestNotifications = () => {
           start_date: contract.start_date,
           end_date: contract.end_date,
           deposit_amount: depositAmount,
+          deposit_received_at: contract.deposit_received_at,
           timestamp: new Date().toISOString(),
           poland_time: polandTime,
           test_mode: true

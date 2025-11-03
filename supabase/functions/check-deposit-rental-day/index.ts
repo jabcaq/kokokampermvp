@@ -15,6 +15,7 @@ interface Contract {
   start_date: string;
   end_date: string;
   deposit_received: boolean;
+  deposit_received_at: string | null;
   payments: any;
 }
 
@@ -50,7 +51,7 @@ serve(async (req) => {
     // 4. Are pending or active
     const { data: contracts, error } = await supabase
       .from('contracts')
-      .select('id, contract_number, tenant_name, tenant_email, tenant_phone, start_date, end_date, deposit_received, payments')
+      .select('id, contract_number, tenant_name, tenant_email, tenant_phone, start_date, end_date, deposit_received, deposit_received_at, payments')
       .gte('start_date', todayStart.toISOString())
       .lte('start_date', todayEnd.toISOString())
       .eq('deposit_received', true)
@@ -99,6 +100,7 @@ serve(async (req) => {
             start_date: contract.start_date,
             end_date: contract.end_date,
             deposit_amount: depositAmount,
+            deposit_received_at: contract.deposit_received_at,
             timestamp: new Date().toISOString(),
             poland_time: polandTime.toISOString()
           }),
