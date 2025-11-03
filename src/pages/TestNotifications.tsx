@@ -77,6 +77,10 @@ const TestNotifications = () => {
   const [selectedContractForInvoiceFile, setSelectedContractForInvoiceFile] = useState("");
   const [selectedInvoiceFileType, setSelectedInvoiceFileType] = useState("reservation");
   const [isSendingInvoiceFileNotification, setIsSendingInvoiceFileNotification] = useState(false);
+
+  // Deposit paid on rental day notification state
+  const [selectedDepositRentalDayContract, setSelectedDepositRentalDayContract] = useState<string>('');
+  const [isSendingDepositRentalDay, setIsSendingDepositRentalDay] = useState(false);
   
   const { toast } = useToast();
 
@@ -999,6 +1003,75 @@ const TestNotifications = () => {
       });
     } finally {
       setIsSendingInvoiceFileNotification(false);
+    }
+  };
+
+  const handleSendDepositRentalDayNotification = async () => {
+    if (!selectedDepositRentalDayContract) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz umowę",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingDepositRentalDay(true);
+    try {
+      const contract = contracts?.find(c => c.id === selectedDepositRentalDayContract);
+      
+      if (!contract?.deposit_received) {
+        toast({
+          title: "Uwaga",
+          description: "Wybrana umowa nie ma oznaczonej wpłaconej kaucji",
+          variant: "destructive",
+        });
+        setIsSendingDepositRentalDay(false);
+        return;
+      }
+
+      const payments = contract.payments as any;
+      const depositAmount = payments?.kaucja?.wysokosc || 0;
+      const polandTime = new Date().toLocaleString('en-US', { timeZone: 'Europe/Warsaw' });
+
+      const webhookResponse = await fetch('https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          notification_type: 'deposit_paid_rental_day',
+          contract_id: contract.id,
+          contract_number: contract.contract_number,
+          tenant_name: contract.tenant_name,
+          tenant_email: contract.tenant_email,
+          tenant_phone: contract.tenant_phone,
+          start_date: contract.start_date,
+          end_date: contract.end_date,
+          deposit_amount: depositAmount,
+          timestamp: new Date().toISOString(),
+          poland_time: polandTime,
+          test_mode: true
+        }),
+      });
+
+      if (!webhookResponse.ok) {
+        throw new Error(`Webhook failed with status: ${webhookResponse.status}`);
+      }
+
+      toast({
+        title: "Sukces",
+        description: `Wysłano powiadomienie o wpłaconej kaucji dla umowy ${contract.contract_number}`,
+      });
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast({
+        title: "Błąd",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingDepositRentalDay(false);
     }
   };
 
@@ -1926,6 +1999,50 @@ const TestNotifications = () => {
             >
               {isSendingInvoiceFileNotification && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Wyślij powiadomienie o fakturze/paragonie
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Deposit Paid on Rental Day Notification */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Powiadomienie o wpłaconej kaucji (dzień wynajmu)
+          </CardTitle>
+          <CardDescription>
+            Test powiadomienia wysyłanego o 7:00 rano w dniu rozpoczęcia wynajmu, jeśli kaucja została opłacona
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <Label>Wybierz umowę z wpłaconą kaucją</Label>
+              <Select
+                value={selectedDepositRentalDayContract}
+                onValueChange={setSelectedDepositRentalDayContract}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Wybierz umowę z wpłaconą kaucją" />
+                </SelectTrigger>
+                <SelectContent>
+                  {contracts?.filter(c => c.deposit_received).map((contract) => (
+                    <SelectItem key={contract.id} value={contract.id}>
+                      {contract.contract_number} - {contract.tenant_name} ✅
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleSendDepositRentalDayNotification}
+              disabled={isSendingDepositRentalDay || !selectedDepositRentalDayContract}
+              className="w-full sm:w-auto"
+            >
+              {isSendingDepositRentalDay && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Wyślij test powiadomienia
             </Button>
           </div>
         </CardContent>
