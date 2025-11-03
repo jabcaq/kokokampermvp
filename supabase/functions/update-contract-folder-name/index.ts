@@ -65,11 +65,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     const newFolderName = documents.folder + requestData.suffix;
     
-    // Webhook URL do Google Drive - placeholder
-    const webhookUrl = 'GOOGLE_DRIVE_WEBHOOK_PLACEHOLDER';
+    // Webhook URL do Google Drive - zmiana nazwy folderu na anulowany
+    const webhookUrl = 'https://hook.eu2.make.com/gx5h00ers5p2pmfolfj8c6latm9iogvy';
 
-    // Wysyłanie webhooka do Make.com (jeśli URL jest skonfigurowany)
-    if (webhookUrl !== 'GOOGLE_DRIVE_WEBHOOK_PLACEHOLDER' && documents.folder_link) {
+    // Wysyłanie webhooka do Make.com
+    if (documents.folder_link) {
       const webhookResponse = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
