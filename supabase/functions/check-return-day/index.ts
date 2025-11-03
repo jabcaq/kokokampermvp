@@ -28,7 +28,8 @@ Deno.serve(async (req) => {
       .select('*')
       .gte('end_date', `${todayStr}T00:00:00`)
       .lt('end_date', `${todayStr}T23:59:59`)
-      .not('is_archived', 'eq', true);
+      .not('is_archived', 'eq', true)
+      .in('status', ['pending', 'active']);
 
     if (contractsError) {
       console.error('Error fetching contracts:', contractsError);

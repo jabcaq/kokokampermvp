@@ -43,7 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
       .lt('start_date', nextDay.toISOString())
       .eq('deposit_received', false)
       .eq('is_archived', false)
-      .neq('status', 'cancelled');
+      .in('status', ['pending', 'active']);
 
     if (error) {
       console.error('Error fetching contracts:', error);

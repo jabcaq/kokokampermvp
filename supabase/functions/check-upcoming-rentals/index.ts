@@ -39,7 +39,8 @@ const handler = async (req: Request): Promise<Response> => {
       .select('*')
       .gte('start_date', startOfDay.toISOString())
       .lte('start_date', endOfDay.toISOString())
-      .neq('status', 'cancelled');
+      .eq('is_archived', false)
+      .in('status', ['pending', 'active']);
 
     if (error) {
       console.error('Error fetching contracts:', error);
