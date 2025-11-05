@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { pl } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 
 const WARSAW_TZ = "Europe/Warsaw";
 
@@ -270,6 +271,19 @@ const DriverSubmission = () => {
         message: `Dodano ${driversCount} ${driversCount === 1 ? 'kierowcę' : 'kierowców'} dla umowy ${contract.contract_number}`,
         link: `/contracts/${contract.id}`,
       });
+
+      // Send webhook notification
+      try {
+        await supabase.functions.invoke('notify-driver-submission', {
+          body: {
+            contractId: contract.id,
+            contractNumber: contract.contract_number,
+          }
+        });
+      } catch (webhookError) {
+        console.error('Error sending webhook:', webhookError);
+        // Don't block submission if webhook fails
+      }
 
       toast.success("Zgłoszenie wysłane pomyślnie!", {
         description: `Dziękujemy za przesłanie danych ${driversCount} ${driversCount === 1 ? 'kierowcy' : 'kierowców'}`,

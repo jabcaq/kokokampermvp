@@ -85,6 +85,10 @@ const TestNotifications = () => {
   // Folder rename notification state (for cancelled contracts)
   const [selectedContractForFolderRename, setSelectedContractForFolderRename] = useState<string>('');
   const [isSendingFolderRename, setIsSendingFolderRename] = useState(false);
+
+  // Driver submission notification state
+  const [selectedContractForDriver, setSelectedContractForDriver] = useState<string>('');
+  const [isSendingDriverSubmission, setIsSendingDriverSubmission] = useState(false);
   
   const { toast } = useToast();
 
@@ -1150,6 +1154,49 @@ const TestNotifications = () => {
     }
   };
 
+  const handleSendDriverSubmissionNotification = async () => {
+    if (!selectedContractForDriver) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz umowę.",
+      });
+      return;
+    }
+
+    setIsSendingDriverSubmission(true);
+    try {
+      const contract = contracts?.find(c => c.id === selectedContractForDriver);
+      if (!contract) {
+        throw new Error("Nie znaleziono umowy");
+      }
+
+      const response = await supabase.functions.invoke('notify-driver-submission', {
+        body: {
+          contractId: contract.id,
+          contractNumber: contract.contract_number,
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to send notification');
+      }
+
+      toast({
+        title: "Sukces",
+        description: `Testowe powiadomienie wysłane dla umowy ${contract.contract_number}`,
+      });
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się wysłać powiadomienia",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingDriverSubmission(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
       <Card>
@@ -2169,6 +2216,57 @@ const TestNotifications = () => {
             >
               {isSendingFolderRename && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Wyślij test zmiany nazwy folderu
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Driver Submission Notification */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Zgłoszenie kierowców do umowy
+          </CardTitle>
+          <CardDescription>
+            Test powiadomienia wysyłanego gdy zostanie wypełniony formularz zgłoszenia kierowców
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-sm text-muted-foreground">
+                Edge Function: notify-driver-submission → Webhook: https://hook.eu2.make.com/mrwzwecoht7kkxzs2w6edejw2e5lhx9b
+              </span>
+            </div>
+
+            <div>
+              <Label>Wybierz umowę</Label>
+              <Select
+                value={selectedContractForDriver}
+                onValueChange={setSelectedContractForDriver}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Wybierz umowę..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {contracts?.map((contract) => (
+                    <SelectItem key={contract.id} value={contract.id}>
+                      {contract.contract_number} - {contract.tenant_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleSendDriverSubmissionNotification}
+              disabled={isSendingDriverSubmission || !selectedContractForDriver}
+              className="w-full sm:w-auto"
+            >
+              {isSendingDriverSubmission && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Wyślij test powiadomienia
             </Button>
           </div>
         </CardContent>
