@@ -21,28 +21,24 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Calculate date range for 2 days from now at 7 AM
+    // Calculate target date (2 days from now)
     const now = new Date();
     const targetDate = new Date(now);
     targetDate.setDate(targetDate.getDate() + 2);
-    targetDate.setHours(0, 0, 0, 0);
     
-    const nextDay = new Date(targetDate);
-    nextDay.setDate(nextDay.getDate() + 1);
+    // Format as YYYY-MM-DD for date comparison
+    const targetDateStr = targetDate.toISOString().split('T')[0];
 
-    console.log('Checking for rentals starting in 2 days:', {
-      from: targetDate.toISOString(),
-      to: nextDay.toISOString()
-    });
+    console.log('Checking for rentals starting in 2 days (date only):', targetDateStr);
 
-    // Fetch contracts starting in 2 days
+    // Fetch contracts starting in 2 days using DATE comparison
     const { data: contracts, error: contractsError } = await supabase
       .from('contracts')
       .select('*')
-      .gte('start_date', targetDate.toISOString())
-      .lt('start_date', nextDay.toISOString())
       .eq('is_archived', false)
-      .in('status', ['pending', 'active']);
+      .in('status', ['pending', 'active'])
+      .filter('start_date', 'gte', `${targetDateStr}T00:00:00`)
+      .filter('start_date', 'lt', `${targetDateStr}T23:59:59`);
 
     if (contractsError) {
       console.error('Error fetching contracts:', contractsError);

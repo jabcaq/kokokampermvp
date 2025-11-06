@@ -19,28 +19,24 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Calculate the date 3 days from now (Warsaw timezone)
+    // Calculate target date (3 days from now)
     const now = new Date();
     const threeDaysFromNow = new Date(now);
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
     
-    // Get start and end of that day in Warsaw time
-    const startOfDay = new Date(threeDaysFromNow);
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const endOfDay = new Date(threeDaysFromNow);
-    endOfDay.setHours(23, 59, 59, 999);
+    // Format as YYYY-MM-DD for date comparison
+    const targetDateStr = threeDaysFromNow.toISOString().split('T')[0];
 
-    console.log('Checking for contracts starting between:', startOfDay.toISOString(), 'and', endOfDay.toISOString());
+    console.log('Checking for contracts starting in 3 days (date only):', targetDateStr);
 
-    // Find contracts starting in 3 days
+    // Find contracts starting in 3 days using DATE comparison
     const { data: contracts, error } = await supabase
       .from('contracts')
       .select('*')
-      .gte('start_date', startOfDay.toISOString())
-      .lte('start_date', endOfDay.toISOString())
       .eq('is_archived', false)
-      .in('status', ['pending', 'active']);
+      .in('status', ['pending', 'active'])
+      .filter('start_date', 'gte', `${targetDateStr}T00:00:00`)
+      .filter('start_date', 'lt', `${targetDateStr}T23:59:59`);
 
     if (error) {
       console.error('Error fetching contracts:', error);

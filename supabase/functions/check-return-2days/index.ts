@@ -17,20 +17,20 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get date 2 days from now (3 days before return)
+    // Get date 2 days from now (for returns)
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + 2);
     const targetDateStr = targetDate.toISOString().split('T')[0];
-    console.log('Checking for returns on:', targetDateStr);
+    console.log('Checking for returns in 2 days (date only):', targetDateStr);
 
-    // Fetch all contracts ending in 2 days
+    // Fetch all contracts ending in 2 days using DATE comparison
     const { data: contracts, error: contractsError } = await supabase
       .from('contracts')
       .select('*')
-      .gte('end_date', `${targetDateStr}T00:00:00`)
-      .lt('end_date', `${targetDateStr}T23:59:59`)
-      .not('is_archived', 'eq', true)
-      .in('status', ['pending', 'active']);
+      .eq('is_archived', false)
+      .in('status', ['pending', 'active'])
+      .filter('end_date', 'gte', `${targetDateStr}T00:00:00`)
+      .filter('end_date', 'lt', `${targetDateStr}T23:59:59`);
 
     if (contractsError) {
       console.error('Error fetching contracts:', contractsError);
