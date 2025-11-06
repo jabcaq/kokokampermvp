@@ -30,7 +30,10 @@ export const useVehicleReturns = (contractId?: string) => {
   return useQuery({
     queryKey: ["vehicle_returns", contractId],
     queryFn: async () => {
-      let query = supabase.from("vehicle_returns").select("*");
+      let query = supabase
+        .from("vehicle_returns")
+        .select("*")
+        .eq("return_completed", true); // Only show completed returns (actual protocols, not bookings)
       
       if (contractId) {
         query = query.eq("contract_id", contractId);
