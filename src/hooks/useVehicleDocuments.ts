@@ -11,6 +11,7 @@ export interface VehicleDocument {
   issue_date?: string;
   expiry_date?: string;
   notes?: string;
+  document_number?: string;
   created_at: string;
   updated_at: string;
 }
@@ -49,6 +50,8 @@ export const useAddVehicleDocument = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["vehicle_documents", variables.vehicle_id] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicle", variables.vehicle_id] });
       toast.success("Dokument został dodany");
     },
     onError: () => {
