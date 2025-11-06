@@ -68,6 +68,8 @@ const ContractDetails = () => {
         .eq("contract_id", id)
         .eq("return_completed", false)
         .not("scheduled_return_date", "is", null)
+        .order("scheduled_return_date", { ascending: false })
+        .limit(1)
         .maybeSingle();
       
       if (error) throw error;
