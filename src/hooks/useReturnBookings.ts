@@ -99,6 +99,7 @@ export const useCreateReturnBooking = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["return_bookings"] });
       queryClient.invalidateQueries({ queryKey: ["vehicle_returns"] });
+      queryClient.invalidateQueries({ queryKey: ["scheduled_return"] });
       toast({
         title: "Sukces",
         description: "Termin zwrotu został zarezerwowany.",
