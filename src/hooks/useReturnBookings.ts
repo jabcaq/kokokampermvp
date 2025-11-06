@@ -64,7 +64,7 @@ export const useCreateReturnBooking = () => {
       // Create notification
       const { data: contractData } = await supabase
         .from("contracts")
-        .select("contract_number, tenant_name")
+        .select("id, contract_number, tenant_name")
         .eq("id", bookingData.contract_id)
         .maybeSingle();
 
