@@ -17,9 +17,10 @@ interface ReturnTabProps {
   endDate: string;
   vehicleModel: string;
   returns: VehicleReturn[] | undefined;
+  scheduledReturn?: any;
 }
 
-export const ReturnTab = ({ contractId, contractNumber, tenantName, startDate, endDate, vehicleModel, returns }: ReturnTabProps) => {
+export const ReturnTab = ({ contractId, contractNumber, tenantName, startDate, endDate, vehicleModel, returns, scheduledReturn }: ReturnTabProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -47,7 +48,7 @@ export const ReturnTab = ({ contractId, contractNumber, tenantName, startDate, e
     navigate(`/vehicle-return?${params.toString()}`);
   };
 
-  const scheduledReturn = returns?.find(r => r.scheduled_return_date && !r.return_completed);
+  
 
   return (
     <div className="space-y-6">

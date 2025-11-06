@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useVehicles } from "@/hooks/useVehicles";
 import { useVehicleHandovers, useAddVehicleHandover } from "@/hooks/useVehicleHandovers";
 import { useVehicleReturns, useAddVehicleReturn } from "@/hooks/useVehicleReturns";
+import { useQuery } from "@tanstack/react-query";
 import { format, addDays } from "date-fns";
 import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { pl } from "date-fns/locale";
@@ -55,6 +56,26 @@ const ContractDetails = () => {
   const { data: vehicles } = useVehicles();
   const { data: handovers } = useVehicleHandovers(id);
   const { data: returns } = useVehicleReturns(id);
+  
+  // Fetch scheduled return booking (not completed)
+  const { data: scheduledReturn } = useQuery({
+    queryKey: ["scheduled_return", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from("vehicle_returns")
+        .select("*")
+        .eq("contract_id", id)
+        .eq("return_completed", false)
+        .not("scheduled_return_date", "is", null)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+  
   const updateContractMutation = useUpdateContract();
 
   const filteredVehicles = useMemo(() => {
@@ -1435,6 +1456,7 @@ const ContractDetails = () => {
             endDate={contract.end_date}
             vehicleModel={contract.vehicle_model}
             returns={returns}
+            scheduledReturn={scheduledReturn}
           />
         </TabsContent>
 
