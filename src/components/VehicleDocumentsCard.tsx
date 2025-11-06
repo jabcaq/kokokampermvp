@@ -45,6 +45,7 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
     issue_date: "",
     expiry_date: "",
     notes: "",
+    policy_number: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,6 +53,18 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
     
     if (!selectedFile) {
       toast.error("Proszę wybrać plik");
+      return;
+    }
+
+    // Validate required dates for OC and inspection
+    if ((formData.document_type === "oc" || formData.document_type === "inspection") && !formData.expiry_date) {
+      toast.error("Data wygaśnięcia jest wymagana dla tego typu dokumentu");
+      return;
+    }
+
+    // Validate policy number for OC
+    if (formData.document_type === "oc" && !formData.policy_number) {
+      toast.error("Numer polisy jest wymagany");
       return;
     }
 
@@ -84,12 +97,35 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
         notes: formData.notes || undefined,
       });
 
+      // Update vehicle data based on document type
+      const vehicleUpdates: any = {};
+      
+      if (formData.document_type === "oc") {
+        vehicleUpdates.insurance_valid_until = formData.expiry_date;
+        vehicleUpdates.insurance_policy_number = formData.policy_number;
+      } else if (formData.document_type === "inspection") {
+        vehicleUpdates.next_inspection_date = formData.expiry_date;
+      }
+
+      // Update vehicle if there are changes
+      if (Object.keys(vehicleUpdates).length > 0) {
+        const { error: updateError } = await supabase
+          .from('vehicles')
+          .update(vehicleUpdates)
+          .eq('id', vehicleId);
+
+        if (updateError) throw updateError;
+      }
+
+      toast.success("Dokument został dodany, a dane pojazdu zaktualizowane");
+
       setFormData({
         document_type: "oc",
         file_name: "",
         issue_date: "",
         expiry_date: "",
         notes: "",
+        policy_number: "",
       });
       setSelectedFile(null);
       setIsDialogOpen(false);
@@ -166,6 +202,19 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
                 )}
               </div>
 
+              {formData.document_type === "oc" && (
+                <div className="space-y-2">
+                  <Label>Numer polisy *</Label>
+                  <Input
+                    type="text"
+                    value={formData.policy_number}
+                    onChange={(e) => setFormData({ ...formData, policy_number: e.target.value })}
+                    placeholder="Wpisz numer polisy"
+                    required
+                  />
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Data wystawienia</Label>
@@ -177,11 +226,15 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Data wygaśnięcia</Label>
+                  <Label>
+                    Data wygaśnięcia
+                    {(formData.document_type === "oc" || formData.document_type === "inspection") && " *"}
+                  </Label>
                   <Input
                     type="date"
                     value={formData.expiry_date}
                     onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
+                    required={formData.document_type === "oc" || formData.document_type === "inspection"}
                   />
                 </div>
               </div>
