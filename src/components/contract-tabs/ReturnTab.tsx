@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import type { VehicleReturn } from "@/hooks/useVehicleReturns";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ReturnTabProps {
   contractId: string;
@@ -50,6 +52,26 @@ export const ReturnTab = ({ contractId, contractNumber, tenantName, startDate, e
 
   
 
+  const { data: scheduledSelf } = useQuery({
+    queryKey: ["scheduled_return", contractId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vehicle_returns")
+        .select("*")
+        .eq("contract_id", contractId)
+        .eq("return_completed", false)
+        .not("scheduled_return_date", "is", null)
+        .order("scheduled_return_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !scheduledReturn && !!contractId,
+  });
+
+  const displayScheduled = scheduledReturn ?? scheduledSelf;
+
   return (
     <div className="space-y-6">
       {/* Booking link card */}
@@ -64,18 +86,18 @@ export const ReturnTab = ({ contractId, contractNumber, tenantName, startDate, e
           <p className="text-muted-foreground">
             Wyślij klientowi link do rezerwacji terminu zwrotu kampera. Klient wybierze dogodny termin w kalendarzu.
           </p>
-          {scheduledReturn && (
+          {displayScheduled && (
             <div className="p-4 bg-muted rounded-lg space-y-2">
               <Label className="text-sm font-semibold">Zarezerwowany termin:</Label>
               <div className="flex items-center gap-2">
                 <CalendarCheck className="h-4 w-4 text-primary" />
                 <span className="font-medium">
-                  {format(new Date(scheduledReturn.scheduled_return_date), "dd.MM.yyyy")} o {scheduledReturn.scheduled_return_time}
+                  {format(new Date(displayScheduled.scheduled_return_date), "dd.MM.yyyy")} o {displayScheduled.scheduled_return_time}
                 </span>
               </div>
-              {scheduledReturn.booking_notes && (
+              {displayScheduled.booking_notes && (
                 <p className="text-sm text-muted-foreground mt-2">
-                  Uwagi: {scheduledReturn.booking_notes}
+                  Uwagi: {displayScheduled.booking_notes}
                 </p>
               )}
             </div>
