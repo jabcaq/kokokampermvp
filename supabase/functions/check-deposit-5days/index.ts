@@ -25,25 +25,22 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Calculate date 5 days from now (not accounting moment, just rental start check)
+    // Calculate target date (5 days from now)
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + 5);
-    targetDate.setHours(0, 0, 0, 0);
-    
-    const nextDay = new Date(targetDate);
-    nextDay.setDate(nextDay.getDate() + 1);
+    const targetDateStr = targetDate.toISOString().split('T')[0];
 
-    console.log('Checking contracts starting on (5 days ahead):', targetDate.toISOString());
+    console.log('Checking contracts starting in 5 days (date only):', targetDateStr);
 
     // Fetch contracts starting in 5 days where deposit is not received
     const { data: contracts, error } = await supabase
       .from('contracts')
       .select('id, contract_number, tenant_name, start_date, deposit_received, payments')
-      .gte('start_date', targetDate.toISOString())
-      .lt('start_date', nextDay.toISOString())
       .eq('deposit_received', false)
       .eq('is_archived', false)
-      .in('status', ['pending', 'active']);
+      .in('status', ['pending', 'active'])
+      .filter('start_date', 'gte', `${targetDateStr}T00:00:00`)
+      .filter('start_date', 'lt', `${targetDateStr}T23:59:59`);
 
     if (error) {
       console.error('Error fetching contracts:', error);

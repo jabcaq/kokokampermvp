@@ -18,21 +18,20 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get today's date range
+    // Get today's date
     const today = new Date();
-    const todayStart = new Date(today.setHours(0, 0, 0, 0));
-    const todayEnd = new Date(today.setHours(23, 59, 59, 999));
+    const todayStr = today.toISOString().split('T')[0];
 
-    console.log('Checking for contracts starting today:', todayStart.toISOString());
+    console.log('Checking for contracts starting today (date only):', todayStr);
 
-    // Find all pending contracts that start today
+    // Find all pending contracts that start today using DATE comparison
     const { data: contracts, error } = await supabase
       .from('contracts')
       .select('*')
       .eq('status', 'pending')
-      .gte('start_date', todayStart.toISOString())
-      .lte('start_date', todayEnd.toISOString())
-      .eq('is_archived', false);
+      .eq('is_archived', false)
+      .filter('start_date', 'gte', `${todayStr}T00:00:00`)
+      .filter('start_date', 'lt', `${todayStr}T23:59:59`);
 
     if (error) {
       console.error('Error fetching contracts:', error);
