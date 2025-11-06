@@ -32,7 +32,9 @@ export default function ReturnBooking() {
   const startDateParsed = startDateStr ? new Date(startDateStr) : null;
   const endDateParsed = endDateStr ? new Date(endDateStr) : null;
 
-  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    endDateParsed && !isNaN(endDateParsed.getTime()) ? startOfDay(endDateParsed) : undefined
+  );
   const [selectedTime, setSelectedTime] = useState<string>();
   const [notes, setNotes] = useState("");
   const [isBooked, setIsBooked] = useState(false);
@@ -183,6 +185,14 @@ export default function ReturnBooking() {
                       onSelect={setSelectedDate}
                       disabled={(date) => date < minDate}
                       className="rounded-md border-0 scale-110"
+                      modifiers={{
+                        contractEnd: endDateParsed && !isNaN(endDateParsed.getTime()) 
+                          ? startOfDay(endDateParsed) 
+                          : new Date(0)
+                      }}
+                      modifiersClassNames={{
+                        contractEnd: "bg-primary/20 font-bold ring-2 ring-primary ring-offset-2"
+                      }}
                     />
                   </div>
                 </div>
