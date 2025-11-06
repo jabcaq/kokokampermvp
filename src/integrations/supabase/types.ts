@@ -885,6 +885,7 @@ export type Database = {
       vehicle_documents: {
         Row: {
           created_at: string
+          document_number: string | null
           document_type: string
           expiry_date: string | null
           file_name: string
@@ -897,6 +898,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          document_number?: string | null
           document_type: string
           expiry_date?: string | null
           file_name: string
@@ -909,6 +911,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          document_number?: string | null
           document_type?: string
           expiry_date?: string | null
           file_name?: string
@@ -1072,6 +1075,7 @@ export type Database = {
           model: string
           name: string | null
           next_inspection_date: string | null
+          registration_certificate_number: string | null
           registration_number: string
           status: string | null
           trailer_weight: number | null
@@ -1091,6 +1095,7 @@ export type Database = {
           model: string
           name?: string | null
           next_inspection_date?: string | null
+          registration_certificate_number?: string | null
           registration_number: string
           status?: string | null
           trailer_weight?: number | null
@@ -1110,6 +1115,7 @@ export type Database = {
           model?: string
           name?: string | null
           next_inspection_date?: string | null
+          registration_certificate_number?: string | null
           registration_number?: string
           status?: string | null
           trailer_weight?: number | null

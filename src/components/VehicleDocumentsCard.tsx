@@ -45,7 +45,7 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
     issue_date: "",
     expiry_date: "",
     notes: "",
-    policy_number: "",
+    document_number: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,9 +62,9 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
       return;
     }
 
-    // Validate policy number for OC
-    if (formData.document_type === "oc" && !formData.policy_number) {
-      toast.error("Numer polisy jest wymagany");
+    // Validate document number for OC and registration
+    if ((formData.document_type === "oc" || formData.document_type === "registration") && !formData.document_number) {
+      toast.error(formData.document_type === "oc" ? "Numer polisy jest wymagany" : "Numer dowodu rejestracyjnego jest wymagany");
       return;
     }
 
@@ -95,6 +95,7 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
         issue_date: formData.issue_date || undefined,
         expiry_date: formData.expiry_date || undefined,
         notes: formData.notes || undefined,
+        document_number: formData.document_number || undefined,
       });
 
       // Update vehicle data based on document type
@@ -102,9 +103,11 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
       
       if (formData.document_type === "oc") {
         vehicleUpdates.insurance_valid_until = formData.expiry_date;
-        vehicleUpdates.insurance_policy_number = formData.policy_number;
+        vehicleUpdates.insurance_policy_number = formData.document_number;
       } else if (formData.document_type === "inspection") {
         vehicleUpdates.next_inspection_date = formData.expiry_date;
+      } else if (formData.document_type === "registration") {
+        vehicleUpdates.registration_certificate_number = formData.document_number;
       }
 
       // Update vehicle if there are changes
@@ -125,7 +128,7 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
         issue_date: "",
         expiry_date: "",
         notes: "",
-        policy_number: "",
+        document_number: "",
       });
       setSelectedFile(null);
       setIsDialogOpen(false);
@@ -202,14 +205,16 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
                 )}
               </div>
 
-              {formData.document_type === "oc" && (
+              {(formData.document_type === "oc" || formData.document_type === "registration") && (
                 <div className="space-y-2">
-                  <Label>Numer polisy *</Label>
+                  <Label>
+                    {formData.document_type === "oc" ? "Numer polisy" : "Numer dowodu rejestracyjnego"} *
+                  </Label>
                   <Input
                     type="text"
-                    value={formData.policy_number}
-                    onChange={(e) => setFormData({ ...formData, policy_number: e.target.value })}
-                    placeholder="Wpisz numer polisy"
+                    value={formData.document_number}
+                    onChange={(e) => setFormData({ ...formData, document_number: e.target.value })}
+                    placeholder={formData.document_type === "oc" ? "Wpisz numer polisy" : "Wpisz numer dowodu"}
                     required
                   />
                 </div>
