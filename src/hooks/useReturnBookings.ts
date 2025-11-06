@@ -38,49 +38,64 @@ export const useCreateReturnBooking = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  return useMutation({
-    mutationFn: async (bookingData: {
-      contract_id: string;
-      scheduled_return_date: string;
-      scheduled_return_time: string;
-      booking_notes?: string;
-      mileage: number;
-      fuel_level: number;
-      employee_name: string;
-      assigned_employee_id?: string;
-    }) => {
-      const { data, error } = await supabase
-        .from("vehicle_returns")
-        .insert([{
-          ...bookingData,
-          return_confirmed: false,
-          return_completed: false,
-        }])
-        .select()
-        .single();
+    return useMutation({
+      mutationFn: async (bookingData: {
+        contract_id: string;
+        scheduled_return_date: string;
+        scheduled_return_time: string;
+        booking_notes?: string;
+        mileage: number;
+        fuel_level: number;
+        employee_name: string;
+        assigned_employee_id?: string;
+      }) => {
+        // 1) Insert booking
+        let insertResult;
+        try {
+          const { data, error } = await supabase
+            .from("vehicle_returns")
+            .insert([
+              {
+                ...bookingData,
+                return_confirmed: false,
+                return_completed: false,
+              },
+            ])
+            .select()
+            .single();
 
-      if (error) throw error;
+          if (error) throw error;
+          insertResult = data;
+        } catch (e: any) {
+          console.error("Booking insert failed", e);
+          throw new Error(`Booking insert failed: ${e?.message || e}`);
+        }
 
-      // Create notification
-      const { data: contractData } = await supabase
-        .from("contracts")
-        .select("id, contract_number, tenant_name")
-        .eq("id", bookingData.contract_id)
-        .maybeSingle();
+        // 2) Create notification (non-blocking)
+        try {
+          const { data: contractData } = await supabase
+            .from("contracts")
+            .select("id, contract_number, tenant_name")
+            .eq("id", bookingData.contract_id)
+            .maybeSingle();
 
-      if (contractData) {
-        await supabase
-          .from("notifications")
-          .insert({
-            type: "return_scheduled",
-            title: "Nowa rezerwacja zwrotu",
-            message: `Zarezerwowano zwrot kampera dla umowy ${contractData.contract_number} - ${contractData.tenant_name} na ${new Date(bookingData.scheduled_return_date).toLocaleDateString('pl-PL')} o ${bookingData.scheduled_return_time}`,
-            link: `/contracts/${bookingData.contract_id}`,
-          });
-      }
+          if (contractData) {
+            await supabase.from("notifications").insert({
+              type: "return_scheduled",
+              title: "Nowa rezerwacja zwrotu",
+              message: `Zarezerwowano zwrot kampera dla umowy ${contractData.contract_number} - ${contractData.tenant_name} na ${new Date(
+                bookingData.scheduled_return_date
+              ).toLocaleDateString("pl-PL")} o ${bookingData.scheduled_return_time}`,
+              link: `/contracts/${bookingData.contract_id}`,
+            });
+          }
+        } catch (e) {
+          console.error("Notification creation failed", e);
+          // Do not block booking creation on notification error
+        }
 
-      return data;
-    },
+        return insertResult;
+      },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["return_bookings"] });
       queryClient.invalidateQueries({ queryKey: ["vehicle_returns"] });
