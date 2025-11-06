@@ -66,7 +66,7 @@ export const useCreateReturnBooking = () => {
         .from("contracts")
         .select("contract_number, tenant_name")
         .eq("id", bookingData.contract_id)
-        .single();
+        .maybeSingle();
 
       if (contractData) {
         await supabase
