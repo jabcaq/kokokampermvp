@@ -882,6 +882,53 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicle_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          expiry_date: string | null
+          file_name: string
+          file_url: string | null
+          id: string
+          issue_date: string | null
+          notes: string | null
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          expiry_date?: string | null
+          file_name: string
+          file_url?: string | null
+          id?: string
+          issue_date?: string | null
+          notes?: string | null
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          expiry_date?: string | null
+          file_name?: string
+          file_url?: string | null
+          id?: string
+          issue_date?: string | null
+          notes?: string | null
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_documents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicle_handovers: {
         Row: {
           contract_id: string

@@ -13,6 +13,7 @@ import { format, differenceInDays } from "date-fns";
 import { pl } from "date-fns/locale";
 import { useVehicle, useUpdateVehicle } from "@/hooks/useVehicles";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VehicleDocumentsCard } from "@/components/VehicleDocumentsCard";
 
 const VehicleDetails = () => {
   const { id } = useParams();
@@ -544,6 +545,8 @@ const VehicleDetails = () => {
           </CardContent>
         </Card>
       </div>
+
+      <VehicleDocumentsCard vehicleId={id!} />
     </div>
   );
 };
