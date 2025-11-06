@@ -118,6 +118,9 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
           .eq('id', vehicleId);
 
         if (updateError) throw updateError;
+        
+        // Force immediate refetch of vehicle data
+        window.location.reload();
       }
 
       toast.success("Dokument został dodany, a dane pojazdu zaktualizowane");
