@@ -16,6 +16,8 @@ import {
   useDeleteVehicleDocument,
 } from "@/hooks/useVehicleDocuments";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface VehicleDocumentsCardProps {
   vehicleId: string;
@@ -35,10 +37,11 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
   const deleteDocument = useDeleteVehicleDocument();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     document_type: "oc",
     file_name: "",
-    file_url: "",
     issue_date: "",
     expiry_date: "",
     notes: "",
@@ -47,29 +50,55 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.file_name) {
+    if (!selectedFile) {
+      toast.error("Proszę wybrać plik");
       return;
     }
 
-    await addDocument.mutateAsync({
-      vehicle_id: vehicleId,
-      document_type: formData.document_type,
-      file_name: formData.file_name,
-      file_url: formData.file_url || undefined,
-      issue_date: formData.issue_date || undefined,
-      expiry_date: formData.expiry_date || undefined,
-      notes: formData.notes || undefined,
-    });
+    setUploading(true);
 
-    setFormData({
-      document_type: "oc",
-      file_name: "",
-      file_url: "",
-      issue_date: "",
-      expiry_date: "",
-      notes: "",
-    });
-    setIsDialogOpen(false);
+    try {
+      // Upload file to Supabase Storage
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${vehicleId}/${Date.now()}_${formData.document_type}.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('vehicle-documents')
+        .upload(fileName, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('vehicle-documents')
+        .getPublicUrl(fileName);
+
+      // Save document metadata to database
+      await addDocument.mutateAsync({
+        vehicle_id: vehicleId,
+        document_type: formData.document_type,
+        file_name: selectedFile.name,
+        file_url: publicUrl,
+        issue_date: formData.issue_date || undefined,
+        expiry_date: formData.expiry_date || undefined,
+        notes: formData.notes || undefined,
+      });
+
+      setFormData({
+        document_type: "oc",
+        file_name: "",
+        issue_date: "",
+        expiry_date: "",
+        notes: "",
+      });
+      setSelectedFile(null);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Nie udało się przesłać pliku");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -114,23 +143,27 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
               </div>
 
               <div className="space-y-2">
-                <Label>Nazwa pliku *</Label>
+                <Label>Plik dokumentu *</Label>
                 <Input
-                  value={formData.file_name}
-                  onChange={(e) => setFormData({ ...formData, file_name: e.target.value })}
-                  placeholder="np. OC_2025.pdf"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setSelectedFile(file);
+                      // Auto-fill file name if empty
+                      if (!formData.file_name) {
+                        setFormData({ ...formData, file_name: file.name });
+                      }
+                    }
+                  }}
                   required
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Link do pliku</Label>
-                <Input
-                  value={formData.file_url}
-                  onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
-                  placeholder="https://..."
-                  type="url"
-                />
+                {selectedFile && (
+                  <p className="text-sm text-muted-foreground">
+                    Wybrany plik: {selectedFile.name}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -167,8 +200,8 @@ export const VehicleDocumentsCard = ({ vehicleId }: VehicleDocumentsCardProps) =
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Anuluj
                 </Button>
-                <Button type="submit" disabled={addDocument.isPending}>
-                  {addDocument.isPending ? "Dodawanie..." : "Dodaj"}
+                <Button type="submit" disabled={uploading || addDocument.isPending}>
+                  {uploading ? "Przesyłanie..." : "Dodaj"}
                 </Button>
               </div>
             </form>
