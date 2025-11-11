@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { FileText, Send, CheckCircle, UserPlus } from "lucide-react";
+import { FileText, Send, CheckCircle, UserPlus, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUpsertContractDocument } from "@/hooks/useContractDocuments";
 import { useContract } from "@/hooks/useContracts";
 import { useCreateNotificationLog } from "@/hooks/useNotificationLogs";
 import { toZonedTime } from "date-fns-tz";
 import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ContractActionsPanelProps {
   contractId: string;
@@ -25,6 +27,47 @@ export const ContractActionsPanel = ({
   const upsertDocument = useUpsertContractDocument();
   const { data: contract } = useContract(contractId);
   const createLog = useCreateNotificationLog();
+
+  // Fetch contract documents to check completion status
+  const { data: contractDocuments } = useQuery({
+    queryKey: ["contract_documents", contractId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contract_documents")
+        .select("*")
+        .eq("contract_id", contractId);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!contractId,
+  });
+
+  // Checklist state
+  const [checklist, setChecklist] = useState({
+    driverForm: false,
+    verification: false,
+    generated: false,
+    sent: false,
+  });
+
+  // Update checklist based on contract documents
+  useEffect(() => {
+    if (contractDocuments) {
+      const hasGenerated = contractDocuments.some(
+        (doc) => doc.document_type === "contract" && doc.status === "generated"
+      );
+      const hasSent = contractDocuments.some(
+        (doc) => doc.document_type === "contract" && doc.status === "sent"
+      );
+      
+      setChecklist((prev) => ({
+        ...prev,
+        generated: hasGenerated || prev.generated,
+        sent: hasSent || prev.sent,
+      }));
+    }
+  }, [contractDocuments]);
 
   const generateVerificationText = () => {
     if (!contract) return "";
@@ -140,6 +183,9 @@ export const ContractActionsPanel = ({
         title: "Sukces",
         description: "Umowa została wygenerowana",
       });
+
+      // Mark as completed in checklist
+      setChecklist((prev) => ({ ...prev, generated: true }));
     } catch (error) {
       toast({
         title: "Błąd",
@@ -194,6 +240,9 @@ export const ContractActionsPanel = ({
         title: "Sukces",
         description: `Umowa została wysłana do ${clientEmail}`,
       });
+
+      // Mark as completed in checklist
+      setChecklist((prev) => ({ ...prev, sent: true }));
     } catch (error) {
       toast({
         title: "Błąd",
@@ -232,6 +281,9 @@ export const ContractActionsPanel = ({
         title: "Sukces",
         description: "Dane zostały wysłane do weryfikacji",
       });
+
+      // Mark as completed in checklist
+      setChecklist((prev) => ({ ...prev, verification: true }));
     } catch (error) {
       toast({
         title: "Błąd",
@@ -282,6 +334,9 @@ export const ContractActionsPanel = ({
         title: "Link skopiowany i wysłany",
         description: "Link do formularza kierowcy został skopiowany i wysłany",
       });
+
+      // Mark as completed in checklist
+      setChecklist((prev) => ({ ...prev, driverForm: true }));
     } catch (error) {
       toast({
         title: "Link skopiowany",
@@ -298,8 +353,87 @@ export const ContractActionsPanel = ({
           <CardTitle className="text-lg">Akcje umowy</CardTitle>
           <CardDescription className="text-xs">Nr umowy: {contractNumber}</CardDescription>
         </CardHeader>
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap gap-3 justify-center">
+        <CardContent className="pt-6 space-y-6">
+          {/* Checklist */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Lista zadań</h3>
+            <div className="space-y-2">
+              {/* Formularz dla kierowców */}
+              <div className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                checklist.driverForm 
+                  ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800' 
+                  : 'bg-muted/30 border border-border'
+              }`}>
+                <div className={`flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all ${
+                  checklist.driverForm 
+                    ? 'bg-green-600 border-green-600' 
+                    : 'border-muted-foreground/30'
+                }`}>
+                  {checklist.driverForm && <Check className="h-3 w-3 text-white" />}
+                </div>
+                <span className={`text-sm ${checklist.driverForm ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                  Formularz dla kierowców
+                </span>
+              </div>
+
+              {/* Wysłanie do weryfikacji */}
+              <div className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                checklist.verification 
+                  ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800' 
+                  : 'bg-muted/30 border border-border'
+              }`}>
+                <div className={`flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all ${
+                  checklist.verification 
+                    ? 'bg-green-600 border-green-600' 
+                    : 'border-muted-foreground/30'
+                }`}>
+                  {checklist.verification && <Check className="h-3 w-3 text-white" />}
+                </div>
+                <span className={`text-sm ${checklist.verification ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                  Wysłanie do weryfikacji
+                </span>
+              </div>
+
+              {/* Wygenerowanie umowy */}
+              <div className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                checklist.generated 
+                  ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800' 
+                  : 'bg-muted/30 border border-border'
+              }`}>
+                <div className={`flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all ${
+                  checklist.generated 
+                    ? 'bg-green-600 border-green-600' 
+                    : 'border-muted-foreground/30'
+                }`}>
+                  {checklist.generated && <Check className="h-3 w-3 text-white" />}
+                </div>
+                <span className={`text-sm ${checklist.generated ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                  Wygenerowanie umowy
+                </span>
+              </div>
+
+              {/* Wysłanie umowy */}
+              <div className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                checklist.sent 
+                  ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800' 
+                  : 'bg-muted/30 border border-border'
+              }`}>
+                <div className={`flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all ${
+                  checklist.sent 
+                    ? 'bg-green-600 border-green-600' 
+                    : 'border-muted-foreground/30'
+                }`}>
+                  {checklist.sent && <Check className="h-3 w-3 text-white" />}
+                </div>
+                <span className={`text-sm ${checklist.sent ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                  Wysłanie umowy
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-3 justify-center pt-4 border-t">
             {/* Generuj umowę */}
             <Button 
               onClick={handleGenerateContract}
