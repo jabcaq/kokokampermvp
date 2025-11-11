@@ -299,44 +299,55 @@ export const ContractActionsPanel = ({
           <CardDescription>Nr umowy: {contractNumber}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="flex flex-wrap gap-2 justify-center">
+            {/* Generuj umowę */}
             <Button 
               onClick={handleGenerateContract}
               disabled={upsertDocument.isPending}
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="group relative bg-blue-600 hover:bg-blue-700 text-white overflow-hidden transition-all duration-300 ease-in-out w-10 hover:w-auto px-2 hover:px-4"
             >
-              <FileText className="h-3 w-3 mr-1.5" />
-              Generuj umowę
+              <FileText className="h-4 w-4 flex-shrink-0" />
+              <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap">
+                Generuj umowę
+              </span>
             </Button>
+
+            {/* Wyślij do klienta */}
             <Button 
               onClick={handleSendToClient}
-              variant="outline"
               disabled={upsertDocument.isPending || !clientEmail}
               size="sm"
-              className="border-gray-400 text-gray-700 hover:bg-gray-100"
+              className="group relative bg-background hover:bg-muted border border-input overflow-hidden transition-all duration-300 ease-in-out w-10 hover:w-auto px-2 hover:px-4"
             >
-              <Send className="h-3 w-3 mr-1.5" />
-              Wyślij do klienta
+              <Send className="h-4 w-4 flex-shrink-0 text-foreground" />
+              <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap text-foreground">
+                Wyślij do klienta
+              </span>
             </Button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+            {/* Formularz kierowcy */}
             <Button 
               onClick={handleCopyDriverForm}
-              variant="outline"
               size="sm"
-              className="border-purple-400 text-purple-700 hover:bg-purple-50"
+              className="group relative bg-purple-600 hover:bg-purple-700 text-white overflow-hidden transition-all duration-300 ease-in-out w-10 hover:w-auto px-2 hover:px-4"
             >
-              <UserPlus className="h-3 w-3 mr-1.5" />
-              Formularz kierowcy
+              <UserPlus className="h-4 w-4 flex-shrink-0" />
+              <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap">
+                Formularz kierowcy
+              </span>
             </Button>
+
+            {/* Wyślij do weryfikacji */}
             <Button 
               onClick={handleSendVerification}
               size="sm"
-              className="bg-orange-500 hover:bg-orange-600 text-white"
+              className="group relative bg-orange-500 hover:bg-orange-600 text-white overflow-hidden transition-all duration-300 ease-in-out w-10 hover:w-auto px-2 hover:px-4"
             >
-              <CheckCircle className="h-3 w-3 mr-1.5" />
-              Wyślij do weryfikacji
+              <CheckCircle className="h-4 w-4 flex-shrink-0" />
+              <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap">
+                Wyślij do weryfikacji
+              </span>
             </Button>
           </div>
         </CardContent>
