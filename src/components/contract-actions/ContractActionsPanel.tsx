@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FileText, Send, CheckCircle, UserPlus, Check } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useUpsertContractDocument } from "@/hooks/useContractDocuments";
 import { useContract } from "@/hooks/useContracts";
@@ -357,79 +358,109 @@ export const ContractActionsPanel = ({
           {/* Checklist */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Lista zadań</h3>
-            <div className="space-y-2">
-              {/* Formularz dla kierowców */}
-              <div className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                checklist.driverForm 
-                  ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800' 
-                  : 'bg-muted/30 border border-border'
-              }`}>
-                <div className={`flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all ${
-                  checklist.driverForm 
-                    ? 'bg-green-600 border-green-600' 
-                    : 'border-muted-foreground/30'
-                }`}>
-                  {checklist.driverForm && <Check className="h-3 w-3 text-white" />}
-                </div>
-                <span className={`text-sm ${checklist.driverForm ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-                  Formularz dla kierowców
-                </span>
-              </div>
+            <TooltipProvider>
+              <div className="space-y-2">
+                {/* Formularz dla kierowców */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-help ${
+                      checklist.driverForm 
+                        ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800' 
+                        : 'bg-muted/30 border border-border'
+                    }`}>
+                      <div className={`flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all ${
+                        checklist.driverForm 
+                          ? 'bg-green-600 border-green-600' 
+                          : 'border-muted-foreground/30'
+                      }`}>
+                        {checklist.driverForm && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                      <span className={`text-sm ${checklist.driverForm ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                        Formularz dla kierowców
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Zaznacza się automatycznie po wysłaniu formularza kierowcy</p>
+                  </TooltipContent>
+                </Tooltip>
 
-              {/* Wysłanie do weryfikacji */}
-              <div className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                checklist.verification 
-                  ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800' 
-                  : 'bg-muted/30 border border-border'
-              }`}>
-                <div className={`flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all ${
-                  checklist.verification 
-                    ? 'bg-green-600 border-green-600' 
-                    : 'border-muted-foreground/30'
-                }`}>
-                  {checklist.verification && <Check className="h-3 w-3 text-white" />}
-                </div>
-                <span className={`text-sm ${checklist.verification ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-                  Wysłanie do weryfikacji
-                </span>
-              </div>
+                {/* Wysłanie do weryfikacji */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-help ${
+                      checklist.verification 
+                        ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800' 
+                        : 'bg-muted/30 border border-border'
+                    }`}>
+                      <div className={`flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all ${
+                        checklist.verification 
+                          ? 'bg-green-600 border-green-600' 
+                          : 'border-muted-foreground/30'
+                      }`}>
+                        {checklist.verification && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                      <span className={`text-sm ${checklist.verification ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                        Wysłanie do weryfikacji
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Zaznacza się automatycznie po wysłaniu do weryfikacji</p>
+                  </TooltipContent>
+                </Tooltip>
 
-              {/* Wygenerowanie umowy */}
-              <div className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                checklist.generated 
-                  ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800' 
-                  : 'bg-muted/30 border border-border'
-              }`}>
-                <div className={`flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all ${
-                  checklist.generated 
-                    ? 'bg-green-600 border-green-600' 
-                    : 'border-muted-foreground/30'
-                }`}>
-                  {checklist.generated && <Check className="h-3 w-3 text-white" />}
-                </div>
-                <span className={`text-sm ${checklist.generated ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-                  Wygenerowanie umowy
-                </span>
-              </div>
+                {/* Wygenerowanie umowy */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-help ${
+                      checklist.generated 
+                        ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800' 
+                        : 'bg-muted/30 border border-border'
+                    }`}>
+                      <div className={`flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all ${
+                        checklist.generated 
+                          ? 'bg-green-600 border-green-600' 
+                          : 'border-muted-foreground/30'
+                      }`}>
+                        {checklist.generated && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                      <span className={`text-sm ${checklist.generated ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                        Wygenerowanie umowy
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Zaznacza się automatycznie po wygenerowaniu umowy</p>
+                  </TooltipContent>
+                </Tooltip>
 
-              {/* Wysłanie umowy */}
-              <div className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                checklist.sent 
-                  ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800' 
-                  : 'bg-muted/30 border border-border'
-              }`}>
-                <div className={`flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all ${
-                  checklist.sent 
-                    ? 'bg-green-600 border-green-600' 
-                    : 'border-muted-foreground/30'
-                }`}>
-                  {checklist.sent && <Check className="h-3 w-3 text-white" />}
-                </div>
-                <span className={`text-sm ${checklist.sent ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-                  Wysłanie umowy
-                </span>
+                {/* Wysłanie umowy */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-help ${
+                      checklist.sent 
+                        ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800' 
+                        : 'bg-muted/30 border border-border'
+                    }`}>
+                      <div className={`flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all ${
+                        checklist.sent 
+                          ? 'bg-green-600 border-green-600' 
+                          : 'border-muted-foreground/30'
+                      }`}>
+                        {checklist.sent && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                      <span className={`text-sm ${checklist.sent ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                        Wysłanie umowy
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Zaznacza się automatycznie po wysłaniu umowy do klienta</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
-            </div>
+            </TooltipProvider>
           </div>
 
           {/* Action Buttons */}
