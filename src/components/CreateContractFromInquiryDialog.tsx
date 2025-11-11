@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,6 +70,11 @@ export const CreateContractFromInquiryDialog = ({
     departureDate: inquiry?.departure_date || "",
     returnDate: inquiry?.return_date || "",
   });
+
+  // Dodatki
+  const [vehicleCleaning, setVehicleCleaning] = useState<string>("");
+  const [vehicleAnimals, setVehicleAnimals] = useState<string>("");
+  const [vehicleExtraEquipment, setVehicleExtraEquipment] = useState<string>("");
 
   const WARSAW_TZ = "Europe/Warsaw";
 
@@ -238,6 +244,9 @@ export const CreateContractFromInquiryDialog = ({
         vehicle_next_inspection: selectedVehicle.next_inspection_date,
         vehicle_insurance_number: selectedVehicle.insurance_policy_number,
         vehicle_insurance_valid_until: selectedVehicle.insurance_valid_until,
+        vehicle_cleaning: vehicleCleaning || null,
+        vehicle_animals: vehicleAnimals || null,
+        vehicle_extra_equipment: vehicleExtraEquipment || null,
         inquiry_id: inquiry.id,
         inquiry_number: inquiry.inquiry_number,
       });
@@ -330,6 +339,9 @@ export const CreateContractFromInquiryDialog = ({
       setIsPremiumCamper(false);
       setCustomDepositAmount(false);
       setDepositAmount("5000");
+      setVehicleCleaning("");
+      setVehicleAnimals("");
+      setVehicleExtraEquipment("");
     }
   }, [inquiry, open]);
 
@@ -482,6 +494,49 @@ export const CreateContractFromInquiryDialog = ({
                 </Command>
               </PopoverContent>
             </Popover>
+          </div>
+
+          <div className="space-y-4 pt-4 border-t">
+            <h4 className="text-sm font-semibold text-foreground">Dodatki</h4>
+            
+            <div className="space-y-2">
+              <Label htmlFor="vehicleCleaning">Sprzątanie dodatkowo</Label>
+              <Select value={vehicleCleaning} onValueChange={setVehicleCleaning}>
+                <SelectTrigger id="vehicleCleaning">
+                  <SelectValue placeholder="Wybierz opcję" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Tak">Tak</SelectItem>
+                  <SelectItem value="Nie">Nie</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="vehicleAnimals">Zwierzę</Label>
+              <Select value={vehicleAnimals} onValueChange={setVehicleAnimals}>
+                <SelectTrigger id="vehicleAnimals">
+                  <SelectValue placeholder="Wybierz opcję" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Tak">Tak</SelectItem>
+                  <SelectItem value="Nie">Nie</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="vehicleExtraEquipment">Wyposażenie dodatkowo</Label>
+              <Select value={vehicleExtraEquipment} onValueChange={setVehicleExtraEquipment}>
+                <SelectTrigger id="vehicleExtraEquipment">
+                  <SelectValue placeholder="Wybierz opcję" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Tak">Tak</SelectItem>
+                  <SelectItem value="Nie">Nie</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-4 pt-4 border-t">
