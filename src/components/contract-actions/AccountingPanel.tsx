@@ -252,20 +252,21 @@ export const AccountingPanel = ({
       description: "Link dla księgowości został skopiowany do schowka"
     });
   };
-  return <Card>
-      <CardHeader>
-        <CardTitle>Panel księgowości</CardTitle>
-        <CardDescription>Nr umowy: {contractNumber}</CardDescription>
+  return <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-b">
+        <CardTitle className="text-lg">Panel księgowości</CardTitle>
+        <CardDescription className="text-xs">Nr umowy: {contractNumber}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-6">
         <div className="space-y-2">
-          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-            <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/30 to-muted/50 rounded-xl border border-border/50 hover:border-border transition-colors duration-200">
+            <div className="flex items-center space-x-3">
               <Checkbox 
                 id="deposit-received" 
                 checked={isDepositReceived}
                 onCheckedChange={handleDepositReceivedChange}
                 disabled={isSendingDepositNotification}
+                className="h-5 w-5"
               />
               <Label 
                 htmlFor="deposit-received" 
@@ -277,12 +278,15 @@ export const AccountingPanel = ({
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-2" />
               )}
             </div>
-            <Badge variant={isDepositReceived ? "default" : "secondary"} className="ml-2">
+            <Badge 
+              variant={isDepositReceived ? "default" : "secondary"} 
+              className={`ml-2 ${isDepositReceived ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-500 hover:bg-orange-600'} transition-colors`}
+            >
               {isDepositReceived ? '✓ Wpłacona' : '⏳ Oczekiwanie'}
             </Badge>
           </div>
           {isDepositReceived && depositReceived && (
-            <p className="text-xs text-muted-foreground px-3">
+            <p className="text-xs text-muted-foreground px-3 animate-fade-in">
               Status kaucji może zostać również zaktualizowany przez Telegram
             </p>
           )}
@@ -290,12 +294,15 @@ export const AccountingPanel = ({
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button size="sm">
-              <Send className="h-3 w-3 mr-1.5" />
+            <Button 
+              size="sm" 
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+            >
+              <Send className="h-4 w-4 mr-2" />
               Wyślij do księgowości
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Wysyłanie do księgowości</DialogTitle>
               <DialogDescription>

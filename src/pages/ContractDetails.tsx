@@ -578,7 +578,7 @@ const ContractDetails = () => {
       </div>
 
       {/* Action Panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
         <ContractActionsPanel 
           contractId={contract.id}
           contractNumber={contract.contract_number}

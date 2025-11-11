@@ -293,19 +293,19 @@ export const ContractActionsPanel = ({
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Akcje umowy</CardTitle>
-          <CardDescription>Nr umowy: {contractNumber}</CardDescription>
+      <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border-b">
+          <CardTitle className="text-lg">Akcje umowy</CardTitle>
+          <CardDescription className="text-xs">Nr umowy: {contractNumber}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex flex-wrap gap-2 justify-center">
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap gap-3 justify-center">
             {/* Generuj umowę */}
             <Button 
               onClick={handleGenerateContract}
               disabled={upsertDocument.isPending}
               size="sm"
-              className="group relative bg-blue-600 hover:bg-blue-700 text-white overflow-hidden transition-all duration-300 ease-in-out w-10 hover:w-auto px-2 hover:px-4"
+              className="group relative bg-blue-600 hover:bg-blue-700 text-white overflow-hidden transition-all duration-300 ease-in-out w-12 hover:w-auto px-3 hover:px-4 shadow-md hover:shadow-lg"
             >
               <FileText className="h-4 w-4 flex-shrink-0" />
               <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap">
@@ -318,7 +318,7 @@ export const ContractActionsPanel = ({
               onClick={handleSendToClient}
               disabled={upsertDocument.isPending || !clientEmail}
               size="sm"
-              className="group relative bg-background hover:bg-muted border border-input overflow-hidden transition-all duration-300 ease-in-out w-10 hover:w-auto px-2 hover:px-4"
+              className="group relative bg-background hover:bg-muted border-2 border-input hover:border-primary/50 overflow-hidden transition-all duration-300 ease-in-out w-12 hover:w-auto px-3 hover:px-4 shadow-md hover:shadow-lg"
             >
               <Send className="h-4 w-4 flex-shrink-0 text-foreground" />
               <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap text-foreground">
@@ -330,7 +330,7 @@ export const ContractActionsPanel = ({
             <Button 
               onClick={handleCopyDriverForm}
               size="sm"
-              className="group relative bg-purple-600 hover:bg-purple-700 text-white overflow-hidden transition-all duration-300 ease-in-out w-10 hover:w-auto px-2 hover:px-4"
+              className="group relative bg-purple-600 hover:bg-purple-700 text-white overflow-hidden transition-all duration-300 ease-in-out w-12 hover:w-auto px-3 hover:px-4 shadow-md hover:shadow-lg"
             >
               <UserPlus className="h-4 w-4 flex-shrink-0" />
               <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap">
@@ -342,7 +342,7 @@ export const ContractActionsPanel = ({
             <Button 
               onClick={handleSendVerification}
               size="sm"
-              className="group relative bg-orange-500 hover:bg-orange-600 text-white overflow-hidden transition-all duration-300 ease-in-out w-10 hover:w-auto px-2 hover:px-4"
+              className="group relative bg-orange-500 hover:bg-orange-600 text-white overflow-hidden transition-all duration-300 ease-in-out w-12 hover:w-auto px-3 hover:px-4 shadow-md hover:shadow-lg"
             >
               <CheckCircle className="h-4 w-4 flex-shrink-0" />
               <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap">
