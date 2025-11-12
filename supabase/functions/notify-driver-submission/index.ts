@@ -47,18 +47,25 @@ Deno.serve(async (req) => {
 
     console.log('Webhook sent successfully');
 
-    // Create notification log
-    await supabase.from('notification_logs').insert({
+    // Create notification log (service role bypasses RLS)
+    const { error: logError } = await supabase.from('notification_logs').insert({
       notification_type: 'driver_submission_webhook',
       notification_title: 'Wypełniono formularz kierowców',
       action_description: `Wysłano webhook dla umowy ${contractNumber}`,
       contract_id: contractId,
       contract_number: contractNumber,
+      user_id: null, // System action, no specific user
+      user_email: null,
       metadata: {
         webhook_url: webhookUrl,
         status: 'success',
       },
     });
+
+    if (logError) {
+      console.error('Error creating notification log:', logError);
+      // Don't fail the whole request if logging fails
+    }
 
     return new Response(
       JSON.stringify({ success: true, message: 'Webhook sent successfully' }),
