@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -348,16 +348,17 @@ export const CreateContractFromInquiryDialog = ({
   const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Utwórz klienta i umowę</DialogTitle>
-          <DialogDescription>
-            Dane z zapytania {inquiry?.inquiry_number}. Możesz je edytować przed utworzeniem.
-          </DialogDescription>
-        </DialogHeader>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[96vh]">
+        <div className="mx-auto w-full max-w-2xl overflow-y-auto">
+          <DrawerHeader className="text-left">
+            <DrawerTitle>Utwórz klienta i umowę</DrawerTitle>
+            <DrawerDescription>
+              Dane z zapytania {inquiry?.inquiry_number}. Możesz je edytować przed utworzeniem.
+            </DrawerDescription>
+          </DrawerHeader>
 
-        <div className="space-y-4 py-4">
+          <div className="space-y-4 px-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="name">Imię i nazwisko *</Label>
             <Input
@@ -653,20 +654,24 @@ export const CreateContractFromInquiryDialog = ({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isCreating}
-          >
-            Anuluj
-          </Button>
-          <Button onClick={handleCreate} disabled={isCreating}>
-            {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Utwórz
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <DrawerFooter className="pt-4 px-4">
+          <div className="flex gap-3 w-full max-w-2xl mx-auto">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isCreating}
+              className="flex-1"
+            >
+              Anuluj
+            </Button>
+            <Button onClick={handleCreate} disabled={isCreating} className="flex-1">
+              {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Utwórz
+            </Button>
+          </div>
+        </DrawerFooter>
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 };
