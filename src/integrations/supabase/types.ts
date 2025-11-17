@@ -227,6 +227,7 @@ export type Database = {
           deposit_received: boolean | null
           deposit_received_at: string | null
           driver_submission_link: string | null
+          driver_submission_link_en: string | null
           employee_return_link: string | null
           end_date: string
           handover_link: string | null
@@ -287,6 +288,7 @@ export type Database = {
           deposit_received?: boolean | null
           deposit_received_at?: string | null
           driver_submission_link?: string | null
+          driver_submission_link_en?: string | null
           employee_return_link?: string | null
           end_date: string
           handover_link?: string | null
@@ -347,6 +349,7 @@ export type Database = {
           deposit_received?: boolean | null
           deposit_received_at?: string | null
           driver_submission_link?: string | null
+          driver_submission_link_en?: string | null
           employee_return_link?: string | null
           end_date?: string
           handover_link?: string | null

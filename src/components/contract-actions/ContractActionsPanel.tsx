@@ -347,6 +347,57 @@ export const ContractActionsPanel = ({
     }
   };
 
+  const handleCopyDriverFormEN = async () => {
+    if (!contractId || !contractNumber) {
+      toast({
+        title: "Błąd",
+        description: "Brak danych umowy. Poczekaj na załadowanie.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const driverFormLinkEN = `https://app.kokokamper.pl/driver-form-en/${encodeURIComponent(contractNumber)}`;
+    navigator.clipboard.writeText(driverFormLinkEN);
+    
+    try {
+      await fetch('https://hook.eu2.make.com/u73t37l3xvdm4dkwrxfftl8yxvuku7op', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contract_id: contractId,
+          contract_number: contractNumber,
+          driver_form_link: driverFormLinkEN,
+          number_of_travelers: contract?.number_of_travelers || null,
+          language: 'en'
+        }),
+      });
+      
+      // Log the action
+      await createLog.mutateAsync({
+        notification_type: 'driver_form_sent',
+        notification_title: 'Wysłano formularz kierowcy (EN)',
+        action_description: `Formularz kierowcy (angielski) dla umowy ${contractNumber}`,
+        contract_id: contractId,
+        contract_number: contractNumber,
+        metadata: { action: 'copy_driver_form_en', link: driverFormLinkEN }
+      });
+
+      toast({
+        title: "Link skopiowany i wysłany",
+        description: "Link do angielskiego formularza kierowcy został skopiowany i wysłany",
+      });
+    } catch (error) {
+      toast({
+        title: "Link skopiowany",
+        description: "Link został skopiowany, ale nie udało się wysłać do systemu",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -491,7 +542,7 @@ export const ContractActionsPanel = ({
               </span>
             </Button>
 
-            {/* Formularz kierowcy */}
+            {/* Formularz kierowcy PL */}
             <Button 
               onClick={handleCopyDriverForm}
               size="sm"
@@ -499,7 +550,19 @@ export const ContractActionsPanel = ({
             >
               <UserPlus className="h-4 w-4 flex-shrink-0" />
               <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap">
-                Formularz kierowcy
+                Formularz PL
+              </span>
+            </Button>
+
+            {/* Formularz kierowcy EN */}
+            <Button 
+              onClick={handleCopyDriverFormEN}
+              size="sm"
+              className="group relative bg-blue-600 hover:bg-blue-700 text-white overflow-hidden transition-all duration-300 ease-in-out w-12 hover:w-auto px-3 hover:px-4 shadow-md hover:shadow-lg"
+            >
+              <UserPlus className="h-4 w-4 flex-shrink-0" />
+              <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap">
+                Formularz EN
               </span>
             </Button>
 
