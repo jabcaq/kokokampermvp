@@ -62,6 +62,7 @@ export const CreateContractFromInquiryDialog = ({
   const [isPremiumCamper, setIsPremiumCamper] = useState(false);
   const [customDepositAmount, setCustomDepositAmount] = useState(false);
   const [depositAmount, setDepositAmount] = useState("5000");
+  const [preferredLanguage, setPreferredLanguage] = useState<"pl" | "en">("pl");
 
   const [formData, setFormData] = useState({
     name: inquiry?.name || "",
@@ -249,6 +250,7 @@ export const CreateContractFromInquiryDialog = ({
         vehicle_extra_equipment: vehicleExtraEquipment || null,
         inquiry_id: inquiry.id,
         inquiry_number: inquiry.inquiry_number,
+        preferred_language: preferredLanguage,
       });
 
       toast({
@@ -537,6 +539,26 @@ export const CreateContractFromInquiryDialog = ({
                   <SelectItem value="Nie">Nie</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-4 border-t">
+            <h4 className="text-sm font-semibold text-foreground">Preferowany język</h4>
+            
+            <div className="space-y-2">
+              <Label htmlFor="preferredLanguage">Język dla formularzy klienta</Label>
+              <Select value={preferredLanguage} onValueChange={(value: "pl" | "en") => setPreferredLanguage(value)}>
+                <SelectTrigger id="preferredLanguage">
+                  <SelectValue placeholder="Wybierz język" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pl">🇵🇱 Polski</SelectItem>
+                  <SelectItem value="en">🇬🇧 English</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Ustaw preferowany język dla formularza kierowców. Możesz później pobrać tę wartość przez API dla Make.com.
+              </p>
             </div>
           </div>
 

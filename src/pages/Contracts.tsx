@@ -59,6 +59,7 @@ const Contracts = () => {
   const [isPremiumCamper, setIsPremiumCamper] = useState(false);
   const [depositAmount, setDepositAmount] = useState<string>("");
   const [insuranceWarning, setInsuranceWarning] = useState("");
+  const [preferredLanguage, setPreferredLanguage] = useState<"pl" | "en">("pl");
   const [vehicleData, setVehicleData] = useState({
     model: "",
     vin: "",
@@ -321,6 +322,7 @@ const Contracts = () => {
         additional_drivers: [],
         payments: paymentsData,
         notes: formData.get('uwagi') as string,
+        preferred_language: preferredLanguage,
       });
       
       toast({
@@ -961,6 +963,26 @@ const Contracts = () => {
                         : "5000 zł"}</span>
                   <span className="block">• Rachunki bankowe są automatycznie przypisywane</span>
                 </p>
+              </div>
+
+              {/* Preferowany język */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Preferowany język</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="preferredLanguage">Język dla formularzy klienta</Label>
+                  <Select value={preferredLanguage} onValueChange={(value: "pl" | "en") => setPreferredLanguage(value)}>
+                    <SelectTrigger id="preferredLanguage">
+                      <SelectValue placeholder="Wybierz język" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pl">🇵🇱 Polski</SelectItem>
+                      <SelectItem value="en">🇬🇧 English</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Ustaw preferowany język dla formularza kierowców. Możesz później pobrać tę wartość przez API dla Make.com.
+                  </p>
+                </div>
               </div>
 
               {/* Uwagi */}

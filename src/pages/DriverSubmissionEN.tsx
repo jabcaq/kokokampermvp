@@ -185,73 +185,91 @@ const DriverSubmissionEN = () => {
 
       const allDrivers = [mainDriver, ...additionalDriversData];
 
-      const updateData: any = {
-        tenant_company_name: formData.companyName || null,
-        tenant_nip: formData.nip || null,
-        invoice_type: formData.invoiceType,
-        number_of_travelers: Number(formData.numberOfTravelers),
-        tenant_name: formData.driverName,
-        tenant_email: formData.driverEmail,
-        tenant_phone: formData.driverPhone,
-        tenant_address: formData.driverAddress,
-        tenant_pesel: formData.driverPesel || null,
-        tenant_license_number: formData.licenseNumber,
-        tenant_license_date: formData.licenseIssueDate,
-        tenant_license_category: 'B',
-        tenant_id_type: formData.documentType,
-        tenant_id_number: formData.documentNumber,
-        tenant_id_issuer: formData.documentIssuedBy,
-        additional_drivers: allDrivers,
-      };
-
-      if (contract.has_trailer) {
-        updateData.tenant_trailer_license_category = formData.trailerLicenseCategory;
-        updateData.vehicle_f1_mass = Number(formData.trailerF1Mass);
-        updateData.vehicle_o1_mass = Number(formData.trailerO1Mass);
-      }
-
+      // Update contract with all driver data - SAME AS POLISH VERSION
       await updateContract.mutateAsync({
         id: contract.id,
-        updates: updateData
-      });
-
-      await updateClient.mutateAsync({
-        id: contract.client_id,
         updates: {
-          name: formData.driverName,
-          email: formData.driverEmail,
-          phone: formData.driverPhone,
-          address: formData.driverAddress,
-          pesel: formData.driverPesel || null,
-          license_number: formData.licenseNumber,
-          license_date: formData.licenseIssueDate,
-          license_category: 'B',
-          id_type: formData.documentType,
-          id_number: formData.documentNumber,
-          id_issuer: formData.documentIssuedBy,
-          company_name: formData.companyName || null,
-          nip: formData.nip || null,
-          trailer_license_category: contract.has_trailer ? formData.trailerLicenseCategory : null,
-        }
+          additional_drivers: allDrivers,
+          invoice_type: formData.invoiceType,
+          tenant_company_name: formData.companyName,
+          tenant_nip: formData.nip,
+          number_of_travelers: Number(formData.numberOfTravelers),
+          tenant_name: formData.driverName,
+          tenant_email: formData.driverEmail,
+          tenant_phone: formData.driverPhone,
+          tenant_address: formData.driverAddress,
+          tenant_pesel: formData.driverPesel,
+          tenant_license_number: formData.licenseNumber,
+          tenant_license_date: formData.licenseIssueDate,
+          tenant_license_category: 'B',
+          tenant_id_type: formData.documentType,
+          tenant_id_number: formData.documentNumber,
+          tenant_id_issuer: formData.documentIssuedBy,
+          tenant_trailer_license_category: formData.trailerLicenseCategory || null,
+          vehicle_f1_mass: formData.trailerF1Mass ? Number(formData.trailerF1Mass) : null,
+          vehicle_o1_mass: formData.trailerO1Mass ? Number(formData.trailerO1Mass) : null,
+        } as any,
       });
 
+      // Sync all tenant data with client profile - SAME AS POLISH VERSION
+      if (contract.client_id) {
+        const clientUpdates: any = {};
+        
+        // Basic contact data
+        if (formData.driverName) clientUpdates.name = formData.driverName;
+        if (formData.driverEmail) clientUpdates.email = formData.driverEmail;
+        if (formData.driverPhone) clientUpdates.phone = formData.driverPhone;
+        if (formData.driverAddress) clientUpdates.address = formData.driverAddress;
+        
+        // Identity documents
+        if (formData.documentType) clientUpdates.id_type = formData.documentType;
+        if (formData.documentNumber) clientUpdates.id_number = formData.documentNumber;
+        if (formData.documentIssuedBy) clientUpdates.id_issuer = formData.documentIssuedBy;
+        if (formData.driverPesel) clientUpdates.pesel = formData.driverPesel;
+        if (formData.nip) clientUpdates.nip = formData.nip;
+        
+        // Driver's license
+        if (formData.licenseNumber) clientUpdates.license_number = formData.licenseNumber;
+        if (formData.hasCategoryB) {
+          clientUpdates.license_category = 'B';
+        }
+        if (formData.licenseIssueDate) clientUpdates.license_date = formData.licenseIssueDate;
+        if (formData.trailerLicenseCategory) clientUpdates.trailer_license_category = formData.trailerLicenseCategory;
+        
+        // Company data
+        if (formData.companyName) clientUpdates.company_name = formData.companyName;
+        
+        // Update only if there are changes
+        if (Object.keys(clientUpdates).length > 0) {
+          await updateClient.mutateAsync({
+            id: contract.client_id,
+            updates: clientUpdates,
+          });
+          console.log('Client profile updated with:', clientUpdates);
+        }
+      }
+
+      // Create notification for new drivers
+      const driversCount = allDrivers.length;
       await createNotificationMutation.mutateAsync({
-        title: "Driver Form Submitted",
-        message: `Driver data has been submitted for contract ${contract.contract_number}`,
-        type: "driver_submission",
-        link: `/contracts/${contract.id}`
+        type: 'driver_new',
+        title: 'New Driver Form Submission',
+        message: `Added ${driversCount} ${driversCount === 1 ? 'driver' : 'drivers'} for contract ${contract.contract_number}`,
+        link: `/contracts/${contract.id}`,
       });
 
-      const now = toZonedTime(new Date(), WARSAW_TZ);
-      const formattedDate = format(now, "yyyy-MM-dd HH:mm:ss");
-
-      await supabase.functions.invoke('notify-driver-submission', {
-        body: {
-          contractId: contract.id,
-          contractNumber: contract.contract_number,
-          timestamp: formattedDate
-        }
-      });
+      // Send webhook notification with Warsaw time
+      try {
+        await supabase.functions.invoke('notify-driver-submission', {
+          body: {
+            contractId: contract.id,
+            contractNumber: contract.contract_number,
+          }
+        });
+      } catch (webhookError) {
+        console.error('Error sending webhook:', webhookError);
+        // Don't block submission if webhook fails
+      }
 
       toast.success("Success!", {
         description: "Driver data has been successfully submitted"

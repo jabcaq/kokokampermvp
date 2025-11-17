@@ -52,6 +52,7 @@ export interface Contract {
   inquiry_number?: string | null;
   deposit_received?: boolean;
   deposit_received_at?: string | null;
+  preferred_language?: 'pl' | 'en';
   created_at?: string;
   updated_at?: string;
 }
