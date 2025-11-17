@@ -246,6 +246,7 @@ export type Database = {
           notes: string | null
           number_of_travelers: number | null
           payments: Json | null
+          preferred_language: string | null
           registration_number: string
           return_link: string | null
           start_date: string
@@ -307,6 +308,7 @@ export type Database = {
           notes?: string | null
           number_of_travelers?: number | null
           payments?: Json | null
+          preferred_language?: string | null
           registration_number: string
           return_link?: string | null
           start_date: string
@@ -368,6 +370,7 @@ export type Database = {
           notes?: string | null
           number_of_travelers?: number | null
           payments?: Json | null
+          preferred_language?: string | null
           registration_number?: string
           return_link?: string | null
           start_date?: string
