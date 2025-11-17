@@ -46,6 +46,7 @@ export interface Contract {
   return_link?: string;
   employee_return_link?: string;
   driver_submission_link?: string;
+  driver_submission_link_en?: string;
   invoice_type?: 'receipt' | 'invoice';
   inquiry_id?: string | null;
   inquiry_number?: string | null;
@@ -173,6 +174,7 @@ export const useAddContract = () => {
       const returnLink = `${baseUrl}/return-booking?contractId=${newContract.id}&contractNumber=${encodeURIComponent(newContract.contract_number)}&startDate=${newContract.start_date}&endDate=${newContract.end_date}`;
       const employeeReturnLink = `${baseUrl}/vehicle-return?contractId=${newContract.id}&contractNumber=${encodeURIComponent(newContract.contract_number)}&vehicleModel=${encodeURIComponent(newContract.vehicle_model)}&registrationNumber=${newContract.registration_number}&startDate=${newContract.start_date}&endDate=${newContract.end_date}`;
       const driverSubmissionLink = `${baseUrl}/driver-submission/${newContract.id}`;
+      const driverSubmissionLinkEN = `${baseUrl}/driver-submission-en/${newContract.id}`;
       
       // Update the contract with generated links
       const { data: updatedContract, error: updateError } = await supabase
@@ -182,6 +184,7 @@ export const useAddContract = () => {
           return_link: returnLink,
           employee_return_link: employeeReturnLink,
           driver_submission_link: driverSubmissionLink,
+          driver_submission_link_en: driverSubmissionLinkEN,
         })
         .eq('id', newContract.id)
         .select()

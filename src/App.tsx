@@ -16,6 +16,7 @@ import Fleet from "./pages/Fleet";
 import VehicleDetails from "./pages/VehicleDetails";
 import Drivers from "./pages/Drivers";
 import DriverSubmission from "./pages/DriverSubmission";
+import DriverSubmissionEN from "./pages/DriverSubmissionEN";
 import VehicleHandover from "./pages/VehicleHandover";
 import VehicleReturn from "./pages/VehicleReturn";
 import Inquiries from "./pages/Inquiries";
@@ -47,6 +48,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/driver-form/:contractId" element={<DriverSubmission />} />
             <Route path="/driver-submission/:contractId" element={<DriverSubmission />} />
+            <Route path="/driver-form-en/:contractId" element={<DriverSubmissionEN />} />
+            <Route path="/driver-submission-en/:contractId" element={<DriverSubmissionEN />} />
             <Route path="/accounting-upload/:invoiceId" element={<AccountingUpload />} />
             <Route path="/invoice-upload/:invoiceId" element={<InvoiceUpload />} />
             <Route path="/return-booking/:contractId" element={<ReturnBooking />} />
