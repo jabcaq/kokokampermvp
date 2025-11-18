@@ -125,13 +125,13 @@ const Inquiries = () => {
   // Filtered inquiries based on status and date
   const filteredInquiries = useMemo(() => {
     return inquiries.filter((inquiry) => {
-      // Status filter
-      if (statusFilter !== "all" && inquiry.status !== statusFilter) {
+      // Email filter - search across all statuses
+      if (emailFilter && !inquiry.email.toLowerCase().includes(emailFilter.toLowerCase())) {
         return false;
       }
 
-      // Email filter
-      if (emailFilter && !inquiry.email.toLowerCase().includes(emailFilter.toLowerCase())) {
+      // Status filter - only apply if no email filter is active
+      if (!emailFilter && statusFilter !== "all" && inquiry.status !== statusFilter) {
         return false;
       }
 
