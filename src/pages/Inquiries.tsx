@@ -34,6 +34,7 @@ const Inquiries = () => {
   const [statusFilter, setStatusFilter] = useState<string>("new");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [emailFilter, setEmailFilter] = useState<string>("");
   const [recipientEmails, setRecipientEmails] = useState<{ email: string; type: 'dw' | 'udw' }[]>([]);
   const [newEmail, setNewEmail] = useState("");
   const { toast } = useToast();
@@ -129,6 +130,11 @@ const Inquiries = () => {
         return false;
       }
 
+      // Email filter
+      if (emailFilter && !inquiry.email.toLowerCase().includes(emailFilter.toLowerCase())) {
+        return false;
+      }
+
       // Date filter
       if (dateFrom || dateTo) {
         const inquiryDate = inquiry.created_at ? new Date(inquiry.created_at) : null;
@@ -144,7 +150,7 @@ const Inquiries = () => {
 
       return true;
     });
-  }, [inquiries, statusFilter, dateFrom, dateTo]);
+  }, [inquiries, statusFilter, emailFilter, dateFrom, dateTo]);
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
@@ -292,6 +298,16 @@ const Inquiries = () => {
           </div>
 
           <div className="flex-1 min-w-[200px]">
+            <label className="text-sm font-medium mb-2 block">Email</label>
+            <Input
+              type="email"
+              placeholder="Filtruj po email..."
+              value={emailFilter}
+              onChange={(e) => setEmailFilter(e.target.value)}
+            />
+          </div>
+
+          <div className="flex-1 min-w-[200px]">
             <label className="text-sm font-medium mb-2 block">Data od</label>
             <Popover>
               <PopoverTrigger asChild>
@@ -345,11 +361,12 @@ const Inquiries = () => {
             </Popover>
           </div>
 
-          {(statusFilter !== "all" || dateFrom || dateTo) && (
+          {(statusFilter !== "all" || emailFilter || dateFrom || dateTo) && (
             <Button
               variant="outline"
               onClick={() => {
                 setStatusFilter("all");
+                setEmailFilter("");
                 setDateFrom(undefined);
                 setDateTo(undefined);
               }}
