@@ -9,9 +9,70 @@ import { useCreateReturnBooking } from "@/hooks/useReturnBookings";
 import { useAvailableEmployees } from "@/hooks/useEmployeeRouting";
 import { Clock, MapPin, Globe, CheckCircle2, AlertCircle, UserCheck } from "lucide-react";
 import { format, isAfter, startOfDay } from "date-fns";
-import { pl } from "date-fns/locale";
+import { pl, enUS } from "date-fns/locale";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import logoImage from "@/assets/koko-logo.jpeg";
+
+const translations = {
+  pl: {
+    title: "Zwrot kampera",
+    subtitle: "Wybierz dogodny termin zwrotu kampera",
+    duration: "Czas trwania",
+    minutes: "30 minut",
+    location: "Lokalizacja",
+    company: "Siedziba firmy",
+    timezone: "Strefa czasowa",
+    contractDetails: "Szczegóły umowy:",
+    number: "Numer:",
+    tenant: "Najemca:",
+    vehicle: "Pojazd:",
+    returnDate: "Data zwrotu:",
+    rentalPeriod: "Okres najmu:",
+    selectDate: "Wybierz datę",
+    selectTime: "Wybierz godzinę:",
+    notes: "Dodatkowe uwagi (opcjonalnie)",
+    notesPlaceholder: "Np. potrzebuję pomocy przy rozładunku...",
+    confirmBooking: "Potwierdź rezerwację",
+    confirmed: "Rezerwacja potwierdzona!",
+    confirmedDesc: "Twoja rezerwacja zwrotu kampera została przyjęta. Skontaktujemy się z Tobą w celu potwierdzenia.",
+    bookingDetails: "Szczegóły rezerwacji:",
+    date: "Data:",
+    time: "Godzina:",
+    contract: "Umowa:",
+    lateWarning: "UWAGA! Wybrałeś datę późniejszą niż data zakończenia wynajmu. Zostaniesz obciążony dodatkową opłatą. Musisz natychmiast skontaktować się pod numerem:",
+    noStaff: "Niestety, w wybranym terminie nie ma dostępnych pracowników. Wybierz inną godzinę lub datę.",
+    handledBy: "Zwrot będzie obsługiwany przez:"
+  },
+  en: {
+    title: "Camper Return",
+    subtitle: "Choose a convenient time to return the camper",
+    duration: "Duration",
+    minutes: "30 minutes",
+    location: "Location",
+    company: "Company Headquarters",
+    timezone: "Time Zone",
+    contractDetails: "Contract Details:",
+    number: "Number:",
+    tenant: "Tenant:",
+    vehicle: "Vehicle:",
+    returnDate: "Return Date:",
+    rentalPeriod: "Rental Period:",
+    selectDate: "Select a date",
+    selectTime: "Select a time:",
+    notes: "Additional notes (optional)",
+    notesPlaceholder: "E.g. I need help with unloading...",
+    confirmBooking: "Confirm Booking",
+    confirmed: "Booking Confirmed!",
+    confirmedDesc: "Your camper return booking has been received. We will contact you for confirmation.",
+    bookingDetails: "Booking Details:",
+    date: "Date:",
+    time: "Time:",
+    contract: "Contract:",
+    lateWarning: "WARNING! You have selected a date later than the rental end date. You will be charged an additional fee. You must immediately contact:",
+    noStaff: "Unfortunately, there are no available staff at the selected time. Please choose another time or date.",
+    handledBy: "Return will be handled by:"
+  }
+};
 
 const TIME_SLOTS = [
   "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
@@ -26,7 +87,6 @@ export default function ReturnBooking() {
   const tenantName = searchParams.get("tenantName") || "";
   const vehicleModel = searchParams.get("vehicleModel") || "";
   
-  // Safely parse dates from URL params
   const startDateStr = searchParams.get("startDate");
   const endDateStr = searchParams.get("endDate");
   const startDateParsed = startDateStr ? new Date(startDateStr) : null;
@@ -38,10 +98,13 @@ export default function ReturnBooking() {
   const [selectedTime, setSelectedTime] = useState<string>();
   const [notes, setNotes] = useState("");
   const [isBooked, setIsBooked] = useState(false);
+  const [language, setLanguage] = useState<'pl' | 'en'>('pl');
+  
+  const t = translations[language];
+  const locale = language === 'pl' ? pl : enUS;
 
   const createBooking = useCreateReturnBooking();
 
-  // Get available employees for selected date and time
   const { data: availableEmployees } = useAvailableEmployees(
     selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
     selectedTime || ""
@@ -49,12 +112,10 @@ export default function ReturnBooking() {
 
   const hasAvailableStaff = availableEmployees && availableEmployees.length > 0;
 
-  // Calculate minimum date (contract end date)
   const minDate = endDateParsed && !isNaN(endDateParsed.getTime()) 
     ? startOfDay(endDateParsed) 
     : new Date();
   
-  // Check if selected date is after contract end date
   const isLateReturn = selectedDate && endDateParsed && !isNaN(endDateParsed.getTime())
     ? isAfter(startOfDay(selectedDate), startOfDay(endDateParsed))
     : false;
@@ -66,7 +127,6 @@ export default function ReturnBooking() {
     const [hours, minutes] = selectedTime.split(":");
     bookingDateTime.setHours(parseInt(hours), parseInt(minutes));
 
-    // Assign to employee with least workload
     const assignedEmployee = availableEmployees![0];
 
     createBooking.mutate({
@@ -91,14 +151,15 @@ export default function ReturnBooking() {
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center space-y-4">
             <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
-            <h1 className="text-2xl font-bold">Rezerwacja potwierdzona!</h1>
+            <h1 className="text-2xl font-bold">{t.confirmed}</h1>
             <p className="text-muted-foreground">
-              Twoja rezerwacja zwrotu kampera została przyjęta. Skontaktujemy się z Tobą w celu potwierdzenia.
+              {t.confirmedDesc}
             </p>
             <div className="pt-4 space-y-2 text-sm">
-              <p><strong>Data:</strong> {selectedDate && format(selectedDate, "dd MMMM yyyy", { locale: pl })}</p>
-              <p><strong>Godzina:</strong> {selectedTime}</p>
-              <p><strong>Umowa:</strong> {contractNumber}</p>
+              <p className="font-semibold">{t.bookingDetails}</p>
+              <p><strong>{t.date}</strong> {selectedDate && format(selectedDate, "dd.MM.yyyy", { locale })}</p>
+              <p><strong>{t.time}</strong> {selectedTime}</p>
+              <p><strong>{t.contract}</strong> {contractNumber}</p>
             </div>
           </CardContent>
         </Card>
@@ -111,14 +172,31 @@ export default function ReturnBooking() {
       <div className="max-w-6xl mx-auto p-4 md:p-8">
         <Card className="overflow-hidden">
           <div className="grid md:grid-cols-[420px,1fr]">
-            {/* Left Side - Info */}
             <div className="p-8 border-r bg-background">
               <div className="space-y-6">
                 <div className="flex flex-col items-center pb-4 border-b">
                   <img src={logoImage} alt="Koko Kamper" className="h-20 w-auto mb-4" />
-                  <h1 className="text-2xl font-bold text-center">Zwrot kampera</h1>
+                  <div className="flex gap-2 mb-4">
+                    <Button
+                      variant={language === 'pl' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setLanguage('pl')}
+                      className="w-12 h-12 p-0 text-2xl"
+                    >
+                      🇵🇱
+                    </Button>
+                    <Button
+                      variant={language === 'en' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setLanguage('en')}
+                      className="w-12 h-12 p-0 text-2xl"
+                    >
+                      🇬🇧
+                    </Button>
+                  </div>
+                  <h1 className="text-2xl font-bold text-center">{t.title}</h1>
                   <p className="text-muted-foreground text-sm text-center mt-2">
-                    Wybierz dogodny termin zwrotu kampera
+                    {t.subtitle}
                   </p>
                 </div>
 
@@ -126,16 +204,16 @@ export default function ReturnBooking() {
                   <div className="flex items-start gap-3">
                     <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium">30 minut</p>
-                      <p className="text-xs text-muted-foreground">Czas trwania</p>
+                      <p className="text-sm font-medium">{t.minutes}</p>
+                      <p className="text-xs text-muted-foreground">{t.duration}</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium">Siedziba firmy</p>
-                      <p className="text-xs text-muted-foreground">Lokalizacja</p>
+                      <p className="text-sm font-medium">{t.company}</p>
+                      <p className="text-xs text-muted-foreground">{t.location}</p>
                     </div>
                   </div>
 
@@ -143,23 +221,23 @@ export default function ReturnBooking() {
                     <Globe className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
                       <p className="text-sm font-medium">Europe / Warsaw</p>
-                      <p className="text-xs text-muted-foreground">Strefa czasowa</p>
+                      <p className="text-xs text-muted-foreground">{t.timezone}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t space-y-2">
-                  <h3 className="font-semibold text-sm">Szczegóły umowy:</h3>
+                  <h3 className="font-semibold text-sm">{t.contractDetails}</h3>
                   <div className="space-y-1 text-sm">
-                    <p><span className="text-muted-foreground">Numer:</span> <strong>{contractNumber}</strong></p>
-                    <p><span className="text-muted-foreground">Najemca:</span> {tenantName}</p>
-                    <p><span className="text-muted-foreground">Pojazd:</span> {vehicleModel}</p>
+                    <p><span className="text-muted-foreground">{t.number}</span> <strong>{contractNumber}</strong></p>
+                    <p><span className="text-muted-foreground">{t.tenant}</span> {tenantName}</p>
+                    <p><span className="text-muted-foreground">{t.vehicle}</span> {vehicleModel}</p>
                     {endDateParsed && !isNaN(endDateParsed.getTime()) && (
-                      <p><span className="text-muted-foreground">Data zwrotu:</span> <strong>{format(endDateParsed, "dd.MM.yyyy HH:mm")}</strong></p>
+                      <p><span className="text-muted-foreground">{t.returnDate}</span> <strong>{format(endDateParsed, "dd.MM.yyyy HH:mm")}</strong></p>
                     )}
                     {startDateParsed && endDateParsed && !isNaN(startDateParsed.getTime()) && !isNaN(endDateParsed.getTime()) && (
                       <p className="text-xs text-muted-foreground pt-2">
-                        Okres najmu: {format(startDateParsed, "dd.MM.yyyy")} - {format(endDateParsed, "dd.MM.yyyy")}
+                        {t.rentalPeriod} {format(startDateParsed, "dd.MM.yyyy")} - {format(endDateParsed, "dd.MM.yyyy")}
                       </p>
                     )}
                   </div>
@@ -167,14 +245,13 @@ export default function ReturnBooking() {
               </div>
             </div>
 
-            {/* Right Side - Calendar */}
             <div className="p-8">
               <div className="space-y-6">
                 <div>
                   <h2 className="text-lg font-semibold mb-6">
                     {selectedDate 
-                      ? format(selectedDate, "EEEE, d MMMM yyyy", { locale: pl })
-                      : "Wybierz datę"
+                      ? format(selectedDate, "EEEE, d MMMM yyyy", { locale })
+                      : t.selectDate
                     }
                   </h2>
                   
@@ -201,8 +278,7 @@ export default function ReturnBooking() {
                   <Alert variant="destructive" className="mt-4">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>UWAGA!</strong> Wybrałeś datę późniejszą niż data zakończenia wynajmu. 
-                      Zostaniesz obciążony dodatkową opłatą. Musisz natychmiast skontaktować się pod numerem:{" "}
+                      {t.lateWarning}{" "}
                       <a href="tel:+48660694257" className="font-bold underline">+48 660 694 257</a>
                     </AlertDescription>
                   </Alert>
@@ -211,7 +287,7 @@ export default function ReturnBooking() {
                 {selectedDate && (
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-base font-semibold">Wybierz godzinę:</Label>
+                      <Label className="text-base font-semibold">{t.selectTime}</Label>
                       <div className="grid grid-cols-3 gap-2 mt-3">
                         {TIME_SLOTS.map((time) => (
                           <Button
@@ -231,8 +307,7 @@ export default function ReturnBooking() {
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
-                          Niestety, w wybranym terminie nie ma dostępnych pracowników. 
-                          Wybierz inną godzinę lub datę.
+                          {t.noStaff}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -241,7 +316,7 @@ export default function ReturnBooking() {
                       <Alert>
                         <UserCheck className="h-4 w-4" />
                         <AlertDescription>
-                          Zwrot będzie obsługiwany przez: <strong>{availableEmployees![0].employee_name}</strong>
+                          {t.handledBy} <strong>{availableEmployees![0].employee_name}</strong>
                         </AlertDescription>
                       </Alert>
                     )}
@@ -249,10 +324,10 @@ export default function ReturnBooking() {
                     {selectedTime && (
                       <>
                         <div className="space-y-2">
-                          <Label htmlFor="notes">Dodatkowe uwagi (opcjonalnie)</Label>
+                          <Label htmlFor="notes">{t.notes}</Label>
                           <Textarea
                             id="notes"
-                            placeholder="Np. potrzebuję pomocy przy rozładunku..."
+                            placeholder={t.notesPlaceholder}
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             rows={3}
@@ -265,7 +340,7 @@ export default function ReturnBooking() {
                           size="lg"
                           disabled={createBooking.isPending || !hasAvailableStaff}
                         >
-                          Potwierdź rezerwację
+                          {t.confirmBooking}
                         </Button>
                       </>
                     )}
