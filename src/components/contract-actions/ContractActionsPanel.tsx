@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useToast } from "@/hooks/use-toast";
 import { useUpsertContractDocument } from "@/hooks/useContractDocuments";
 import { useContract } from "@/hooks/useContracts";
-import { useCreateNotificationLog } from "@/hooks/useNotificationLogs";
+
 import { toZonedTime } from "date-fns-tz";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
@@ -27,7 +27,6 @@ export const ContractActionsPanel = ({
   const { toast } = useToast();
   const upsertDocument = useUpsertContractDocument();
   const { data: contract } = useContract(contractId);
-  const createLog = useCreateNotificationLog();
 
   // Fetch contract documents to check completion status
   const { data: contractDocuments } = useQuery({
@@ -169,16 +168,6 @@ export const ContractActionsPanel = ({
         sent_to_email: null,
         file_url: null,
       });
-      
-      // Log the action
-      await createLog.mutateAsync({
-        notification_type: 'contract_generated',
-        notification_title: 'Wygenerowano umowę',
-        action_description: `Umowa ${contractNumber} została wygenerowana`,
-        contract_id: contractId,
-        contract_number: contractNumber,
-        metadata: { action: 'generate_contract' }
-      });
 
       toast({
         title: "Sukces",
@@ -226,16 +215,6 @@ export const ContractActionsPanel = ({
         sent_to_email: clientEmail,
         file_url: null,
       });
-      
-      // Log the action
-      await createLog.mutateAsync({
-        notification_type: 'contract_sent',
-        notification_title: 'Wysłano umowę do klienta',
-        action_description: `Umowa ${contractNumber} wysłana na ${clientEmail}`,
-        contract_id: contractId,
-        contract_number: contractNumber,
-        metadata: { action: 'send_to_client', email: clientEmail }
-      });
 
       toast({
         title: "Sukces",
@@ -266,16 +245,6 @@ export const ContractActionsPanel = ({
           contract_number: contractNumber,
           verification_data: verificationText,
         }),
-      });
-      
-      // Log the action
-      await createLog.mutateAsync({
-        notification_type: 'verification_sent',
-        notification_title: 'Wysłano dane do weryfikacji',
-        action_description: `Dane umowy ${contractNumber} wysłane do weryfikacji`,
-        contract_id: contractId,
-        contract_number: contractNumber,
-        metadata: { action: 'send_verification' }
       });
 
       toast({
@@ -320,16 +289,6 @@ export const ContractActionsPanel = ({
           number_of_travelers: contract?.number_of_travelers || null,
         }),
       });
-      
-      // Log the action
-      await createLog.mutateAsync({
-        notification_type: 'driver_form_sent',
-        notification_title: 'Wysłano formularz kierowcy',
-        action_description: `Formularz kierowcy dla umowy ${contractNumber}`,
-        contract_id: contractId,
-        contract_number: contractNumber,
-        metadata: { action: 'copy_driver_form', link: driverFormLink }
-      });
 
       toast({
         title: "Link skopiowany i wysłany",
@@ -373,16 +332,6 @@ export const ContractActionsPanel = ({
           number_of_travelers: contract?.number_of_travelers || null,
           language: 'en'
         }),
-      });
-      
-      // Log the action
-      await createLog.mutateAsync({
-        notification_type: 'driver_form_sent',
-        notification_title: 'Wysłano formularz kierowcy (EN)',
-        action_description: `Formularz kierowcy (angielski) dla umowy ${contractNumber}`,
-        contract_id: contractId,
-        contract_number: contractNumber,
-        metadata: { action: 'copy_driver_form_en', link: driverFormLinkEN }
       });
 
       toast({
