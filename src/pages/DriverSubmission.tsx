@@ -9,7 +9,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { UserPlus, Send, CheckCircle2, FileText, Plus, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useContractByNumber, useUpdateContract, useContract } from "@/hooks/useContracts";
-import { useCreateNotification } from "@/hooks/useNotifications";
 import { useUpdateClient } from "@/hooks/useClients";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
@@ -36,7 +35,6 @@ const DriverSubmission = () => {
   const isLoading = isUUID ? isLoadingByUUID : isLoadingByNumber;
   const isError = isUUID ? isErrorByUUID : isErrorByNumber;
   const updateContract = useUpdateContract();
-  const createNotificationMutation = useCreateNotification();
   const updateClient = useUpdateClient();
   const [submitted, setSubmitted] = useState(false);
   const [additionalDrivers, setAdditionalDrivers] = useState<number[]>([]);
@@ -263,16 +261,7 @@ const DriverSubmission = () => {
         }
       }
 
-      // Create notification for new drivers
-      const driversCount = allDrivers.length;
-      await createNotificationMutation.mutateAsync({
-        type: 'driver_new',
-        title: 'Nowy formularz dodatkowych kierowców',
-        message: `Dodano ${driversCount} ${driversCount === 1 ? 'kierowcę' : 'kierowców'} dla umowy ${contract.contract_number}`,
-        link: `/contracts/${contract.id}`,
-      });
-
-      // Send webhook notification
+      // Send webhook notification (this will also create the notification log)
       try {
         await supabase.functions.invoke('notify-driver-submission', {
           body: {
@@ -286,7 +275,7 @@ const DriverSubmission = () => {
       }
 
       toast.success("Zgłoszenie wysłane pomyślnie!", {
-        description: `Dziękujemy za przesłanie danych ${driversCount} ${driversCount === 1 ? 'kierowcy' : 'kierowców'}`,
+        description: `Dziękujemy za przesłanie danych kierowców`,
       });
       setSubmitted(true);
     } catch (error: any) {
@@ -1012,10 +1001,10 @@ const DriverSubmission = () => {
               <Button 
                 type="submit" 
                 className="w-full gap-2 shadow-md"
-                disabled={updateContract.isPending || createNotificationMutation.isPending}
+                disabled={updateContract.isPending}
               >
                 <Send className="h-4 w-4" />
-                {(updateContract.isPending || createNotificationMutation.isPending) 
+                {updateContract.isPending
                   ? 'Wysyłanie...' 
                   : `Wyślij zgłoszenie ${additionalDrivers.length > 0 ? `(${1 + additionalDrivers.length} ${additionalDrivers.length === 1 ? 'kierowca' : 'kierowców'})` : ''}`
                 }
