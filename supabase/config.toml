@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.telegram-update-deposit]
 verify_jwt = false
+
+[functions.notify-driver-submission]
+verify_jwt = false
