@@ -1334,39 +1334,43 @@ const ContractDetails = () => {
             </div>
           </div>
           
-          <Separator />
-          
-          <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">Opłata zasadnicza</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-              <div className="space-y-3">
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data</Label>
-                {isEditing ? (
-                  <Input type="date" value={displayData?.payments?.zasadnicza?.data || displayData?.payments?.zasadnicza?.termin || ''} onChange={(e) => {
-                    const newPayments = { ...displayData.payments, zasadnicza: { ...displayData.payments?.zasadnicza, data: e.target.value, termin: e.target.value } };
-                    updateField('payments', newPayments);
-                  }} />
-                ) : (
-                  <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.zasadnicza?.data || displayData?.payments?.zasadnicza?.termin || 'Nie podano'}</p>
-                )}
+          {!displayData?.is_full_payment_as_reservation && (
+            <>
+              <Separator />
+              
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">Opłata zasadnicza</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  <div className="space-y-3">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Data</Label>
+                    {isEditing ? (
+                      <Input type="date" value={displayData?.payments?.zasadnicza?.data || displayData?.payments?.zasadnicza?.termin || ''} onChange={(e) => {
+                        const newPayments = { ...displayData.payments, zasadnicza: { ...displayData.payments?.zasadnicza, data: e.target.value, termin: e.target.value } };
+                        updateField('payments', newPayments);
+                      }} />
+                    ) : (
+                      <p className="text-base font-semibold text-foreground pt-1">{displayData?.payments?.zasadnicza?.data || displayData?.payments?.zasadnicza?.termin || 'Nie podano'}</p>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Wysokość</Label>
+                    {isEditing ? (
+                      <Input type="number" step="0.01" value={displayData?.payments?.zasadnicza?.wysokosc ?? ''} onChange={(e) => {
+                        const newPayments = { ...displayData.payments, zasadnicza: { ...displayData.payments?.zasadnicza, wysokosc: e.target.value } };
+                        updateField('payments', newPayments);
+                      }} />
+                    ) : (
+                      <p className="text-base font-semibold text-foreground pt-1">
+                        {displayData?.payments?.zasadnicza?.wysokosc ? `${displayData.payments.zasadnicza.wysokosc} PLN` : 'Nie podano'}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="space-y-3">
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Wysokość</Label>
-                {isEditing ? (
-                  <Input type="number" step="0.01" value={displayData?.payments?.zasadnicza?.wysokosc ?? ''} onChange={(e) => {
-                    const newPayments = { ...displayData.payments, zasadnicza: { ...displayData.payments?.zasadnicza, wysokosc: e.target.value } };
-                    updateField('payments', newPayments);
-                  }} />
-                ) : (
-                  <p className="text-base font-semibold text-foreground pt-1">
-                    {displayData?.payments?.zasadnicza?.wysokosc ? `${displayData.payments.zasadnicza.wysokosc} PLN` : 'Nie podano'}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <Separator />
+              
+              <Separator />
+            </>
+          )}
           
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">Kaucja</h4>
