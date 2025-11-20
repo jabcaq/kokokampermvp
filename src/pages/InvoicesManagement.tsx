@@ -819,7 +819,18 @@ const InvoicesManagement = () => {
       <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle>{previewFile?.name}</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>{previewFile?.name}</DialogTitle>
+              {previewFile && (
+                <Button
+                  onClick={() => window.open(previewFile.url, '_blank')}
+                  variant="outline"
+                  size="sm"
+                >
+                  Otwórz w nowej karcie
+                </Button>
+              )}
+            </div>
           </DialogHeader>
           <div className="mt-4">
             {previewFile && (
@@ -831,20 +842,30 @@ const InvoicesManagement = () => {
                     className="w-full h-auto rounded-lg"
                   />
                 ) : isPdfFile(previewFile.type) ? (
-                  <iframe
-                    src={previewFile.url}
-                    className="w-full h-[70vh] rounded-lg border"
-                    title={previewFile.name}
-                  />
+                  <div className="space-y-3">
+                    <iframe
+                      src={previewFile.url}
+                      className="w-full h-[70vh] rounded-lg border"
+                      title={previewFile.name}
+                    />
+                    <p className="text-sm text-muted-foreground text-center">
+                      Jeśli PDF nie wyświetla się poprawnie, kliknij "Otwórz w nowej karcie"
+                    </p>
+                  </div>
                 ) : (
                   <div className="text-center space-y-4 p-8">
                     <FileText className="h-24 w-24 mx-auto text-muted-foreground" />
                     <p className="text-muted-foreground">
                       Podgląd niedostępny dla tego typu pliku
                     </p>
+                    <p className="text-sm text-muted-foreground">
+                      {previewFile.type?.includes('word') && 'Dokument Word (.doc, .docx)'}
+                      {previewFile.type?.includes('excel') && 'Arkusz Excel (.xls, .xlsx)'}
+                      {!previewFile.type?.includes('word') && !previewFile.type?.includes('excel') && 'Format pliku'}
+                    </p>
                     <Button
                       onClick={() => window.open(previewFile.url, '_blank')}
-                      variant="outline"
+                      variant="default"
                     >
                       Pobierz plik
                     </Button>
