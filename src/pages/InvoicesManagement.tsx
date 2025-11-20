@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { PDFPreviewModal } from "@/components/PDFPreviewModal";
 
 const statusConfig = {
   pending: { label: "Oczekuje", icon: Clock, className: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
@@ -478,6 +479,7 @@ const InvoicesManagement = () => {
     const [signedUrl, setSignedUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [downloading, setDownloading] = useState(false);
+    const [showPDFModal, setShowPDFModal] = useState(false);
 
     useEffect(() => {
       const getSignedUrl = async () => {
@@ -582,42 +584,51 @@ const InvoicesManagement = () => {
 
     if (isPdfFile(file.type)) {
       return (
-        <div className="text-center space-y-4 p-8">
-          <div className="flex items-center justify-center">
-            <div className="bg-primary/10 p-6 rounded-full">
-              <FileText className="h-24 w-24 text-primary" />
+        <>
+          <div className="text-center space-y-4 p-8">
+            <div className="flex items-center justify-center">
+              <div className="bg-primary/10 p-6 rounded-full">
+                <FileText className="h-24 w-24 text-primary" />
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Dokument PDF</h3>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Kliknij poniższy przycisk, aby pobrać lub wyświetlić dokument PDF.
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Dokument PDF</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                Kliknij poniższy przycisk, aby pobrać lub wyświetlić dokument PDF.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                onClick={() => setShowPDFModal(true)}
+                size="lg"
+                className="gap-2"
+              >
+                <Eye className="h-5 w-5" />
+                Podgląd PDF
+              </Button>
+              <Button
+                onClick={handleDownload}
+                disabled={downloading}
+                size="lg"
+                variant="outline"
+                className="gap-2"
+              >
+                <FileText className="h-5 w-5" />
+                {downloading ? "Pobieranie..." : "Pobierz PDF"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Użyj "Pobierz PDF" jeśli podgląd nie działa lub wyłącz adblocker dla tej strony
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button
-              onClick={handleDownload}
-              disabled={downloading}
-              size="lg"
-              className="gap-2"
-            >
-              <FileText className="h-5 w-5" />
-              {downloading ? "Pobieranie..." : "Pobierz PDF"}
-            </Button>
-            <Button
-              onClick={() => window.open(signedUrl, '_blank')}
-              size="lg"
-              variant="outline"
-              className="gap-2"
-            >
-              <Eye className="h-5 w-5" />
-              Otwórz w nowej karcie
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Jeśli "Otwórz w nowej karcie" nie działa, użyj "Pobierz PDF" lub wyłącz adblocker dla tej strony
-          </p>
-        </div>
+          
+          <PDFPreviewModal
+            isOpen={showPDFModal}
+            onClose={() => setShowPDFModal(false)}
+            pdfUrl={signedUrl || ''}
+            fileName={file.name}
+          />
+        </>
       );
     }
 
