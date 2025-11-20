@@ -473,6 +473,106 @@ const InvoicesManagement = () => {
   const isImageFile = (type?: string) => type?.startsWith('image/');
   const isPdfFile = (type?: string) => type === 'application/pdf';
 
+  // Component for file preview with signed URL support
+  const FilePreviewContent = ({ file }: { file: ContractInvoiceFile }) => {
+    const [signedUrl, setSignedUrl] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+      const getSignedUrl = async () => {
+        setLoading(true);
+        try {
+          // Check if file is from invoices bucket (private)
+          if (file.url.includes('/invoices/')) {
+            const pathMatch = file.url.match(/\/invoices\/(.+)$/);
+            if (pathMatch) {
+              const { data, error } = await supabase.storage
+                .from('invoices')
+                .createSignedUrl(pathMatch[1], 3600); // 1 hour expiry
+              
+              if (data?.signedUrl && !error) {
+                setSignedUrl(data.signedUrl);
+              } else {
+                setSignedUrl(file.url); // Fallback to original URL
+              }
+            }
+          } else {
+            setSignedUrl(file.url); // Public URL
+          }
+        } catch (error) {
+          console.error('Error generating signed URL:', error);
+          setSignedUrl(file.url); // Fallback
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      getSignedUrl();
+    }, [file.url]);
+
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center p-8">
+          <p className="text-muted-foreground">Ładowanie podglądu...</p>
+        </div>
+      );
+    }
+
+    if (!signedUrl) {
+      return (
+        <div className="text-center space-y-4 p-8">
+          <FileText className="h-24 w-24 mx-auto text-muted-foreground" />
+          <p className="text-muted-foreground">Nie udało się załadować pliku</p>
+        </div>
+      );
+    }
+
+    if (isImageFile(file.type)) {
+      return (
+        <img 
+          src={signedUrl} 
+          alt={file.name}
+          className="w-full h-auto rounded-lg"
+        />
+      );
+    }
+
+    if (isPdfFile(file.type)) {
+      return (
+        <div className="space-y-3">
+          <iframe
+            src={signedUrl}
+            className="w-full h-[70vh] rounded-lg border"
+            title={file.name}
+          />
+          <p className="text-sm text-muted-foreground text-center">
+            Jeśli PDF nie wyświetla się poprawnie, kliknij "Otwórz w nowej karcie"
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="text-center space-y-4 p-8">
+        <FileText className="h-24 w-24 mx-auto text-muted-foreground" />
+        <p className="text-muted-foreground">
+          Podgląd niedostępny dla tego typu pliku
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {file.type?.includes('word') && 'Dokument Word (.doc, .docx)'}
+          {file.type?.includes('excel') && 'Arkusz Excel (.xls, .xlsx)'}
+          {!file.type?.includes('word') && !file.type?.includes('excel') && 'Format pliku'}
+        </p>
+        <Button
+          onClick={() => window.open(signedUrl, '_blank')}
+          variant="default"
+        >
+          Pobierz plik
+        </Button>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Ładowanie...</div>;
   }
@@ -823,7 +923,27 @@ const InvoicesManagement = () => {
               <DialogTitle>{previewFile?.name}</DialogTitle>
               {previewFile && (
                 <Button
-                  onClick={() => window.open(previewFile.url, '_blank')}
+                  onClick={async () => {
+                    // Generate signed URL for private buckets
+                    const url = previewFile.url;
+                    if (url.includes('/invoices/')) {
+                      try {
+                        const pathMatch = url.match(/\/invoices\/(.+)$/);
+                        if (pathMatch) {
+                          const { data } = await supabase.storage
+                            .from('invoices')
+                            .createSignedUrl(pathMatch[1], 3600);
+                          if (data?.signedUrl) {
+                            window.open(data.signedUrl, '_blank');
+                            return;
+                          }
+                        }
+                      } catch (error) {
+                        console.error('Error generating signed URL:', error);
+                      }
+                    }
+                    window.open(url, '_blank');
+                  }}
                   variant="outline"
                   size="sm"
                 >
@@ -834,44 +954,7 @@ const InvoicesManagement = () => {
           </DialogHeader>
           <div className="mt-4">
             {previewFile && (
-              <>
-                {isImageFile(previewFile.type) ? (
-                  <img 
-                    src={previewFile.url} 
-                    alt={previewFile.name}
-                    className="w-full h-auto rounded-lg"
-                  />
-                ) : isPdfFile(previewFile.type) ? (
-                  <div className="space-y-3">
-                    <iframe
-                      src={previewFile.url}
-                      className="w-full h-[70vh] rounded-lg border"
-                      title={previewFile.name}
-                    />
-                    <p className="text-sm text-muted-foreground text-center">
-                      Jeśli PDF nie wyświetla się poprawnie, kliknij "Otwórz w nowej karcie"
-                    </p>
-                  </div>
-                ) : (
-                  <div className="text-center space-y-4 p-8">
-                    <FileText className="h-24 w-24 mx-auto text-muted-foreground" />
-                    <p className="text-muted-foreground">
-                      Podgląd niedostępny dla tego typu pliku
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {previewFile.type?.includes('word') && 'Dokument Word (.doc, .docx)'}
-                      {previewFile.type?.includes('excel') && 'Arkusz Excel (.xls, .xlsx)'}
-                      {!previewFile.type?.includes('word') && !previewFile.type?.includes('excel') && 'Format pliku'}
-                    </p>
-                    <Button
-                      onClick={() => window.open(previewFile.url, '_blank')}
-                      variant="default"
-                    >
-                      Pobierz plik
-                    </Button>
-                  </div>
-                )}
-              </>
+              <FilePreviewContent file={previewFile} />
             )}
           </div>
         </DialogContent>
