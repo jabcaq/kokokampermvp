@@ -371,17 +371,23 @@ const ContractDetails = () => {
         const startDateWarsaw = toZonedTime(new Date(value), WARSAW_TZ);
         const mainPaymentDate = addDays(startDateWarsaw, -14);
         
-        updated.payments = {
+        const newPayments: any = {
           ...prev.payments,
-          zasadnicza: {
-            ...prev.payments?.zasadnicza,
-            data: mainPaymentDate.toISOString().split('T')[0],
-          },
           kaucja: {
             ...prev.payments?.kaucja,
             data: startDateWarsaw.toISOString().split('T')[0],
           },
         };
+        
+        // Only update zasadnicza if not full payment as reservation
+        if (!prev.is_full_payment_as_reservation) {
+          newPayments.zasadnicza = {
+            ...prev.payments?.zasadnicza,
+            data: mainPaymentDate.toISOString().split('T')[0],
+          };
+        }
+        
+        updated.payments = newPayments;
       }
       
       // Auto-update payment amounts when value changes
@@ -390,16 +396,11 @@ const ContractDetails = () => {
         const isFullPayment = prev.is_full_payment_as_reservation;
         
         if (isFullPayment) {
-          // Full payment as reservation
+          // Full payment as reservation - no zasadnicza field
           updated.payments = {
-            ...prev.payments,
             rezerwacyjna: {
               ...prev.payments?.rezerwacyjna,
               wysokosc: numValue > 0 ? numValue : null,
-            },
-            zasadnicza: {
-              ...prev.payments?.zasadnicza,
-              wysokosc: 0,
             },
             kaucja: {
               ...prev.payments?.kaucja,
@@ -432,16 +433,11 @@ const ContractDetails = () => {
         const numValue = parseFloat(prev.value) || 0;
         
         if (value) {
-          // Full payment as reservation
+          // Full payment as reservation - remove zasadnicza field completely
           updated.payments = {
-            ...prev.payments,
             rezerwacyjna: {
               ...prev.payments?.rezerwacyjna,
               wysokosc: numValue > 0 ? numValue : null,
-            },
-            zasadnicza: {
-              ...prev.payments?.zasadnicza,
-              wysokosc: 0,
             },
             kaucja: {
               ...prev.payments?.kaucja,
