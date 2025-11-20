@@ -20,6 +20,11 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { PDFPreviewModal } from "@/components/PDFPreviewModal";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const statusConfig = {
   pending: { label: "Oczekuje", icon: Clock, className: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
@@ -56,6 +61,9 @@ const InvoicesManagement = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
   const [sendingWebhookId, setSendingWebhookId] = useState<string | null>(null);
+  const [showPDFModal, setShowPDFModal] = useState(false);
+  const [pdfModalUrl, setPdfModalUrl] = useState<string>("");
+  const [pdfModalFileName, setPdfModalFileName] = useState<string>("");
   
   const updateInvoice = useUpdateContractInvoice();
   const addInvoice = useAddContractInvoice();
@@ -964,19 +972,52 @@ const InvoicesManagement = () => {
                 <div className="space-y-2">
                   <h3 className="font-semibold">Wgrane pliki:</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {previewInvoice.files.map((file: ContractInvoiceFile) => (
+                  {previewInvoice.files.map((file: ContractInvoiceFile) => (
                       <div 
                         key={file.id} 
                         className="relative group border rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer bg-muted"
-                        onClick={() => setPreviewFile(file)}
+                        onClick={async () => {
+                          if (isPdfFile(file.type)) {
+                            // For PDFs, open in modal
+                            const url = file.url;
+                            if (url.includes('/invoices/')) {
+                              const path = url.split('/invoices/')[1].split('?')[0];
+                              const { data } = await supabase.storage
+                                .from('invoices')
+                                .createSignedUrl(path, 3600);
+                              if (data?.signedUrl) {
+                                setPdfModalUrl(data.signedUrl);
+                                setPdfModalFileName(file.name);
+                                setShowPDFModal(true);
+                              }
+                            }
+                          } else {
+                            setPreviewFile(file);
+                          }
+                        }}
                       >
-                        <div className="aspect-square flex items-center justify-center p-4">
+                        <div className="aspect-square flex items-center justify-center p-4 bg-background">
                           {isImageFile(file.type) ? (
                             <img 
                               src={file.url} 
                               alt={file.name}
                               className="w-full h-full object-cover"
                             />
+                          ) : isPdfFile(file.type) ? (
+                            <div className="w-full h-full flex items-center justify-center bg-muted/50">
+                              <Document
+                                file={file.url}
+                                loading={<FileText className="h-12 w-12 text-muted-foreground animate-pulse" />}
+                                error={<FileText className="h-12 w-12 text-muted-foreground" />}
+                              >
+                                <Page 
+                                  pageNumber={1} 
+                                  width={200}
+                                  renderTextLayer={false}
+                                  renderAnnotationLayer={false}
+                                />
+                              </Document>
+                            </div>
                           ) : (
                             <FileText className="h-12 w-12 text-muted-foreground" />
                           )}
@@ -1191,6 +1232,14 @@ const InvoicesManagement = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* PDF Preview Modal */}
+      <PDFPreviewModal
+        isOpen={showPDFModal}
+        onClose={() => setShowPDFModal(false)}
+        pdfUrl={pdfModalUrl}
+        fileName={pdfModalFileName}
+      />
     </div>
   );
 };
