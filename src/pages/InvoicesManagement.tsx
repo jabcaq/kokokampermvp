@@ -539,15 +539,27 @@ const InvoicesManagement = () => {
 
     if (isPdfFile(file.type)) {
       return (
-        <div className="space-y-3">
-          <iframe
-            src={signedUrl}
-            className="w-full h-[70vh] rounded-lg border"
-            title={file.name}
-          />
-          <p className="text-sm text-muted-foreground text-center">
-            Jeśli PDF nie wyświetla się poprawnie, kliknij "Otwórz w nowej karcie"
-          </p>
+        <div className="text-center space-y-4 p-8">
+          <div className="flex items-center justify-center">
+            <div className="bg-red-500/10 p-6 rounded-full">
+              <FileText className="h-24 w-24 text-red-500" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Dokument PDF</h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Podgląd PDF w przeglądarce jest zablokowany ze względów bezpieczeństwa. 
+              Kliknij poniższy przycisk, aby otworzyć dokument w nowej karcie.
+            </p>
+          </div>
+          <Button
+            onClick={() => window.open(signedUrl, '_blank')}
+            size="lg"
+            className="gap-2"
+          >
+            <Eye className="h-5 w-5" />
+            Otwórz PDF w nowej karcie
+          </Button>
         </div>
       );
     }
