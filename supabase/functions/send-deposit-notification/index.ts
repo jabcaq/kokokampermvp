@@ -24,7 +24,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Sending deposit notification for contract:', requestData.contract_number);
 
     // Webhook do Make.com dla powiadomienia o kaucji
-    const webhookResponse = await fetch('https://hook.eu2.make.com/8lb97jeybom44bgvdx8c5jsf2976yeex', {
+    const webhookResponse = await fetch('https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -688,7 +688,7 @@ const TestNotifications = () => {
 
     setIsSendingDepositNotification(true);
     try {
-      const response = await fetch("https://hook.eu2.make.com/8lb97jeybom44bgvdx8c5jsf2976yeex", {
+      const response = await fetch("https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1977,7 +1977,7 @@ const TestNotifications = () => {
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
                 <span className="text-sm text-muted-foreground">
-                  Webhook: https://hook.eu2.make.com/8lb97jeybom44bgvdx8c5jsf2976yeex
+                  Webhook: https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp
                 </span>
               </div>
             </div>
