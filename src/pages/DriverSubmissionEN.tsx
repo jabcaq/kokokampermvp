@@ -9,7 +9,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { UserPlus, Send, CheckCircle2, FileText, Plus, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useContractByNumber, useUpdateContract, useContract } from "@/hooks/useContracts";
-import { useCreateNotification } from "@/hooks/useNotifications";
 import { useUpdateClient } from "@/hooks/useClients";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
@@ -32,7 +31,6 @@ const DriverSubmissionEN = () => {
   const isLoading = isUUID ? isLoadingByUUID : isLoadingByNumber;
   const isError = isUUID ? isErrorByUUID : isErrorByNumber;
   const updateContract = useUpdateContract();
-  const createNotificationMutation = useCreateNotification();
   const updateClient = useUpdateClient();
   const [submitted, setSubmitted] = useState(false);
   const [additionalDrivers, setAdditionalDrivers] = useState<number[]>([]);
@@ -249,16 +247,7 @@ const DriverSubmissionEN = () => {
         }
       }
 
-      // Create notification for new drivers
-      const driversCount = allDrivers.length;
-      await createNotificationMutation.mutateAsync({
-        type: 'driver_new',
-        title: 'New Driver Form Submission',
-        message: `Added ${driversCount} ${driversCount === 1 ? 'driver' : 'drivers'} for contract ${contract.contract_number}`,
-        link: `/contracts/${contract.id}`,
-      });
-
-      // Send webhook notification with Warsaw time
+      // Send webhook notification (this will also create the notification log)
       try {
         await supabase.functions.invoke('notify-driver-submission', {
           body: {
