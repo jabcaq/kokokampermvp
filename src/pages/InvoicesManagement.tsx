@@ -477,6 +477,7 @@ const InvoicesManagement = () => {
   const FilePreviewContent = ({ file }: { file: ContractInvoiceFile }) => {
     const [signedUrl, setSignedUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [downloading, setDownloading] = useState(false);
 
     useEffect(() => {
       const getSignedUrl = async () => {
@@ -510,6 +511,37 @@ const InvoicesManagement = () => {
       getSignedUrl();
     }, [file.url]);
 
+    const handleDownload = async () => {
+      if (!signedUrl) return;
+      
+      setDownloading(true);
+      try {
+        const response = await fetch(signedUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast({
+          title: "Sukces",
+          description: "Plik został pobrany",
+        });
+      } catch (error) {
+        console.error('Download error:', error);
+        toast({
+          title: "Błąd",
+          description: "Nie udało się pobrać pliku. Spróbuj wyłączyć adblocker.",
+          variant: "destructive",
+        });
+      } finally {
+        setDownloading(false);
+      }
+    };
+
     if (loading) {
       return (
         <div className="flex items-center justify-center p-8">
@@ -529,11 +561,22 @@ const InvoicesManagement = () => {
 
     if (isImageFile(file.type)) {
       return (
-        <img 
-          src={signedUrl} 
-          alt={file.name}
-          className="w-full h-auto rounded-lg"
-        />
+        <div className="space-y-4">
+          <img 
+            src={signedUrl} 
+            alt={file.name}
+            className="w-full h-auto rounded-lg"
+          />
+          <div className="flex justify-center">
+            <Button
+              onClick={handleDownload}
+              disabled={downloading}
+              variant="outline"
+            >
+              {downloading ? "Pobieranie..." : "Pobierz zdjęcie"}
+            </Button>
+          </div>
+        </div>
       );
     }
 
@@ -541,25 +584,39 @@ const InvoicesManagement = () => {
       return (
         <div className="text-center space-y-4 p-8">
           <div className="flex items-center justify-center">
-            <div className="bg-red-500/10 p-6 rounded-full">
-              <FileText className="h-24 w-24 text-red-500" />
+            <div className="bg-primary/10 p-6 rounded-full">
+              <FileText className="h-24 w-24 text-primary" />
             </div>
           </div>
           <div className="space-y-2">
             <h3 className="text-lg font-semibold">Dokument PDF</h3>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Podgląd PDF w przeglądarce jest zablokowany ze względów bezpieczeństwa. 
-              Kliknij poniższy przycisk, aby otworzyć dokument w nowej karcie.
+              Kliknij poniższy przycisk, aby pobrać lub wyświetlić dokument PDF.
             </p>
           </div>
-          <Button
-            onClick={() => window.open(signedUrl, '_blank')}
-            size="lg"
-            className="gap-2"
-          >
-            <Eye className="h-5 w-5" />
-            Otwórz PDF w nowej karcie
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              onClick={handleDownload}
+              disabled={downloading}
+              size="lg"
+              className="gap-2"
+            >
+              <FileText className="h-5 w-5" />
+              {downloading ? "Pobieranie..." : "Pobierz PDF"}
+            </Button>
+            <Button
+              onClick={() => window.open(signedUrl, '_blank')}
+              size="lg"
+              variant="outline"
+              className="gap-2"
+            >
+              <Eye className="h-5 w-5" />
+              Otwórz w nowej karcie
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Jeśli "Otwórz w nowej karcie" nie działa, użyj "Pobierz PDF" lub wyłącz adblocker dla tej strony
+          </p>
         </div>
       );
     }
@@ -576,10 +633,11 @@ const InvoicesManagement = () => {
           {!file.type?.includes('word') && !file.type?.includes('excel') && 'Format pliku'}
         </p>
         <Button
-          onClick={() => window.open(signedUrl, '_blank')}
+          onClick={handleDownload}
+          disabled={downloading}
           variant="default"
         >
-          Pobierz plik
+          {downloading ? "Pobieranie..." : "Pobierz plik"}
         </Button>
       </div>
     );
