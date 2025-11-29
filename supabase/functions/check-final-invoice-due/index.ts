@@ -136,6 +136,7 @@ const handler = async (req: Request): Promise<Response> => {
             tenant_email: contract.tenant_email,
             end_date: contract.end_date,
             contract_value: contract.value || 0,
+            invoice_upload_link: `/contracts/${contract.id}`,
             advance_invoices: advanceInvoices,
             total_advance_amount: totalAdvanceAmount,
             final_invoice_amount: (contract.value || 0) - totalAdvanceAmount,
