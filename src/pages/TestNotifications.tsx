@@ -89,6 +89,18 @@ const TestNotifications = () => {
   // Driver submission notification state
   const [selectedContractForDriver, setSelectedContractForDriver] = useState<string>('');
   const [isSendingDriverSubmission, setIsSendingDriverSubmission] = useState(false);
+
+  // Payment due 7 days notification state
+  const [selectedContractPayment7Days, setSelectedContractPayment7Days] = useState<string>('');
+  const [isSendingPayment7Days, setIsSendingPayment7Days] = useState(false);
+
+  // Payment overdue notification state
+  const [selectedContractPaymentOverdue, setSelectedContractPaymentOverdue] = useState<string>('');
+  const [isSendingPaymentOverdue, setIsSendingPaymentOverdue] = useState(false);
+
+  // Final invoice notification state
+  const [selectedContractFinalInvoice, setSelectedContractFinalInvoice] = useState<string>('');
+  const [isSendingFinalInvoice, setIsSendingFinalInvoice] = useState(false);
   
   const { toast } = useToast();
 
@@ -1197,6 +1209,105 @@ const TestNotifications = () => {
     }
   };
 
+  const handleSendPayment7DaysNotification = async () => {
+    if (!selectedContractPayment7Days) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz umowę.",
+      });
+      return;
+    }
+
+    setIsSendingPayment7Days(true);
+    try {
+      const response = await supabase.functions.invoke('check-payment-due-7days');
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to check payments');
+      }
+
+      toast({
+        title: "Sukces",
+        description: "Sprawdzono płatności za 7 dni - powiadomienia wysłane",
+      });
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się sprawdzić płatności",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingPayment7Days(false);
+    }
+  };
+
+  const handleSendPaymentOverdueNotification = async () => {
+    if (!selectedContractPaymentOverdue) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz umowę.",
+      });
+      return;
+    }
+
+    setIsSendingPaymentOverdue(true);
+    try {
+      const response = await supabase.functions.invoke('check-payment-overdue');
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to check overdue payments');
+      }
+
+      toast({
+        title: "Sukces",
+        description: "Sprawdzono zaległe płatności - powiadomienia wysłane",
+      });
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się sprawdzić zaległych płatności",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingPaymentOverdue(false);
+    }
+  };
+
+  const handleSendFinalInvoiceNotification = async () => {
+    if (!selectedContractFinalInvoice) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz umowę.",
+      });
+      return;
+    }
+
+    setIsSendingFinalInvoice(true);
+    try {
+      const response = await supabase.functions.invoke('check-final-invoice-due');
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to check final invoices');
+      }
+
+      toast({
+        title: "Sukces",
+        description: "Sprawdzono faktury końcowe - powiadomienia wysłane",
+      });
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się sprawdzić faktur końcowych",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingFinalInvoice(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
       <Card>
@@ -2267,6 +2378,159 @@ const TestNotifications = () => {
             >
               {isSendingDriverSubmission && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Wyślij test powiadomienia
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Payment Due 7 Days Notification */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Przypomnienie o płatności 7 dni przed terminem
+          </CardTitle>
+          <CardDescription>
+            Test powiadomienia wysyłanego 7 dni przed terminem płatności rezerwacyjnej lub zasadniczej
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-sm text-muted-foreground">
+                Edge Function: check-payment-due-7days → Webhook: https://hook.eu2.make.com/y6p65n7fg253wq5j1y0ryqxra1hsibxo
+              </span>
+            </div>
+
+            <div>
+              <Label>Wybierz umowę (sprawdzi wszystkie płatności za 7 dni)</Label>
+              <Select
+                value={selectedContractPayment7Days}
+                onValueChange={setSelectedContractPayment7Days}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Wybierz umowę..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {contracts?.map((contract) => (
+                    <SelectItem key={contract.id} value={contract.id}>
+                      {contract.contract_number} - {contract.tenant_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleSendPayment7DaysNotification}
+              disabled={isSendingPayment7Days || !selectedContractPayment7Days}
+              className="w-full sm:w-auto"
+            >
+              {isSendingPayment7Days && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Sprawdź płatności za 7 dni
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Payment Overdue Notification */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Powiadomienie o braku wpłaty
+          </CardTitle>
+          <CardDescription>
+            Test powiadomienia wysyłanego gdy nie odnotowano wpłaty opłaty rezerwacyjnej lub zasadniczej po terminie
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-sm text-muted-foreground">
+                Edge Function: check-payment-overdue → Webhook: https://hook.eu2.make.com/qnvmpalrn8bhuz7qjon7cknhzw7yz4mq
+              </span>
+            </div>
+
+            <div>
+              <Label>Wybierz umowę (sprawdzi wszystkie zaległe płatności)</Label>
+              <Select
+                value={selectedContractPaymentOverdue}
+                onValueChange={setSelectedContractPaymentOverdue}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Wybierz umowę..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {contracts?.map((contract) => (
+                    <SelectItem key={contract.id} value={contract.id}>
+                      {contract.contract_number} - {contract.tenant_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleSendPaymentOverdueNotification}
+              disabled={isSendingPaymentOverdue || !selectedContractPaymentOverdue}
+              className="w-full sm:w-auto"
+            >
+              {isSendingPaymentOverdue && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Sprawdź zaległe płatności
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Final Invoice Notification */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Przypomnienie o fakturze końcowej
+          </CardTitle>
+          <CardDescription>
+            Test powiadomienia wysyłanego w ostatnim dniu wykonania usługi z listą faktur zaliczkowych
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-sm text-muted-foreground">
+                Edge Function: check-final-invoice-due → Webhook: https://hook.eu2.make.com/g4hbumjfkgenjrv9x4431oslrcyciy72
+              </span>
+            </div>
+
+            <div>
+              <Label>Wybierz umowę (sprawdzi umowy kończące się dziś)</Label>
+              <Select
+                value={selectedContractFinalInvoice}
+                onValueChange={setSelectedContractFinalInvoice}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Wybierz umowę..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {contracts?.map((contract) => (
+                    <SelectItem key={contract.id} value={contract.id}>
+                      {contract.contract_number} - {contract.tenant_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleSendFinalInvoiceNotification}
+              disabled={isSendingFinalInvoice || !selectedContractFinalInvoice}
+              className="w-full sm:w-auto"
+            >
+              {isSendingFinalInvoice && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Sprawdź faktury końcowe
             </Button>
           </div>
         </CardContent>

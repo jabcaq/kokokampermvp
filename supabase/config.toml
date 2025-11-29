@@ -41,3 +41,12 @@ verify_jwt = false
 
 [functions.notify-driver-submission]
 verify_jwt = false
+
+[functions.check-payment-due-7days]
+verify_jwt = false
+
+[functions.check-payment-overdue]
+verify_jwt = false
+
+[functions.check-final-invoice-due]
+verify_jwt = false
