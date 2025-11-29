@@ -126,11 +126,16 @@ const handler = async (req: Request): Promise<Response> => {
         const totalAdvanceAmount = advanceInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
         const finalInvoiceAmount = (contract.value || 0) - totalAdvanceAmount;
 
+        console.log(`Contract ${contract.contract_number}: Total value=${contract.value}, Advance invoices=${totalAdvanceAmount}, Final invoice amount=${finalInvoiceAmount}`);
+        console.log(`  Advance invoices found: ${advanceInvoices.length}`, advanceInvoices);
+
         // Skip if no final invoice is needed
         if (finalInvoiceAmount <= 0) {
-          console.log(`Skipping contract ${contract.contract_number} - no final invoice needed (amount: ${finalInvoiceAmount})`);
+          console.log(`✓ Skipping contract ${contract.contract_number} - no final invoice needed (all payments already invoiced)`);
           continue;
         }
+        
+        console.log(`→ Sending final invoice reminder for ${contract.contract_number}`);
 
         const webhookResponse = await fetch(webhookUrl, {
           method: 'POST',
