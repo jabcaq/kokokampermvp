@@ -79,9 +79,9 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         const payments = contract.payments || {};
         
-        // Check reservation payment (zaliczka)
-        if (payments.zaliczka?.termin) {
-          const paymentDate = new Date(payments.zaliczka.termin).toISOString().split('T')[0];
+        // Check reservation payment (rezerwacyjna)
+        if (payments.rezerwacyjna?.termin) {
+          const paymentDate = new Date(payments.rezerwacyjna.termin).toISOString().split('T')[0];
           // In test mode, send notification regardless of date; in production, check if date matches
           if (testContractId || paymentDate === targetDateStr) {
             const webhookResponse = await fetch(webhookUrl, {
@@ -96,9 +96,10 @@ const handler = async (req: Request): Promise<Response> => {
                 tenant_email: contract.tenant_email,
                 payment_type: 'reservation',
                 payment_type_pl: 'Opłata rezerwacyjna',
-                payment_amount: payments.zaliczka.wysokosc || 0,
-                payment_due_date: payments.zaliczka.termin,
+                payment_amount: payments.rezerwacyjna.wysokosc || 0,
+                payment_due_date: payments.rezerwacyjna.termin,
                 contract_link: `/contracts/${contract.id}`,
+                invoice_upload_link: `/contracts/${contract.id}`,
                 days_before: 7,
                 timestamp: new Date().toISOString(),
               }),
@@ -131,6 +132,7 @@ const handler = async (req: Request): Promise<Response> => {
                 payment_amount: payments.zasadnicza.wysokosc || 0,
                 payment_due_date: payments.zasadnicza.termin,
                 contract_link: `/contracts/${contract.id}`,
+                invoice_upload_link: `/contracts/${contract.id}`,
                 days_before: 7,
                 timestamp: new Date().toISOString(),
               }),
