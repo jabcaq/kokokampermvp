@@ -78,10 +78,10 @@ const ContractDetails = () => {
     },
   });
   
-  // Set default tab to invoices for accounting role
+  // Set default tab based on role
   useEffect(() => {
     if (userRoles?.isAccounting) {
-      setActiveTab("invoices");
+      setActiveTab("contract"); // Default to contract view for accounting
     }
   }, [userRoles]);
   
@@ -626,8 +626,12 @@ const ContractDetails = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {userRoles?.isAccounting ? (
-          // Accounting role sees only Invoices tab
-          <TabsList className="grid w-full mb-8 grid-cols-1">
+          // Accounting role sees Umowa (read-only) and Faktury tabs
+          <TabsList className="grid w-full mb-8 grid-cols-2">
+            <TabsTrigger value="contract" className="gap-2">
+              <FileText className="h-4 w-4" />
+              Umowa
+            </TabsTrigger>
             <TabsTrigger value="invoices" className="gap-2">
               <CreditCard className="h-4 w-4" />
               {displayData?.invoice_type === 'invoice' ? 'Faktury' : 'Paragony'}
