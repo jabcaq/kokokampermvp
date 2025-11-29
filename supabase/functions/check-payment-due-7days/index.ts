@@ -25,6 +25,9 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Check if this is a test request with a specific contract
+    const { testContractId } = await req.json().catch(() => ({}));
+
     // Calculate target date (7 days from now)
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + 7);
@@ -32,12 +35,22 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Checking payments due in 7 days:', targetDateStr);
 
-    // Fetch all active contracts
-    const { data: contracts, error } = await supabase
+    // Fetch contracts (either specific test contract or all active contracts)
+    let query = supabase
       .from('contracts')
       .select('id, contract_number, tenant_name, tenant_email, start_date, payments')
-      .eq('is_archived', false)
-      .in('status', ['pending', 'active']);
+      .eq('is_archived', false);
+
+    if (testContractId) {
+      // Test mode: check specific contract regardless of date
+      console.log('Test mode: checking contract', testContractId);
+      query = query.eq('id', testContractId);
+    } else {
+      // Production mode: check active/pending contracts
+      query = query.in('status', ['pending', 'active']);
+    }
+
+    const { data: contracts, error } = await query;
 
     if (error) {
       console.error('Error fetching contracts:', error);
@@ -69,7 +82,8 @@ const handler = async (req: Request): Promise<Response> => {
         // Check reservation payment (zaliczka)
         if (payments.zaliczka?.termin) {
           const paymentDate = new Date(payments.zaliczka.termin).toISOString().split('T')[0];
-          if (paymentDate === targetDateStr) {
+          // In test mode, send notification regardless of date; in production, check if date matches
+          if (testContractId || paymentDate === targetDateStr) {
             const webhookResponse = await fetch(webhookUrl, {
               method: 'POST',
               headers: {
@@ -100,7 +114,8 @@ const handler = async (req: Request): Promise<Response> => {
         // Check main payment (zasadnicza)
         if (payments.zasadnicza?.termin) {
           const paymentDate = new Date(payments.zasadnicza.termin).toISOString().split('T')[0];
-          if (paymentDate === targetDateStr) {
+          // In test mode, send notification regardless of date; in production, check if date matches
+          if (testContractId || paymentDate === targetDateStr) {
             const webhookResponse = await fetch(webhookUrl, {
               method: 'POST',
               headers: {
