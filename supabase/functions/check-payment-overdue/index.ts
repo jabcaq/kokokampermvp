@@ -1,0 +1,157 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface Contract {
+  id: string;
+  contract_number: string;
+  tenant_name: string;
+  tenant_email: string;
+  start_date: string;
+  payments: any;
+}
+
+const handler = async (req: Request): Promise<Response> => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const today = new Date().toISOString().split('T')[0];
+
+    console.log('Checking for overdue payments as of:', today);
+
+    // Fetch all active contracts
+    const { data: contracts, error } = await supabase
+      .from('contracts')
+      .select('id, contract_number, tenant_name, tenant_email, start_date, payments')
+      .eq('is_archived', false)
+      .in('status', ['pending', 'active']);
+
+    if (error) {
+      console.error('Error fetching contracts:', error);
+      throw error;
+    }
+
+    if (!contracts || contracts.length === 0) {
+      console.log('No contracts found');
+      return new Response(
+        JSON.stringify({ 
+          message: 'No contracts found',
+          checked: 0
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
+
+    let notificationsSent = 0;
+    const webhookUrl = 'https://hook.eu2.make.com/qnvmpalrn8bhuz7qjon7cknhzw7yz4mq';
+
+    // Check each contract for overdue payments
+    for (const contract of contracts as Contract[]) {
+      try {
+        const payments = contract.payments || {};
+        
+        // Check reservation payment (zaliczka) - overdue
+        if (payments.zaliczka?.termin) {
+          const paymentDate = new Date(payments.zaliczka.termin).toISOString().split('T')[0];
+          if (paymentDate < today) {
+            const daysOverdue = Math.floor((new Date(today).getTime() - new Date(paymentDate).getTime()) / (1000 * 60 * 60 * 24));
+            
+            const webhookResponse = await fetch(webhookUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                contract_id: contract.id,
+                contract_number: contract.contract_number,
+                tenant_name: contract.tenant_name,
+                tenant_email: contract.tenant_email,
+                payment_type: 'reservation',
+                payment_type_pl: 'Opłata rezerwacyjna',
+                payment_amount: payments.zaliczka.wysokosc || 0,
+                payment_due_date: payments.zaliczka.termin,
+                days_overdue: daysOverdue,
+                timestamp: new Date().toISOString(),
+              }),
+            });
+
+            if (webhookResponse.ok) {
+              console.log(`Overdue payment notification sent for reservation - contract ${contract.contract_number}`);
+              notificationsSent++;
+            }
+          }
+        }
+
+        // Check main payment (zasadnicza) - overdue
+        if (payments.zasadnicza?.termin) {
+          const paymentDate = new Date(payments.zasadnicza.termin).toISOString().split('T')[0];
+          if (paymentDate < today) {
+            const daysOverdue = Math.floor((new Date(today).getTime() - new Date(paymentDate).getTime()) / (1000 * 60 * 60 * 24));
+            
+            const webhookResponse = await fetch(webhookUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                contract_id: contract.id,
+                contract_number: contract.contract_number,
+                tenant_name: contract.tenant_name,
+                tenant_email: contract.tenant_email,
+                payment_type: 'main_payment',
+                payment_type_pl: 'Płatność zasadnicza',
+                payment_amount: payments.zasadnicza.wysokosc || 0,
+                payment_due_date: payments.zasadnicza.termin,
+                days_overdue: daysOverdue,
+                timestamp: new Date().toISOString(),
+              }),
+            });
+
+            if (webhookResponse.ok) {
+              console.log(`Overdue payment notification sent for main payment - contract ${contract.contract_number}`);
+              notificationsSent++;
+            }
+          }
+        }
+      } catch (webhookError) {
+        console.error(`Error processing contract ${contract.contract_number}:`, webhookError);
+      }
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        message: 'Overdue payment check completed',
+        contracts_checked: contracts.length,
+        notifications_sent: notificationsSent
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      }
+    );
+  } catch (error: any) {
+    console.error('Error in check-payment-overdue function:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      }
+    );
+  }
+};
+
+serve(handler);
