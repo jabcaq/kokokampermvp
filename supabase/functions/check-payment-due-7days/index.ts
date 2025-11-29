@@ -79,10 +79,11 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         const payments = contract.payments || {};
         
-        // Check reservation payment (rezerwacyjna)
-        if (payments.rezerwacyjna?.termin) {
-          const paymentDate = new Date(payments.rezerwacyjna.termin).toISOString().split('T')[0];
-          console.log(`Contract ${contract.contract_number}: rezerwacyjna termin=${payments.rezerwacyjna.termin}, paymentDate=${paymentDate}, testMode=${!!testContractId}`);
+        // Check reservation payment (rezerwacyjna) - check both 'termin' and 'data' fields
+        const rezerwacyjnaDueDate = payments.rezerwacyjna?.termin || payments.rezerwacyjna?.data;
+        if (rezerwacyjnaDueDate) {
+          const paymentDate = new Date(rezerwacyjnaDueDate).toISOString().split('T')[0];
+          console.log(`Contract ${contract.contract_number}: rezerwacyjna date=${rezerwacyjnaDueDate}, paymentDate=${paymentDate}, testMode=${!!testContractId}`);
           
           // In test mode, send notification regardless of date; in production, check if date matches
           if (testContractId || paymentDate === targetDateStr) {
@@ -101,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
                 payment_type: 'reservation',
                 payment_type_pl: 'Opłata rezerwacyjna',
                 payment_amount: payments.rezerwacyjna.wysokosc || 0,
-                payment_due_date: payments.rezerwacyjna.termin,
+                payment_due_date: rezerwacyjnaDueDate,
                 contract_link: `/contracts/${contract.id}`,
                 invoice_upload_link: `/contracts/${contract.id}`,
                 days_before: 7,
@@ -123,9 +124,10 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
 
-        // Check main payment (zasadnicza)
-        if (payments.zasadnicza?.termin) {
-          const paymentDate = new Date(payments.zasadnicza.termin).toISOString().split('T')[0];
+        // Check main payment (zasadnicza) - check both 'termin' and 'data' fields
+        const zasadniczaDueDate = payments.zasadnicza?.termin || payments.zasadnicza?.data;
+        if (zasadniczaDueDate) {
+          const paymentDate = new Date(zasadniczaDueDate).toISOString().split('T')[0];
           // In test mode, send notification regardless of date; in production, check if date matches
           if (testContractId || paymentDate === targetDateStr) {
             const webhookResponse = await fetch(webhookUrl, {
@@ -141,7 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
                 payment_type: 'main_payment',
                 payment_type_pl: 'Płatność zasadnicza',
                 payment_amount: payments.zasadnicza.wysokosc || 0,
-                payment_due_date: payments.zasadnicza.termin,
+                payment_due_date: zasadniczaDueDate,
                 contract_link: `/contracts/${contract.id}`,
                 invoice_upload_link: `/contracts/${contract.id}`,
                 days_before: 7,
