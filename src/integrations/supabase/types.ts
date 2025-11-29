@@ -1154,6 +1154,7 @@ export type Database = {
         | "user"
         | "return_handler"
         | "admin_return_handler"
+        | "accounting"
       contract_status: "active" | "completed" | "cancelled" | "pending"
       inquiry_status: "new" | "in_progress" | "completed" | "archived"
     }
@@ -1289,6 +1290,7 @@ export const Constants = {
         "user",
         "return_handler",
         "admin_return_handler",
+        "accounting",
       ],
       contract_status: ["active", "completed", "cancelled", "pending"],
       inquiry_status: ["new", "in_progress", "completed", "archived"],
