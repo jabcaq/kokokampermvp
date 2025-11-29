@@ -1220,15 +1220,18 @@ const TestNotifications = () => {
 
     setIsSendingPayment7Days(true);
     try {
-      const response = await supabase.functions.invoke('check-payment-due-7days');
+      const response = await supabase.functions.invoke('check-payment-due-7days', {
+        body: { testContractId: selectedContractPayment7Days }
+      });
 
       if (response.error) {
         throw new Error(response.error.message || 'Failed to check payments');
       }
 
+      const contract = contracts?.find(c => c.id === selectedContractPayment7Days);
       toast({
         title: "Sukces",
-        description: "Sprawdzono płatności za 7 dni - powiadomienia wysłane",
+        description: `Sprawdzono płatności za 7 dni dla umowy ${contract?.contract_number} - webhook wysłany`,
       });
     } catch (error: any) {
       console.error('Error:', error);
