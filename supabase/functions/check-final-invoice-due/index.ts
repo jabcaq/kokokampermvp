@@ -33,29 +33,58 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const today = new Date().toISOString().split('T')[0];
+    // Check if this is a test request with specific contract_id
+    let contracts = [];
+    const requestBody = req.method === 'POST' ? await req.json() : {};
+    const testContractId = requestBody?.contract_id;
 
-    console.log('Checking for contracts ending today (final invoice due):', today);
+    if (testContractId) {
+      console.log('TEST MODE: Checking specific contract:', testContractId);
+      
+      // Fetch the specific contract for testing
+      const { data: contract, error } = await supabase
+        .from('contracts')
+        .select('id, contract_number, tenant_name, tenant_email, end_date, value')
+        .eq('id', testContractId)
+        .eq('is_archived', false)
+        .single();
 
-    // Fetch contracts ending today
-    const { data: contracts, error } = await supabase
-      .from('contracts')
-      .select('id, contract_number, tenant_name, tenant_email, end_date, value')
-      .eq('is_archived', false)
-      .eq('status', 'active')
-      .gte('end_date', `${today}T00:00:00`)
-      .lt('end_date', `${today}T23:59:59`);
+      if (error) {
+        console.error('Error fetching test contract:', error);
+        throw error;
+      }
 
-    if (error) {
-      console.error('Error fetching contracts:', error);
-      throw error;
+      contracts = contract ? [contract] : [];
+    } else {
+      // Production mode: Check contracts ending today
+      const today = new Date().toISOString().split('T')[0];
+      console.log('PRODUCTION MODE: Checking for contracts ending today (final invoice due):', today);
+
+      // Fetch contracts ending today
+      const { data: fetchedContracts, error } = await supabase
+        .from('contracts')
+        .select('id, contract_number, tenant_name, tenant_email, end_date, value')
+        .eq('is_archived', false)
+        .eq('status', 'active')
+        .gte('end_date', `${today}T00:00:00`)
+        .lt('end_date', `${today}T23:59:59`);
+
+      if (error) {
+        console.error('Error fetching contracts:', error);
+        throw error;
+      }
+
+      contracts = fetchedContracts || [];
     }
 
     if (!contracts || contracts.length === 0) {
-      console.log('No contracts ending today');
+      const message = testContractId 
+        ? 'Test contract not found or is archived' 
+        : 'No contracts ending today';
+      console.log(message);
       return new Response(
         JSON.stringify({ 
-          message: 'No contracts ending today',
+          message,
           checked: 0
         }),
         {
