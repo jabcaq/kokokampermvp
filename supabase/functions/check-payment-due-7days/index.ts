@@ -82,8 +82,12 @@ const handler = async (req: Request): Promise<Response> => {
         // Check reservation payment (rezerwacyjna)
         if (payments.rezerwacyjna?.termin) {
           const paymentDate = new Date(payments.rezerwacyjna.termin).toISOString().split('T')[0];
+          console.log(`Contract ${contract.contract_number}: rezerwacyjna termin=${payments.rezerwacyjna.termin}, paymentDate=${paymentDate}, testMode=${!!testContractId}`);
+          
           // In test mode, send notification regardless of date; in production, check if date matches
           if (testContractId || paymentDate === targetDateStr) {
+            console.log(`Sending webhook for reservation payment - contract ${contract.contract_number}`);
+            
             const webhookResponse = await fetch(webhookUrl, {
               method: 'POST',
               headers: {
@@ -105,10 +109,17 @@ const handler = async (req: Request): Promise<Response> => {
               }),
             });
 
+            console.log(`Webhook response status: ${webhookResponse.status}, ok: ${webhookResponse.ok}`);
+            
             if (webhookResponse.ok) {
               console.log(`Payment reminder sent for reservation payment - contract ${contract.contract_number}`);
               notificationsSent++;
+            } else {
+              const errorText = await webhookResponse.text();
+              console.error(`Webhook failed with status ${webhookResponse.status}: ${errorText}`);
             }
+          } else {
+            console.log(`Skipping contract ${contract.contract_number} - date mismatch`);
           }
         }
 
