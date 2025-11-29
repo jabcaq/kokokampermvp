@@ -1286,15 +1286,21 @@ const TestNotifications = () => {
 
     setIsSendingFinalInvoice(true);
     try {
-      const response = await supabase.functions.invoke('check-final-invoice-due');
+      const response = await supabase.functions.invoke('check-final-invoice-due', {
+        body: {
+          contract_id: selectedContractFinalInvoice,
+        }
+      });
 
       if (response.error) {
         throw new Error(response.error.message || 'Failed to check final invoices');
       }
 
+      const contract = contracts?.find(c => c.id === selectedContractFinalInvoice);
+
       toast({
         title: "Sukces",
-        description: "Sprawdzono faktury końcowe - powiadomienia wysłane",
+        description: `Sprawdzono fakturę końcową dla umowy ${contract?.contract_number} - webhook wysłany`,
       });
     } catch (error: any) {
       console.error('Error:', error);
