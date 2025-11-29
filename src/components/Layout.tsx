@@ -38,7 +38,7 @@ export const Layout = () => {
   const { data: userRoles } = useQuery({
     queryKey: ["user_roles", user?.id],
     queryFn: async () => {
-      if (!user?.id) return { isAdmin: false, isReturnHandler: false };
+      if (!user?.id) return { isAdmin: false, isReturnHandler: false, isAccounting: false };
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
@@ -50,6 +50,7 @@ export const Layout = () => {
       return {
         isAdmin: roles.includes("admin") || roles.includes("admin_return_handler"),
         isReturnHandler: roles.includes("return_handler") || roles.includes("admin_return_handler"),
+        isAccounting: roles.includes("accounting"),
       };
     },
     enabled: !!user?.id,
@@ -68,6 +69,11 @@ export const Layout = () => {
 
   // Filter nav items based on user role
   const filteredNavItems = navItems.filter(item => {
+    // If user is accounting, show only Contracts
+    if (userRoles?.isAccounting) {
+      return item.path === "/contracts";
+    }
+    // For other roles, filter admin-only items
     if (item.adminOnly) {
       return userRoles?.isAdmin;
     }

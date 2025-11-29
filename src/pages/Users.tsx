@@ -171,6 +171,7 @@ const Users = () => {
                         <SelectItem value="admin">Administrator</SelectItem>
                         <SelectItem value="return_handler">Pracownik obsługi zwrotów</SelectItem>
                         <SelectItem value="admin_return_handler">Administrator i Pracownik zwrotów</SelectItem>
+                        <SelectItem value="accounting">Księgowość</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -232,6 +233,7 @@ const Users = () => {
                         <SelectItem value="admin">Administrator</SelectItem>
                         <SelectItem value="return_handler">Pracownik obsługi zwrotów</SelectItem>
                         <SelectItem value="admin_return_handler">Administrator i Pracownik zwrotów</SelectItem>
+                        <SelectItem value="accounting">Księgowość</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -278,6 +280,8 @@ const Users = () => {
                         ? "Pracownik zwrotów" 
                         : user.role === "admin_return_handler"
                         ? "Administrator i Pracownik zwrotów"
+                        : user.role === "accounting"
+                        ? "Księgowość"
                         : "Użytkownik"}
                     </Badge>
                   </TableCell>

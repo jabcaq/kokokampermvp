@@ -195,6 +195,18 @@ const AccountingUpload = () => {
                 <p className="text-sm text-muted-foreground">{invoice.notes}</p>
               </div>
             )}
+            
+            <div className="pt-2 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`/contracts/${invoice.contract_id}`, '_blank')}
+                className="w-full"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Zobacz pełną umowę
+              </Button>
+            </div>
           </div>
 
           {invoice.invoice_file_url ? (
