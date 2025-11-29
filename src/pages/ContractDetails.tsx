@@ -57,6 +57,34 @@ const ContractDetails = () => {
   const { data: handovers } = useVehicleHandovers(id);
   const { data: returns } = useVehicleReturns(id);
   
+  // Check if user has accounting role
+  const { data: userRoles } = useQuery({
+    queryKey: ["user_roles_accounting"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { isAccounting: false };
+      
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+      
+      if (error) throw error;
+      
+      const roles = data?.map(r => r.role) || [];
+      return {
+        isAccounting: roles.includes("accounting"),
+      };
+    },
+  });
+  
+  // Set default tab to invoices for accounting role
+  useEffect(() => {
+    if (userRoles?.isAccounting) {
+      setActiveTab("invoices");
+    }
+  }, [userRoles]);
+  
   // Fetch scheduled return booking (not completed)
   const { data: scheduledReturn } = useQuery({
     queryKey: ["scheduled_return", id],
@@ -553,76 +581,93 @@ const ContractDetails = () => {
           <p className="text-muted-foreground mt-2">Szczegóły umowy najmu</p>
         </div>
         <div className="flex gap-2">
-          {!isEditing ? (
-            <Button onClick={handleEdit} className="gap-2">
-              <Edit2 className="h-4 w-4" />
-              Edytuj umowę
-            </Button>
-          ) : (
+          {!userRoles?.isAccounting && (
             <>
-              <Button variant="outline" onClick={handleCancel} className="gap-2">
-                <X className="h-4 w-4" />
-                Anuluj
-              </Button>
-              <Button onClick={handleSave} className="gap-2">
-                <Save className="h-4 w-4" />
-                Zapisz zmiany
-              </Button>
+              {!isEditing ? (
+                <Button onClick={handleEdit} className="gap-2">
+                  <Edit2 className="h-4 w-4" />
+                  Edytuj umowę
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={handleCancel} className="gap-2">
+                    <X className="h-4 w-4" />
+                    Anuluj
+                  </Button>
+                  <Button onClick={handleSave} className="gap-2">
+                    <Save className="h-4 w-4" />
+                    Zapisz zmiany
+                  </Button>
+                </>
+              )}
             </>
           )}
         </div>
       </div>
 
-      {/* Action Panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-        <ContractActionsPanel 
-          contractId={contract.id}
-          contractNumber={contract.contract_number}
-          clientEmail={contract.tenant_email}
-        />
-        <AccountingPanel 
-          contractId={contract.id}
-          contractNumber={contract.contract_number}
-          payments={contract.payments}
-          tenantName={contract.tenant_name}
-          depositReceived={contract.deposit_received}
-          tenantNip={contract.tenant_nip}
-        />
-      </div>
+      {/* Action Panels - Hidden for accounting role */}
+      {!userRoles?.isAccounting && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
+          <ContractActionsPanel 
+            contractId={contract.id}
+            contractNumber={contract.contract_number}
+            clientEmail={contract.tenant_email}
+          />
+          <AccountingPanel 
+            contractId={contract.id}
+            contractNumber={contract.contract_number}
+            payments={contract.payments}
+            tenantName={contract.tenant_name}
+            depositReceived={contract.deposit_received}
+            tenantNip={contract.tenant_nip}
+          />
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className={`grid w-full mb-8 ${contract.inquiry_id ? 'grid-cols-7' : 'grid-cols-6'}`}>
-          <TabsTrigger value="contract" className="gap-2">
-            <FileText className="h-4 w-4" />
-            Umowa
-          </TabsTrigger>
-          <TabsTrigger value="documents" className="gap-2">
-            <FolderOpen className="h-4 w-4" />
-            Dokumenty
-          </TabsTrigger>
-          <TabsTrigger value="drivers" className="gap-2">
-            <Users className="h-4 w-4" />
-            Kierowcy
-          </TabsTrigger>
-          <TabsTrigger value="invoices" className="gap-2">
-            <CreditCard className="h-4 w-4" />
-            {displayData?.invoice_type === 'invoice' ? 'Faktury' : 'Paragony'}
-          </TabsTrigger>
-          <TabsTrigger value="handover" className="gap-2">
-            <Truck className="h-4 w-4" />
-            Wydanie
-          </TabsTrigger>
-          <TabsTrigger value="return" className="gap-2">
-            <Package className="h-4 w-4" />
-            Zdanie
-          </TabsTrigger>
-          {contract.inquiry_id && (
-            <TabsTrigger value="conversation" className="gap-2">
-              <MessageCircle className="h-4 w-4" />
-              Konwersacja
+        {userRoles?.isAccounting ? (
+          // Accounting role sees only Invoices tab
+          <TabsList className="grid w-full mb-8 grid-cols-1">
+            <TabsTrigger value="invoices" className="gap-2">
+              <CreditCard className="h-4 w-4" />
+              {displayData?.invoice_type === 'invoice' ? 'Faktury' : 'Paragony'}
             </TabsTrigger>
-          )}
-        </TabsList>
+          </TabsList>
+        ) : (
+          // Other roles see all tabs
+          <TabsList className={`grid w-full mb-8 ${contract.inquiry_id ? 'grid-cols-7' : 'grid-cols-6'}`}>
+            <TabsTrigger value="contract" className="gap-2">
+              <FileText className="h-4 w-4" />
+              Umowa
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="gap-2">
+              <FolderOpen className="h-4 w-4" />
+              Dokumenty
+            </TabsTrigger>
+            <TabsTrigger value="drivers" className="gap-2">
+              <Users className="h-4 w-4" />
+              Kierowcy
+            </TabsTrigger>
+            <TabsTrigger value="invoices" className="gap-2">
+              <CreditCard className="h-4 w-4" />
+              {displayData?.invoice_type === 'invoice' ? 'Faktury' : 'Paragony'}
+            </TabsTrigger>
+            <TabsTrigger value="handover" className="gap-2">
+              <Truck className="h-4 w-4" />
+              Wydanie
+            </TabsTrigger>
+            <TabsTrigger value="return" className="gap-2">
+              <Package className="h-4 w-4" />
+              Zdanie
+            </TabsTrigger>
+            {contract.inquiry_id && (
+              <TabsTrigger value="conversation" className="gap-2">
+                <MessageCircle className="h-4 w-4" />
+                Konwersacja
+              </TabsTrigger>
+            )}
+          </TabsList>
+        )}
 
         <TabsContent value="contract" className="space-y-8">
 

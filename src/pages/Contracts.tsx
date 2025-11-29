@@ -50,6 +50,7 @@ const Contracts = () => {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAccounting, setIsAccounting] = useState(false);
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
   const [vehicleSearchOpen, setVehicleSearchOpen] = useState(false);
   const [generatedContractNumber, setGeneratedContractNumber] = useState<string>("");
@@ -92,10 +93,11 @@ const Contracts = () => {
         const { data } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
-        setIsAdmin(!!data);
+          .eq('user_id', user.id);
+        
+        const roles = data?.map(r => r.role) || [];
+        setIsAdmin(roles.includes('admin'));
+        setIsAccounting(roles.includes('accounting'));
       }
     };
     checkAdminStatus();
@@ -470,13 +472,14 @@ const Contracts = () => {
               {showArchived ? "Pokaż aktywne" : "Pokaż zarchiwizowane"}
             </Button>
           )}
-          <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 shadow-md">
-                <Plus className="h-4 w-4" />
-                Nowa umowa
-              </Button>
-            </DialogTrigger>
+          {!isAccounting && (
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+              <DialogTrigger asChild>
+                <Button className="gap-2 shadow-md">
+                  <Plus className="h-4 w-4" />
+                  Nowa umowa
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
               <DialogTitle>Nowa umowa</DialogTitle>
@@ -1014,6 +1017,7 @@ const Contracts = () => {
             </form>
           </DialogContent>
         </Dialog>
+          )}
         </div>
       </div>
 
@@ -1112,14 +1116,16 @@ const Contracts = () => {
                           <Eye className="h-4 w-4" />
                         </Button>
                       </Link>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="shrink-0"
-                        onClick={() => setDeleteContractId(contract.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {!isAccounting && (
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="shrink-0"
+                          onClick={() => setDeleteContractId(contract.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
