@@ -13,6 +13,7 @@ interface Contract {
   tenant_email: string;
   end_date: string;
   value: number;
+  is_full_payment_as_reservation: boolean;
 }
 
 interface ContractInvoice {
@@ -44,7 +45,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Fetch the specific contract for testing
       const { data: contract, error } = await supabase
         .from('contracts')
-        .select('id, contract_number, tenant_name, tenant_email, end_date, value')
+        .select('id, contract_number, tenant_name, tenant_email, end_date, value, is_full_payment_as_reservation')
         .eq('id', testContractId)
         .eq('is_archived', false)
         .single();
@@ -63,7 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Fetch contracts ending today
       const { data: fetchedContracts, error } = await supabase
         .from('contracts')
-        .select('id, contract_number, tenant_name, tenant_email, end_date, value')
+        .select('id, contract_number, tenant_name, tenant_email, end_date, value, is_full_payment_as_reservation')
         .eq('is_archived', false)
         .eq('status', 'active')
         .gte('end_date', `${today}T00:00:00`)
@@ -123,6 +124,13 @@ const handler = async (req: Request): Promise<Response> => {
         }));
 
         const totalAdvanceAmount = advanceInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+        const finalInvoiceAmount = (contract.value || 0) - totalAdvanceAmount;
+
+        // Skip if no final invoice is needed
+        if (finalInvoiceAmount <= 0) {
+          console.log(`Skipping contract ${contract.contract_number} - no final invoice needed (amount: ${finalInvoiceAmount})`);
+          continue;
+        }
 
         const webhookResponse = await fetch(webhookUrl, {
           method: 'POST',
@@ -139,7 +147,8 @@ const handler = async (req: Request): Promise<Response> => {
             invoice_upload_link: `/contracts/${contract.id}`,
             advance_invoices: advanceInvoices,
             total_advance_amount: totalAdvanceAmount,
-            final_invoice_amount: (contract.value || 0) - totalAdvanceAmount,
+            final_invoice_amount: finalInvoiceAmount,
+            is_full_payment_as_reservation: contract.is_full_payment_as_reservation || false,
             timestamp: new Date().toISOString(),
           }),
         });
