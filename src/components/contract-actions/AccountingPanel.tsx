@@ -252,14 +252,14 @@ export const AccountingPanel = ({
       description: "Link dla księgowości został skopiowany do schowka"
     });
   };
-  return <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-300">
+  return <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 h-full">
       <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-b">
-        <CardTitle className="text-lg">Panel księgowości</CardTitle>
-        <CardDescription className="text-xs">Nr umowy: {contractNumber}</CardDescription>
+        <CardTitle className="text-lg font-semibold">Panel księgowości</CardTitle>
+        <CardDescription className="text-xs text-muted-foreground">Nr umowy: {contractNumber}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 pt-6">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/30 to-muted/50 rounded-xl border border-border/50 hover:border-border transition-colors duration-200">
+      <CardContent className="space-y-4 pt-6 flex flex-col h-[calc(100%-5rem)]">
+        <div className="space-y-2 flex-1">
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/30 to-muted/50 rounded-xl border border-border/50 hover:border-border transition-all duration-200 hover:shadow-sm">{/* Deposit status */}
             <div className="flex items-center space-x-3">
               <Checkbox 
                 id="deposit-received" 
@@ -296,7 +296,7 @@ export const AccountingPanel = ({
           <DialogTrigger asChild>
             <Button 
               size="sm" 
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all duration-200 mt-auto"
             >
               <Send className="h-4 w-4 mr-2" />
               Wyślij do księgowości

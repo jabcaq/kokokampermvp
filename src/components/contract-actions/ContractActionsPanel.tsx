@@ -349,17 +349,17 @@ export const ContractActionsPanel = ({
 
   return (
     <>
-      <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 h-full">
         <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border-b">
-          <CardTitle className="text-lg">Akcje umowy</CardTitle>
-          <CardDescription className="text-xs">Nr umowy: {contractNumber}</CardDescription>
+          <CardTitle className="text-lg font-semibold">Akcje umowy</CardTitle>
+          <CardDescription className="text-xs text-muted-foreground">Nr umowy: {contractNumber}</CardDescription>
         </CardHeader>
-        <CardContent className="pt-6 space-y-6">
+        <CardContent className="pt-6 space-y-6 flex flex-col h-[calc(100%-5rem)]">
           {/* Checklist */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Lista zadań</h3>
+          <div className="space-y-3 flex-1">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">Lista zadań</h3>
             <TooltipProvider>
-              <div className="space-y-2">
+              <div className="space-y-2.5">{/* Formularz dla kierowców */}
                 {/* Formularz dla kierowców */}
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -464,58 +464,59 @@ export const ContractActionsPanel = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2 justify-between pt-4 border-t">
-            {/* Generuj umowę */}
-            <Button 
-              onClick={handleGenerateContract}
-              disabled={upsertDocument.isPending}
-              size="sm"
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              <span className="whitespace-nowrap">Generuj umowę</span>
-            </Button>
+          <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t mt-auto">
+            {/* Row 1: Main actions */}
+            <div className="flex gap-2 flex-1">
+              <Button 
+                onClick={handleGenerateContract}
+                disabled={upsertDocument.isPending}
+                size="sm"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                <span className="whitespace-nowrap text-xs sm:text-sm">Generuj</span>
+              </Button>
 
-            {/* Wyślij do klienta */}
-            <Button 
-              onClick={handleSendToClient}
-              disabled={upsertDocument.isPending || !clientEmail}
-              size="sm"
-              className="flex-1 bg-background hover:bg-muted border-2 border-input hover:border-primary/50 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
-            >
-              <Send className="h-4 w-4 mr-2 text-foreground" />
-              <span className="whitespace-nowrap text-foreground">Wyślij do klienta</span>
-            </Button>
+              <Button 
+                onClick={handleSendToClient}
+                disabled={upsertDocument.isPending || !clientEmail}
+                size="sm"
+                className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                <span className="whitespace-nowrap text-xs sm:text-sm">Wyślij</span>
+              </Button>
+            </div>
 
-            {/* Formularz kierowcy PL */}
-            <Button 
-              onClick={handleCopyDriverForm}
-              size="sm"
-              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              <span className="whitespace-nowrap">Formularz PL</span>
-            </Button>
+            {/* Row 2: Forms */}
+            <div className="flex gap-2 flex-1">
+              <Button 
+                onClick={handleCopyDriverForm}
+                size="sm"
+                className="flex-1 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                <span className="whitespace-nowrap text-xs sm:text-sm">PL</span>
+              </Button>
 
-            {/* Formularz kierowcy EN */}
-            <Button 
-              onClick={handleCopyDriverFormEN}
-              size="sm"
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              <span className="whitespace-nowrap">Formularz EN</span>
-            </Button>
+              <Button 
+                onClick={handleCopyDriverFormEN}
+                size="sm"
+                className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                <span className="whitespace-nowrap text-xs sm:text-sm">EN</span>
+              </Button>
 
-            {/* Wyślij do weryfikacji */}
-            <Button 
-              onClick={handleSendVerification}
-              size="sm"
-              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              <span className="whitespace-nowrap">Wyślij do weryfikacji</span>
-            </Button>
+              <Button 
+                onClick={handleSendVerification}
+                size="sm"
+                className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                <span className="whitespace-nowrap text-xs sm:text-sm">Weryfikacja</span>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
