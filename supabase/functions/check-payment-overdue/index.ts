@@ -63,9 +63,10 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         const payments = contract.payments || {};
         
-        // Check reservation payment (zaliczka) - overdue
-        if (payments.zaliczka?.termin) {
-          const paymentDate = new Date(payments.zaliczka.termin).toISOString().split('T')[0];
+        // Check reservation payment (rezerwacyjna) - overdue - check both 'termin' and 'data' fields
+        const rezerwacyjnaDueDate = payments.rezerwacyjna?.termin || payments.rezerwacyjna?.data;
+        if (rezerwacyjnaDueDate) {
+          const paymentDate = new Date(rezerwacyjnaDueDate).toISOString().split('T')[0];
           if (paymentDate < today) {
             const daysOverdue = Math.floor((new Date(today).getTime() - new Date(paymentDate).getTime()) / (1000 * 60 * 60 * 24));
             
@@ -81,8 +82,8 @@ const handler = async (req: Request): Promise<Response> => {
                 tenant_email: contract.tenant_email,
                 payment_type: 'reservation',
                 payment_type_pl: 'Opłata rezerwacyjna',
-                payment_amount: payments.zaliczka.wysokosc || 0,
-                payment_due_date: payments.zaliczka.termin,
+                payment_amount: payments.rezerwacyjna.wysokosc || 0,
+                payment_due_date: rezerwacyjnaDueDate,
                 contract_link: `/contracts/${contract.id}`,
                 days_overdue: daysOverdue,
                 timestamp: new Date().toISOString(),
@@ -96,9 +97,10 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
 
-        // Check main payment (zasadnicza) - overdue
-        if (payments.zasadnicza?.termin) {
-          const paymentDate = new Date(payments.zasadnicza.termin).toISOString().split('T')[0];
+        // Check main payment (zasadnicza) - overdue - check both 'termin' and 'data' fields
+        const zasadniczaDueDate = payments.zasadnicza?.termin || payments.zasadnicza?.data;
+        if (zasadniczaDueDate) {
+          const paymentDate = new Date(zasadniczaDueDate).toISOString().split('T')[0];
           if (paymentDate < today) {
             const daysOverdue = Math.floor((new Date(today).getTime() - new Date(paymentDate).getTime()) / (1000 * 60 * 60 * 24));
             
@@ -115,7 +117,7 @@ const handler = async (req: Request): Promise<Response> => {
                 payment_type: 'main_payment',
                 payment_type_pl: 'Płatność zasadnicza',
                 payment_amount: payments.zasadnicza.wysokosc || 0,
-                payment_due_date: payments.zasadnicza.termin,
+                payment_due_date: zasadniczaDueDate,
                 contract_link: `/contracts/${contract.id}`,
                 days_overdue: daysOverdue,
                 timestamp: new Date().toISOString(),
