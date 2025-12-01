@@ -144,24 +144,33 @@ const Contracts = () => {
         const prefix = selectedVehicle.type === "Kamper" ? "K" : "P";
         const currentYear = new Date().getFullYear();
         
-        // Find the last contract number for this vehicle type
-        const { data: lastContract } = await supabase
+        // Pobierz wszystkie umowy dla tego typu w tym roku (nowy i stary format)
+        const { data: existingContracts } = await supabase
           .from('contracts')
           .select('contract_number')
-          .like('contract_number', `${prefix}/%/${currentYear}`)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .or(`contract_number.like.${prefix}/%/${currentYear},contract_number.like.%/${currentYear}/${prefix}`)
+          .order('created_at', { ascending: false });
         
         let nextNumber = 1;
-        if (lastContract?.contract_number) {
-          const parts = lastContract.contract_number.split('/');
-          if (parts.length === 3) {
-            nextNumber = parseInt(parts[1]) + 1;
+        if (existingContracts && existingContracts.length > 0) {
+          // Parsuj numery z obu formatów i znajdź najwyższy
+          const numbers = existingContracts
+            .map(c => {
+              const parts = c.contract_number.split('/');
+              if (parts.length === 3) {
+                // Stary format: K/14/2025 lub nowy format: 14/2025/K
+                return parseInt(parts[0] === prefix ? parts[1] : parts[0]);
+              }
+              return 0;
+            })
+            .filter(n => !isNaN(n));
+          
+          if (numbers.length > 0) {
+            nextNumber = Math.max(...numbers) + 1;
           }
         }
         
-        const newContractNumber = `${prefix}/${nextNumber}/${currentYear}`;
+        const newContractNumber = `${nextNumber}/${currentYear}/${prefix}`;
         setGeneratedContractNumber(newContractNumber);
       }
     }
@@ -182,24 +191,33 @@ const Contracts = () => {
       const prefix = selectedVehicle.type === "Kamper" ? "K" : "P";
       const currentYear = new Date().getFullYear();
       
-      // Find the last contract number for this vehicle type
-      const { data: lastContract } = await supabase
+      // Pobierz wszystkie umowy dla tego typu w tym roku (nowy i stary format)
+      const { data: existingContracts } = await supabase
         .from('contracts')
         .select('contract_number')
-        .like('contract_number', `${prefix}/%/${currentYear}`)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .or(`contract_number.like.${prefix}/%/${currentYear},contract_number.like.%/${currentYear}/${prefix}`)
+        .order('created_at', { ascending: false });
       
       let nextNumber = 1;
-      if (lastContract?.contract_number) {
-        const parts = lastContract.contract_number.split('/');
-        if (parts.length === 3) {
-          nextNumber = parseInt(parts[1]) + 1;
+      if (existingContracts && existingContracts.length > 0) {
+        // Parsuj numery z obu formatów i znajdź najwyższy
+        const numbers = existingContracts
+          .map(c => {
+            const parts = c.contract_number.split('/');
+            if (parts.length === 3) {
+              // Stary format: K/14/2025 lub nowy format: 14/2025/K
+              return parseInt(parts[0] === prefix ? parts[1] : parts[0]);
+            }
+            return 0;
+          })
+          .filter(n => !isNaN(n));
+        
+        if (numbers.length > 0) {
+          nextNumber = Math.max(...numbers) + 1;
         }
       }
       
-      finalContractNumber = `${prefix}/${nextNumber}/${currentYear}`;
+      finalContractNumber = `${nextNumber}/${currentYear}/${prefix}`;
     }
     
     // Calculate payment amounts
