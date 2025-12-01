@@ -217,21 +217,21 @@ export const CreateContractFromInquiryDialog = ({
       // Create payments object - all dates in Warsaw timezone
       const payments = {
         rezerwacyjna: {
-          wysokosc: reservationAmount.toFixed(2),
-          termin: reservationDate.toISOString().split('T')[0],
-          rachunek: "72 1140 2004 0000 3702 8191 5344"
+          wysokosc: parseFloat(reservationAmount.toFixed(2)),
+          data: reservationDate.toISOString().split('T')[0],
+          rachunek: "34 1140 2004 0000 3802 8192 4912"
         },
         ...(isFullPaymentAsReservation ? {} : {
           zasadnicza: {
-            wysokosc: mainPaymentAmount.toFixed(2),
-            termin: mainPaymentDate.toISOString().split('T')[0],
-            rachunek: "72 1140 2004 0000 3702 8191 5344"
+            wysokosc: parseFloat(mainPaymentAmount.toFixed(2)),
+            data: mainPaymentDate.toISOString().split('T')[0],
+            rachunek: "34 1140 2004 0000 3802 8192 4912"
           }
         }),
         kaucja: {
-          wysokosc: finalDepositAmount.toFixed(2),
-          termin: startDate.split('T')[0],
-          rachunek: "72 1140 2004 0000 3702 8191 5344"
+          wysokosc: finalDepositAmount,
+          data: startDate.split('T')[0],
+          rachunek: "34 1140 2004 0000 3802 8192 4912"
         }
       };
 
