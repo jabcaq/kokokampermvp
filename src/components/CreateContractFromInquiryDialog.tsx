@@ -147,24 +147,33 @@ export const CreateContractFromInquiryDialog = ({
       
       const year = new Date().getFullYear();
       
-      // Pobierz ostatni numer dla tego typu w tym roku
+      // Pobierz wszystkie umowy dla tego typu w tym roku (nowy i stary format)
       const { data: existingContracts } = await supabase
         .from('contracts')
         .select('contract_number')
-        .like('contract_number', `${typePrefix}/%/${year}`)
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .or(`contract_number.like.${typePrefix}/%/${year},contract_number.like.%/${year}/${typePrefix}`)
+        .order('created_at', { ascending: false });
 
       let nextNumber = 1;
       if (existingContracts && existingContracts.length > 0) {
-        const lastNumber = existingContracts[0].contract_number;
-        const parts = lastNumber.split('/');
-        if (parts.length === 3) {
-          nextNumber = parseInt(parts[1]) + 1;
+        // Parsuj numery z obu formatów i znajdź najwyższy
+        const numbers = existingContracts
+          .map(c => {
+            const parts = c.contract_number.split('/');
+            if (parts.length === 3) {
+              // Stary format: K/14/2025 lub nowy format: 14/2025/K
+              return parseInt(parts[0] === typePrefix ? parts[1] : parts[0]);
+            }
+            return 0;
+          })
+          .filter(n => !isNaN(n));
+        
+        if (numbers.length > 0) {
+          nextNumber = Math.max(...numbers) + 1;
         }
       }
 
-      const contractNumber = `${typePrefix}/${nextNumber}/${year}`;
+      const contractNumber = `${nextNumber}/${year}/${typePrefix}`;
 
       // Konwertuj datetime-local (Warsaw time) do UTC ISO string
       const parseWarsawToUTC = (dateTimeLocal: string) => {
