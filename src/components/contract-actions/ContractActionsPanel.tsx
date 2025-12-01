@@ -464,18 +464,16 @@ export const ContractActionsPanel = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap gap-3 justify-center pt-4 border-t">
+          <div className="flex gap-2 justify-between pt-4 border-t">
             {/* Generuj umowę */}
             <Button 
               onClick={handleGenerateContract}
               disabled={upsertDocument.isPending}
               size="sm"
-              className="group relative bg-blue-600 hover:bg-blue-700 text-white overflow-hidden transition-all duration-300 ease-in-out w-12 hover:w-auto px-3 hover:px-4 shadow-md hover:shadow-lg"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
             >
-              <FileText className="h-4 w-4 flex-shrink-0" />
-              <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap">
-                Generuj umowę
-              </span>
+              <FileText className="h-4 w-4 mr-2" />
+              <span className="whitespace-nowrap">Generuj umowę</span>
             </Button>
 
             {/* Wyślij do klienta */}
@@ -483,48 +481,40 @@ export const ContractActionsPanel = ({
               onClick={handleSendToClient}
               disabled={upsertDocument.isPending || !clientEmail}
               size="sm"
-              className="group relative bg-background hover:bg-muted border-2 border-input hover:border-primary/50 overflow-hidden transition-all duration-300 ease-in-out w-12 hover:w-auto px-3 hover:px-4 shadow-md hover:shadow-lg"
+              className="flex-1 bg-background hover:bg-muted border-2 border-input hover:border-primary/50 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
             >
-              <Send className="h-4 w-4 flex-shrink-0 text-foreground" />
-              <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap text-foreground">
-                Wyślij do klienta
-              </span>
+              <Send className="h-4 w-4 mr-2 text-foreground" />
+              <span className="whitespace-nowrap text-foreground">Wyślij do klienta</span>
             </Button>
 
             {/* Formularz kierowcy PL */}
             <Button 
               onClick={handleCopyDriverForm}
               size="sm"
-              className="group relative bg-purple-600 hover:bg-purple-700 text-white overflow-hidden transition-all duration-300 ease-in-out w-12 hover:w-auto px-3 hover:px-4 shadow-md hover:shadow-lg"
+              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
             >
-              <UserPlus className="h-4 w-4 flex-shrink-0" />
-              <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap">
-                Formularz PL
-              </span>
+              <UserPlus className="h-4 w-4 mr-2" />
+              <span className="whitespace-nowrap">Formularz PL</span>
             </Button>
 
             {/* Formularz kierowcy EN */}
             <Button 
               onClick={handleCopyDriverFormEN}
               size="sm"
-              className="group relative bg-blue-600 hover:bg-blue-700 text-white overflow-hidden transition-all duration-300 ease-in-out w-12 hover:w-auto px-3 hover:px-4 shadow-md hover:shadow-lg"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
             >
-              <UserPlus className="h-4 w-4 flex-shrink-0" />
-              <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap">
-                Formularz EN
-              </span>
+              <UserPlus className="h-4 w-4 mr-2" />
+              <span className="whitespace-nowrap">Formularz EN</span>
             </Button>
 
             {/* Wyślij do weryfikacji */}
             <Button 
               onClick={handleSendVerification}
               size="sm"
-              className="group relative bg-orange-500 hover:bg-orange-600 text-white overflow-hidden transition-all duration-300 ease-in-out w-12 hover:w-auto px-3 hover:px-4 shadow-md hover:shadow-lg"
+              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
             >
-              <CheckCircle className="h-4 w-4 flex-shrink-0" />
-              <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-300 ease-in-out group-hover:ml-2 whitespace-nowrap">
-                Wyślij do weryfikacji
-              </span>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              <span className="whitespace-nowrap">Wyślij do weryfikacji</span>
             </Button>
           </div>
         </CardContent>
