@@ -359,15 +359,26 @@ export const ContractActionsPanel = ({
   const getProformaAmount = (type: ProformaPaymentType): number => {
     if (!contract?.payments) return 0;
     const payments = contract.payments as any;
+    
+    const parseAmount = (value: any): number => {
+      if (value === null || value === undefined) return 0;
+      if (typeof value === 'number') return value;
+      if (typeof value === 'string') {
+        const numericValue = value.replace(/[^\d.]/g, '');
+        return parseFloat(numericValue) || 0;
+      }
+      return 0;
+    };
+
     switch (type) {
       case 'reservation':
-        return parseFloat(payments.rezerwacyjna?.wysokosc?.replace(/[^\d.]/g, '') || '0');
+        return parseAmount(payments.rezerwacyjna?.wysokosc);
       case 'main_payment':
-        return parseFloat(payments.zasadnicza?.wysokosc?.replace(/[^\d.]/g, '') || '0');
+        return parseAmount(payments.zasadnicza?.wysokosc);
       case 'deposit':
-        return parseFloat(payments.kaucja?.wysokosc?.replace(/[^\d.]/g, '') || '0');
+        return parseAmount(payments.kaucja?.wysokosc);
       case 'final':
-        return parseFloat(payments.kaucja?.wysokosc?.replace(/[^\d.]/g, '') || '0');
+        return parseAmount(payments.kaucja?.wysokosc);
       default:
         return 0;
     }
