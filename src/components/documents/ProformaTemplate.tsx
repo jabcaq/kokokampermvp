@@ -161,7 +161,6 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: '#666',
     textAlign: 'center',
-    fontStyle: 'italic',
   },
 });
 
