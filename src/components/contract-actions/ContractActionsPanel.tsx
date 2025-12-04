@@ -2,11 +2,15 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { FileText, Send, CheckCircle, UserPlus, Check } from "lucide-react";
+import { FileText, Send, CheckCircle, UserPlus, Check, Receipt, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useUpsertContractDocument } from "@/hooks/useContractDocuments";
 import { useContract } from "@/hooks/useContracts";
+import { downloadProforma, ProformaPaymentType } from "@/services/proformaService";
+import { PROFORMA_PAYMENT_LABELS } from "@/config/companyData";
 
 import { toZonedTime } from "date-fns-tz";
 import { format } from "date-fns";
@@ -50,6 +54,11 @@ export const ContractActionsPanel = ({
     generated: false,
     sent: false,
   });
+
+  // Proforma dialog state
+  const [proformaDialogOpen, setProformaDialogOpen] = useState(false);
+  const [selectedProformaType, setSelectedProformaType] = useState<ProformaPaymentType>('reservation');
+  const [isGeneratingProforma, setIsGeneratingProforma] = useState(false);
 
   // Update checklist based on contract documents
   useEffect(() => {
@@ -347,6 +356,78 @@ export const ContractActionsPanel = ({
     }
   };
 
+  const getProformaAmount = (type: ProformaPaymentType): number => {
+    if (!contract?.payments) return 0;
+    const payments = contract.payments as any;
+    switch (type) {
+      case 'reservation':
+        return parseFloat(payments.rezerwacyjna?.wysokosc?.replace(/[^\d.]/g, '') || '0');
+      case 'main_payment':
+        return parseFloat(payments.zasadnicza?.wysokosc?.replace(/[^\d.]/g, '') || '0');
+      case 'deposit':
+        return parseFloat(payments.kaucja?.wysokosc?.replace(/[^\d.]/g, '') || '0');
+      case 'final':
+        return parseFloat(payments.kaucja?.wysokosc?.replace(/[^\d.]/g, '') || '0');
+      default:
+        return 0;
+    }
+  };
+
+  const handleGenerateProforma = async () => {
+    if (!contract) {
+      toast({
+        title: "Błąd",
+        description: "Nie znaleziono danych umowy",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const amount = getProformaAmount(selectedProformaType);
+    if (amount <= 0) {
+      toast({
+        title: "Błąd",
+        description: "Brak kwoty dla wybranego typu płatności",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingProforma(true);
+    try {
+      await downloadProforma({
+        contractNumber: contract.contract_number,
+        contractId: contract.id,
+        paymentType: selectedProformaType,
+        amount,
+        vehicleModel: contract.vehicle_model,
+        startDate: contract.start_date,
+        endDate: contract.end_date,
+        client: {
+          name: contract.tenant_company_name || contract.tenant_name || 'Klient',
+          address: contract.tenant_address || undefined,
+          nip: contract.tenant_nip || undefined,
+          email: contract.tenant_email || undefined,
+        },
+      });
+
+      toast({
+        title: "Sukces",
+        description: "Proforma została wygenerowana i pobrana",
+      });
+      setProformaDialogOpen(false);
+    } catch (error) {
+      console.error('Error generating proforma:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie udało się wygenerować proformy",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingProforma(false);
+    }
+  };
+
   return (
     <>
       <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 h-full">
@@ -517,10 +598,80 @@ export const ContractActionsPanel = ({
                 <span className="whitespace-nowrap text-xs sm:text-sm">Weryfikacja</span>
               </Button>
             </div>
+
+            {/* Row 3: Proforma */}
+            <div className="flex gap-2 flex-1">
+              <Button 
+                onClick={() => setProformaDialogOpen(true)}
+                size="sm"
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                <Receipt className="h-4 w-4 mr-2" />
+                <span className="whitespace-nowrap text-xs sm:text-sm">Proforma</span>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Proforma Dialog */}
+      <Dialog open={proformaDialogOpen} onOpenChange={setProformaDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Generuj Proformę</DialogTitle>
+            <DialogDescription>
+              Wybierz typ płatności dla proformy
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <RadioGroup
+              value={selectedProformaType}
+              onValueChange={(value) => setSelectedProformaType(value as ProformaPaymentType)}
+              className="space-y-3"
+            >
+              {(['reservation', 'main_payment', 'deposit'] as ProformaPaymentType[]).map((type) => {
+                const amount = getProformaAmount(type);
+                const isDisabled = amount <= 0;
+                return (
+                  <div key={type} className={`flex items-center space-x-3 p-3 rounded-lg border ${isDisabled ? 'opacity-50' : 'hover:bg-muted/50'}`}>
+                    <RadioGroupItem value={type} id={type} disabled={isDisabled} />
+                    <Label htmlFor={type} className={`flex-1 cursor-pointer ${isDisabled ? 'cursor-not-allowed' : ''}`}>
+                      <div className="flex justify-between items-center">
+                        <span>{PROFORMA_PAYMENT_LABELS[type]}</span>
+                        <span className="font-semibold">
+                          {amount > 0 ? `${amount.toFixed(2)} PLN` : 'Brak kwoty'}
+                        </span>
+                      </div>
+                    </Label>
+                  </div>
+                );
+              })}
+            </RadioGroup>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setProformaDialogOpen(false)}>
+              Anuluj
+            </Button>
+            <Button 
+              onClick={handleGenerateProforma}
+              disabled={isGeneratingProforma || getProformaAmount(selectedProformaType) <= 0}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {isGeneratingProforma ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generowanie...
+                </>
+              ) : (
+                <>
+                  <Receipt className="h-4 w-4 mr-2" />
+                  Pobierz Proformę
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
