@@ -46,8 +46,8 @@ const statusConfig = {
   }
 };
 const invoiceTypeLabels = {
-  reservation: "Rezerwacyjna",
-  main_payment: "Zasadnicza",
+  reservation: "Zaliczkowa (rezerwacja)",
+  main_payment: "Zaliczkowa (płatność główna)",
   final: "Końcowa"
 };
 export const InvoicesReceiptsTab = ({
