@@ -13,6 +13,7 @@ interface Contract {
   tenant_email: string;
   start_date: string;
   payments: any;
+  is_full_payment_as_reservation: boolean;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -38,7 +39,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Fetch contracts (either specific test contract or all active contracts)
     let query = supabase
       .from('contracts')
-      .select('id, contract_number, tenant_name, tenant_email, start_date, payments')
+      .select('id, contract_number, tenant_name, tenant_email, start_date, payments, is_full_payment_as_reservation')
       .eq('is_archived', false);
 
     if (testContractId) {
@@ -79,8 +80,22 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         const payments = contract.payments || {};
         
+        // Skip if full payment was made with reservation
+        if (contract.is_full_payment_as_reservation) {
+          console.log(`Skipping contract ${contract.contract_number} - full payment as reservation`);
+          continue;
+        }
+        
         // Check main payment (zasadnicza) - check both 'termin' and 'data' fields
         const zasadniczaDueDate = payments.zasadnicza?.termin || payments.zasadnicza?.data;
+        const zasadniczaAmount = payments.zasadnicza?.wysokosc;
+        
+        // Skip if no zasadnicza amount
+        if (!zasadniczaAmount || zasadniczaAmount === 0 || zasadniczaAmount === '0' || zasadniczaAmount === '') {
+          console.log(`Skipping contract ${contract.contract_number} - no zasadnicza amount`);
+          continue;
+        }
+        
         if (zasadniczaDueDate) {
           const paymentDate = new Date(zasadniczaDueDate).toISOString().split('T')[0];
           // In test mode, send notification regardless of date; in production, check if date matches
