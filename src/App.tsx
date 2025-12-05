@@ -35,6 +35,7 @@ import AdminEmployeeSchedules from "./pages/AdminEmployeeSchedules";
 import TestNotifications from "./pages/TestNotifications";
 import BookingsCalendar from "./pages/BookingsCalendar";
 import NotificationLogs from "./pages/NotificationLogs";
+import AdminExport from "./pages/AdminExport";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/accounting-upload/:invoiceId" element={<AccountingUpload />} />
             <Route path="/invoice-upload/:invoiceId" element={<InvoiceUpload />} />
             <Route path="/return-booking/:contractId" element={<ReturnBooking />} />
+            <Route path="/admin/export-data" element={<AdminExport />} />
             <Route element={
               <ProtectedRoute>
                 <Layout />
