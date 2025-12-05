@@ -74,56 +74,11 @@ const handler = async (req: Request): Promise<Response> => {
     let notificationsSent = 0;
     const webhookUrl = 'https://hook.eu2.make.com/y6p65n7fg253wq5j1y0ryqxra1hsibxo';
 
-    // Check each contract for payments due in 7 days
+    // Check each contract for payments due in 7 days (only main payment - zasadnicza)
     for (const contract of contracts as Contract[]) {
       try {
         const payments = contract.payments || {};
         
-        // Check reservation payment (rezerwacyjna) - check both 'termin' and 'data' fields
-        const rezerwacyjnaDueDate = payments.rezerwacyjna?.termin || payments.rezerwacyjna?.data;
-        if (rezerwacyjnaDueDate) {
-          const paymentDate = new Date(rezerwacyjnaDueDate).toISOString().split('T')[0];
-          console.log(`Contract ${contract.contract_number}: rezerwacyjna date=${rezerwacyjnaDueDate}, paymentDate=${paymentDate}, testMode=${!!testContractId}`);
-          
-          // In test mode, send notification regardless of date; in production, check if date matches
-          if (testContractId || paymentDate === targetDateStr) {
-            console.log(`Sending webhook for reservation payment - contract ${contract.contract_number}`);
-            
-            const webhookResponse = await fetch(webhookUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                contract_id: contract.id,
-                contract_number: contract.contract_number,
-                tenant_name: contract.tenant_name,
-                tenant_email: contract.tenant_email,
-                payment_type: 'reservation',
-                payment_type_pl: 'Opłata rezerwacyjna',
-                payment_amount: payments.rezerwacyjna.wysokosc || 0,
-                payment_due_date: rezerwacyjnaDueDate,
-                contract_link: `/contracts/${contract.id}`,
-                invoice_upload_link: `/contracts/${contract.id}`,
-                days_before: 7,
-                timestamp: new Date().toISOString(),
-              }),
-            });
-
-            console.log(`Webhook response status: ${webhookResponse.status}, ok: ${webhookResponse.ok}`);
-            
-            if (webhookResponse.ok) {
-              console.log(`Payment reminder sent for reservation payment - contract ${contract.contract_number}`);
-              notificationsSent++;
-            } else {
-              const errorText = await webhookResponse.text();
-              console.error(`Webhook failed with status ${webhookResponse.status}: ${errorText}`);
-            }
-          } else {
-            console.log(`Skipping contract ${contract.contract_number} - date mismatch`);
-          }
-        }
-
         // Check main payment (zasadnicza) - check both 'termin' and 'data' fields
         const zasadniczaDueDate = payments.zasadnicza?.termin || payments.zasadnicza?.data;
         if (zasadniczaDueDate) {
