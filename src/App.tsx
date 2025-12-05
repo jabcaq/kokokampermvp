@@ -34,6 +34,7 @@ import MyReturns from "./pages/MyReturns";
 import AdminEmployeeSchedules from "./pages/AdminEmployeeSchedules";
 import TestNotifications from "./pages/TestNotifications";
 import BookingsCalendar from "./pages/BookingsCalendar";
+import NotificationLogs from "./pages/NotificationLogs";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="/employee-schedule" element={<EmployeeSchedule />} />
               <Route path="/my-returns" element={<MyReturns />} />
               <Route path="/admin/employee-schedules" element={<AdminEmployeeSchedules />} />
+              <Route path="/admin/notification-logs" element={<NotificationLogs />} />
               <Route path="/test-notifications" element={<TestNotifications />} />
             </Route>
             <Route path="/vehicle-handover/:contractId" element={<VehicleHandover />} />
