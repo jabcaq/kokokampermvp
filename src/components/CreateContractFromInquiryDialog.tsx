@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { addDays } from "date-fns";
+import { MultiVehicleSelector, SelectedVehicle } from "@/components/MultiVehicleSelector";
 
 interface Inquiry {
   id: string;
@@ -63,6 +64,10 @@ export const CreateContractFromInquiryDialog = ({
   const [customDepositAmount, setCustomDepositAmount] = useState(false);
   const [depositAmount, setDepositAmount] = useState("5000");
   const [preferredLanguage, setPreferredLanguage] = useState<"pl" | "en">("pl");
+
+  // Multi-vehicle mode
+  const [isMultiVehicleMode, setIsMultiVehicleMode] = useState(false);
+  const [multiVehicles, setMultiVehicles] = useState<SelectedVehicle[]>([]);
 
   const [formData, setFormData] = useState({
     name: inquiry?.name || "",
@@ -353,6 +358,8 @@ export const CreateContractFromInquiryDialog = ({
       setVehicleCleaning("");
       setVehicleAnimals("");
       setVehicleExtraEquipment("");
+      setIsMultiVehicleMode(false);
+      setMultiVehicles([]);
     }
   }, [inquiry, open]);
 
@@ -370,6 +377,42 @@ export const CreateContractFromInquiryDialog = ({
           </DrawerHeader>
 
           <div className="space-y-4 px-4 py-4">
+          {/* Tryb wielu pojazdów */}
+          <div className="flex items-center space-x-2 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+            <Checkbox
+              id="multi_vehicle_mode_inquiry"
+              checked={isMultiVehicleMode}
+              onCheckedChange={(checked) => {
+                setIsMultiVehicleMode(checked === true);
+                if (checked) {
+                  setMultiVehicles([{
+                    vehicleId: "",
+                    model: "",
+                    vin: "",
+                    registration_number: "",
+                    next_inspection_date: "",
+                    insurance_policy_number: "",
+                    insurance_valid_until: "",
+                    additional_info: "",
+                    type: "",
+                    cleaning: "",
+                    animals: "",
+                    extra_equipment: "",
+                  }]);
+                  setSelectedVehicleId("");
+                } else {
+                  setMultiVehicles([]);
+                }
+              }}
+            />
+            <Label htmlFor="multi_vehicle_mode_inquiry" className="cursor-pointer font-medium">
+              Umowa na wiele pojazdów
+            </Label>
+            <span className="text-xs text-muted-foreground ml-2">
+              (dla wynajmu kilku kamperów jednocześnie)
+            </span>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="name">Imię i nazwisko *</Label>
             <Input
@@ -446,68 +489,80 @@ export const CreateContractFromInquiryDialog = ({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="vehicle">Pojazd *</Label>
-            <Popover open={vehicleSearchOpen} onOpenChange={setVehicleSearchOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={vehicleSearchOpen}
-                  className="w-full justify-between"
-                >
-                  {selectedVehicle ? (
-                    <span className="flex items-center gap-2">
-                      <span className="font-medium">{selectedVehicle.registration_number}</span>
-                      <span className="text-muted-foreground">-</span>
-                      <span>{selectedVehicle.model}</span>
-                      {selectedVehicle.type && (
-                        <span className="text-xs text-muted-foreground">({selectedVehicle.type})</span>
-                      )}
-                    </span>
-                  ) : (
-                    "Wybierz pojazd..."
-                  )}
-                  <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[500px] p-0 bg-popover" align="start">
-                <Command className="bg-popover">
-                  <CommandInput placeholder="Szukaj po rejestracji, modelu lub typie..." />
-                  <CommandList>
-                    <CommandEmpty>Nie znaleziono pojazdu.</CommandEmpty>
-                    <CommandGroup>
-                      {availableVehicles.map((vehicle) => (
-                        <CommandItem
-                          key={vehicle.id}
-                          value={`${vehicle.registration_number} ${vehicle.model} ${vehicle.type || ''}`}
-                          onSelect={() => {
-                            setSelectedVehicleId(vehicle.id);
-                            setVehicleSearchOpen(false);
-                          }}
-                          className="cursor-pointer"
-                        >
-                          <div className="flex flex-col">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{vehicle.registration_number}</span>
-                              <span className="text-muted-foreground">-</span>
-                              <span>{vehicle.model}</span>
+          {isMultiVehicleMode ? (
+            <div className="space-y-2">
+              <Label>Pojazdy *</Label>
+              <MultiVehicleSelector
+                vehicles={availableVehicles}
+                selectedVehicles={multiVehicles}
+                onVehiclesChange={setMultiVehicles}
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="vehicle">Pojazd *</Label>
+              <Popover open={vehicleSearchOpen} onOpenChange={setVehicleSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={vehicleSearchOpen}
+                    className="w-full justify-between"
+                  >
+                    {selectedVehicle ? (
+                      <span className="flex items-center gap-2">
+                        <span className="font-medium">{selectedVehicle.registration_number}</span>
+                        <span className="text-muted-foreground">-</span>
+                        <span>{selectedVehicle.model}</span>
+                        {selectedVehicle.type && (
+                          <span className="text-xs text-muted-foreground">({selectedVehicle.type})</span>
+                        )}
+                      </span>
+                    ) : (
+                      "Wybierz pojazd..."
+                    )}
+                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[500px] p-0 bg-popover" align="start">
+                  <Command className="bg-popover">
+                    <CommandInput placeholder="Szukaj po rejestracji, modelu lub typie..." />
+                    <CommandList>
+                      <CommandEmpty>Nie znaleziono pojazdu.</CommandEmpty>
+                      <CommandGroup>
+                        {availableVehicles.map((vehicle) => (
+                          <CommandItem
+                            key={vehicle.id}
+                            value={`${vehicle.registration_number} ${vehicle.model} ${vehicle.type || ''}`}
+                            onSelect={() => {
+                              setSelectedVehicleId(vehicle.id);
+                              setVehicleSearchOpen(false);
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{vehicle.registration_number}</span>
+                                <span className="text-muted-foreground">-</span>
+                                <span>{vehicle.model}</span>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {vehicle.type && <span>Typ: {vehicle.type}</span>}
+                                {vehicle.type && vehicle.vin && <span> • </span>}
+                                {vehicle.vin && <span>VIN: {vehicle.vin}</span>}
+                              </div>
                             </div>
-                            <div className="text-xs text-muted-foreground">
-                              {vehicle.type && <span>Typ: {vehicle.type}</span>}
-                              {vehicle.type && vehicle.vin && <span> • </span>}
-                              {vehicle.vin && <span>VIN: {vehicle.vin}</span>}
-                            </div>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
 
+          {!isMultiVehicleMode && (
           <div className="space-y-4 pt-4 border-t">
             <h4 className="text-sm font-semibold text-foreground">Dodatki</h4>
             
