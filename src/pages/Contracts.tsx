@@ -41,6 +41,8 @@ const statusConfig = {
 
 const WARSAW_TZ = "Europe/Warsaw";
 
+import { MultiVehicleSelector, SelectedVehicle } from "@/components/MultiVehicleSelector";
+
 const Contracts = () => {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,6 +63,11 @@ const Contracts = () => {
   const [depositAmount, setDepositAmount] = useState<string>("");
   const [insuranceWarning, setInsuranceWarning] = useState("");
   const [preferredLanguage, setPreferredLanguage] = useState<"pl" | "en">("pl");
+  
+  // Multi-vehicle mode
+  const [isMultiVehicleMode, setIsMultiVehicleMode] = useState(false);
+  const [multiVehicles, setMultiVehicles] = useState<SelectedVehicle[]>([]);
+  
   const [vehicleData, setVehicleData] = useState({
     model: "",
     vin: "",
@@ -183,49 +190,18 @@ const Contracts = () => {
     // Get selected client to pre-fill tenant data
     const selectedClient = clients.find(c => c.id === selectedClientId);
     
-    // Generate fresh contract number to avoid duplicates
-    const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
-    let finalContractNumber = generatedContractNumber;
-    
-    if (selectedVehicle?.type) {
-      const prefix = selectedVehicle.type === "Kamper" ? "K" : "P";
-      const currentYear = new Date().getFullYear();
-      
-      // Pobierz wszystkie umowy dla tego typu w tym roku (nowy i stary format)
-      const { data: existingContracts } = await supabase
-        .from('contracts')
-        .select('contract_number')
-        .or(`contract_number.like.${prefix}/%/${currentYear},contract_number.like.%/${currentYear}/${prefix}`)
-        .order('created_at', { ascending: false });
-      
-      let nextNumber = 1;
-      if (existingContracts && existingContracts.length > 0) {
-        // Parsuj numery z obu formatów i znajdź najwyższy
-        const numbers = existingContracts
-          .map(c => {
-            const parts = c.contract_number.split('/');
-            if (parts.length === 3) {
-              // Stary format: K/14/2025 lub nowy format: 14/2025/K
-              return parseInt(parts[0] === prefix ? parts[1] : parts[0]);
-            }
-            return 0;
-          })
-          .filter(n => !isNaN(n));
-        
-        if (numbers.length > 0) {
-          nextNumber = Math.max(...numbers) + 1;
-        }
+    // Validate multi-vehicle mode
+    if (isMultiVehicleMode) {
+      const validVehicles = multiVehicles.filter(v => v.vehicleId);
+      if (validVehicles.length === 0) {
+        toast({
+          title: "Błąd",
+          description: "Wybierz co najmniej jeden pojazd.",
+          variant: "destructive",
+        });
+        return;
       }
-      
-      finalContractNumber = `${nextNumber}/${currentYear}/${prefix}`;
     }
-    
-    // Calculate payment amounts
-    const total = parseFloat(totalAmount) || 0;
-    const reservationAmount = isFullPaymentAsReservation ? total.toFixed(2) : (total * 0.30).toFixed(2);
-    const mainAmount = isFullPaymentAsReservation ? "0.00" : (total * 0.70).toFixed(2);
-    
-    console.log('Total amount:', total, 'from totalAmount:', totalAmount);
 
     // Get dates from inputs and convert from Warsaw to UTC
     const startDateInput = (formData.get('okres_od') as string) || "";
@@ -242,8 +218,6 @@ const Contracts = () => {
     
     // Convert datetime-local (Warsaw time) to UTC ISO string
     const parseWarsawToUTC = (dateTimeLocal: string) => {
-      // datetime-local format: "2025-02-10T10:00"
-      // Treat this as Warsaw time and convert to UTC
       const warsawDate = new Date(dateTimeLocal);
       return fromZonedTime(warsawDate, WARSAW_TZ).toISOString();
     };
@@ -254,26 +228,29 @@ const Contracts = () => {
     // Helper for optional date fields (send null, not empty string)
     const emptyToNull = (v: string | undefined | null) => (v && v.trim() !== "" ? v : null);
     
+    // Calculate payment amounts
+    const total = parseFloat(totalAmount) || 0;
+    const reservationAmount = isFullPaymentAsReservation ? total.toFixed(2) : (total * 0.30).toFixed(2);
+    const mainAmount = isFullPaymentAsReservation ? "0.00" : (total * 0.70).toFixed(2);
+    
     // Automatyczne obliczanie dat płatności
-    // Data rezerwacyjna: dzisiaj + 2 dni
     const today = new Date();
     const reservationDate = new Date(today);
     reservationDate.setDate(reservationDate.getDate() + 2);
     const reservationDateStr = reservationDate.toISOString().split('T')[0];
     
-    // Data zasadnicza: 14 dni przed datą rozpoczęcia wynajmu
     const startDateObj = new Date(startDateISO);
     const mainPaymentDate = new Date(startDateObj);
     mainPaymentDate.setDate(mainPaymentDate.getDate() - 14);
     const mainPaymentDateStr = mainPaymentDate.toISOString().split('T')[0];
     
-    // Przygotuj dane płatności z automatycznymi kwotami i datami
-    const getDefaultDeposit = () => {
-      if (vehicleData.type === "Przyczepa") return 3000;
-      if (vehicleData.type === "Kamper") return isPremiumCamper ? 8000 : 5000;
+    // Przygotuj dane płatności
+    const getDefaultDeposit = (vehicleType?: string) => {
+      if (vehicleType === "Przyczepa") return 3000;
+      if (vehicleType === "Kamper") return isPremiumCamper ? 8000 : 5000;
       return 5000;
     };
-    const finalDepositAmount = customDepositAmount ? parseFloat(depositAmount) : getDefaultDeposit();
+    const finalDepositAmount = customDepositAmount ? parseFloat(depositAmount) : getDefaultDeposit(vehicleData.type);
     
     const paymentsData: any = {
       rezerwacyjna: {
@@ -288,7 +265,6 @@ const Contracts = () => {
       },
     };
 
-    // Only add main payment if not full payment as reservation
     if (!isFullPaymentAsReservation) {
       paymentsData.zasadnicza = {
         data: mainPaymentDateStr,
@@ -296,59 +272,170 @@ const Contracts = () => {
         rachunek: "34 1140 2004 0000 3802 8192 4912",
       };
     }
+
+    // Helper function to generate contract number for a vehicle
+    const generateContractNumber = async (vehicleType: string) => {
+      const prefix = vehicleType === "Kamper" ? "K" : "P";
+      const currentYear = new Date().getFullYear();
+      
+      const { data: existingContracts } = await supabase
+        .from('contracts')
+        .select('contract_number')
+        .or(`contract_number.like.${prefix}/%/${currentYear},contract_number.like.%/${currentYear}/${prefix}`)
+        .order('created_at', { ascending: false });
+      
+      let nextNumber = 1;
+      if (existingContracts && existingContracts.length > 0) {
+        const numbers = existingContracts
+          .map(c => {
+            const parts = c.contract_number.split('/');
+            if (parts.length === 3) {
+              return parseInt(parts[0] === prefix ? parts[1] : parts[0]);
+            }
+            return 0;
+          })
+          .filter(n => !isNaN(n));
+        
+        if (numbers.length > 0) {
+          nextNumber = Math.max(...numbers) + 1;
+        }
+      }
+      
+      return `${nextNumber}/${currentYear}/${prefix}`;
+    };
     
     try {
-      await addContractMutation.mutateAsync({
-        contract_number: finalContractNumber || (formData.get('umowa_numer') as string),
-        umowa_text: formData.get('umowa_text') as string,
-        client_id: selectedClientId,
-        vehicle_model: vehicleData.model || (formData.get('przedmiot_model') as string) || "",
-        registration_number: vehicleData.registration_number || (formData.get('przedmiot_nr_rej') as string) || "",
-        start_date: startDateISO,
-        end_date: endDateISO,
-        status: 'pending',
-        value: total > 0 ? total : null,
-        is_full_payment_as_reservation: isFullPaymentAsReservation,
-        tenant_company_name: formData.get('tenant_company_name') as string || "",
-        lessor_name: "Koko Group Sp. z o.o.",
-        lessor_address: "Złotokłos, 05-504, ul. Stawowa 1",
-        lessor_phone: "+48 660 694 257",
-        lessor_website: "www.kokokamper.pl",
-        lessor_email: "kontakt@kokokamper.pl",
-        tenant_name: selectedClient?.name || "",
-        tenant_email: selectedClient?.email || "",
-        tenant_phone: selectedClient?.phone || "",
-        tenant_address: "",
-        tenant_id_type: "",
-        tenant_id_number: "",
-        tenant_id_issuer: "",
-        tenant_pesel: "",
-        tenant_nip: formData.get('tenant_nip') as string || "",
-        tenant_license_number: "",
-        tenant_license_date: null,
-        vehicle_vin: vehicleData.vin || (formData.get('przedmiot_vin') as string) || "",
-        vehicle_next_inspection: emptyToNull(vehicleData.next_inspection_date || (formData.get('przedmiot_nastepne_badanie') as string)),
-        vehicle_insurance_number: vehicleData.insurance_policy_number || (formData.get('przedmiot_polisa_numer') as string) || "",
-        vehicle_insurance_valid_until: emptyToNull(vehicleData.insurance_valid_until || (formData.get('przedmiot_polisa_wazna_do') as string)),
-        vehicle_cleaning: vehicleData.cleaning || null,
-        vehicle_animals: vehicleData.animals || null,
-        vehicle_extra_equipment: vehicleData.extra_equipment || null,
-        vehicle_additional_info: (() => {
-          const additionalText = vehicleData.additional_info || (formData.get('przedmiot_dodatkowe_info') as string) || "";
-          const insuranceNote = insuranceWarning ? `UWAGA: ${insuranceWarning}` : "";
-          const combined = [additionalText, insuranceNote].filter(Boolean).join(' | ');
-          return combined;
-        })(),
-        additional_drivers: [],
-        payments: paymentsData,
-        notes: formData.get('uwagi') as string,
-        preferred_language: preferredLanguage,
-      });
-      
-      toast({
-        title: "Umowa utworzona",
-        description: "Nowa umowa została pomyślnie dodana do systemu.",
-      });
+      if (isMultiVehicleMode) {
+        // Multi-vehicle mode: create a contract for each vehicle
+        const validVehicles = multiVehicles.filter(v => v.vehicleId);
+        let createdCount = 0;
+        
+        for (const vehicleItem of validVehicles) {
+          const contractNumber = await generateContractNumber(vehicleItem.type || "Kamper");
+          
+          // Calculate deposit for this specific vehicle
+          const vehicleDepositAmount = customDepositAmount 
+            ? parseFloat(depositAmount) 
+            : getDefaultDeposit(vehicleItem.type);
+          
+          const vehiclePaymentsData = {
+            ...paymentsData,
+            kaucja: {
+              ...paymentsData.kaucja,
+              wysokosc: vehicleDepositAmount,
+            },
+          };
+          
+          await addContractMutation.mutateAsync({
+            contract_number: contractNumber,
+            umowa_text: formData.get('umowa_text') as string,
+            client_id: selectedClientId,
+            vehicle_model: vehicleItem.model,
+            registration_number: vehicleItem.registration_number,
+            start_date: startDateISO,
+            end_date: endDateISO,
+            status: 'pending',
+            value: total > 0 ? total : null,
+            is_full_payment_as_reservation: isFullPaymentAsReservation,
+            tenant_company_name: formData.get('tenant_company_name') as string || "",
+            lessor_name: "Koko Group Sp. z o.o.",
+            lessor_address: "Złotokłos, 05-504, ul. Stawowa 1",
+            lessor_phone: "+48 660 694 257",
+            lessor_website: "www.kokokamper.pl",
+            lessor_email: "kontakt@kokokamper.pl",
+            tenant_name: selectedClient?.name || "",
+            tenant_email: selectedClient?.email || "",
+            tenant_phone: selectedClient?.phone || "",
+            tenant_address: "",
+            tenant_id_type: "",
+            tenant_id_number: "",
+            tenant_id_issuer: "",
+            tenant_pesel: "",
+            tenant_nip: formData.get('tenant_nip') as string || "",
+            tenant_license_number: "",
+            tenant_license_date: null,
+            vehicle_vin: vehicleItem.vin,
+            vehicle_next_inspection: emptyToNull(vehicleItem.next_inspection_date),
+            vehicle_insurance_number: vehicleItem.insurance_policy_number,
+            vehicle_insurance_valid_until: emptyToNull(vehicleItem.insurance_valid_until),
+            vehicle_cleaning: vehicleItem.cleaning || null,
+            vehicle_animals: vehicleItem.animals || null,
+            vehicle_extra_equipment: vehicleItem.extra_equipment || null,
+            vehicle_additional_info: vehicleItem.additional_info || null,
+            additional_drivers: [],
+            payments: vehiclePaymentsData,
+            notes: formData.get('uwagi') as string,
+            preferred_language: preferredLanguage,
+          });
+          
+          createdCount++;
+        }
+        
+        toast({
+          title: "Umowy utworzone",
+          description: `Utworzono ${createdCount} umów dla tego samego klienta.`,
+        });
+      } else {
+        // Single vehicle mode (existing logic)
+        const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
+        let finalContractNumber = generatedContractNumber;
+        
+        if (selectedVehicle?.type) {
+          finalContractNumber = await generateContractNumber(selectedVehicle.type);
+        }
+        
+        await addContractMutation.mutateAsync({
+          contract_number: finalContractNumber || (formData.get('umowa_numer') as string),
+          umowa_text: formData.get('umowa_text') as string,
+          client_id: selectedClientId,
+          vehicle_model: vehicleData.model || (formData.get('przedmiot_model') as string) || "",
+          registration_number: vehicleData.registration_number || (formData.get('przedmiot_nr_rej') as string) || "",
+          start_date: startDateISO,
+          end_date: endDateISO,
+          status: 'pending',
+          value: total > 0 ? total : null,
+          is_full_payment_as_reservation: isFullPaymentAsReservation,
+          tenant_company_name: formData.get('tenant_company_name') as string || "",
+          lessor_name: "Koko Group Sp. z o.o.",
+          lessor_address: "Złotokłos, 05-504, ul. Stawowa 1",
+          lessor_phone: "+48 660 694 257",
+          lessor_website: "www.kokokamper.pl",
+          lessor_email: "kontakt@kokokamper.pl",
+          tenant_name: selectedClient?.name || "",
+          tenant_email: selectedClient?.email || "",
+          tenant_phone: selectedClient?.phone || "",
+          tenant_address: "",
+          tenant_id_type: "",
+          tenant_id_number: "",
+          tenant_id_issuer: "",
+          tenant_pesel: "",
+          tenant_nip: formData.get('tenant_nip') as string || "",
+          tenant_license_number: "",
+          tenant_license_date: null,
+          vehicle_vin: vehicleData.vin || (formData.get('przedmiot_vin') as string) || "",
+          vehicle_next_inspection: emptyToNull(vehicleData.next_inspection_date || (formData.get('przedmiot_nastepne_badanie') as string)),
+          vehicle_insurance_number: vehicleData.insurance_policy_number || (formData.get('przedmiot_polisa_numer') as string) || "",
+          vehicle_insurance_valid_until: emptyToNull(vehicleData.insurance_valid_until || (formData.get('przedmiot_polisa_wazna_do') as string)),
+          vehicle_cleaning: vehicleData.cleaning || null,
+          vehicle_animals: vehicleData.animals || null,
+          vehicle_extra_equipment: vehicleData.extra_equipment || null,
+          vehicle_additional_info: (() => {
+            const additionalText = vehicleData.additional_info || (formData.get('przedmiot_dodatkowe_info') as string) || "";
+            const insuranceNote = insuranceWarning ? `UWAGA: ${insuranceWarning}` : "";
+            const combined = [additionalText, insuranceNote].filter(Boolean).join(' | ');
+            return combined;
+          })(),
+          additional_drivers: [],
+          payments: paymentsData,
+          notes: formData.get('uwagi') as string,
+          preferred_language: preferredLanguage,
+        });
+        
+        toast({
+          title: "Umowa utworzona",
+          description: "Nowa umowa została pomyślnie dodana do systemu.",
+        });
+      }
       
       setIsDialogOpen(false);
       setSelectedVehicleId("");
@@ -360,6 +447,8 @@ const Contracts = () => {
       setIsPremiumCamper(false);
       setDepositAmount("");
       setInsuranceWarning("");
+      setIsMultiVehicleMode(false);
+      setMultiVehicles([]);
       setVehicleData({
         model: "",
         vin: "",
@@ -457,6 +546,8 @@ const Contracts = () => {
       setIsPremiumCamper(false);
       setDepositAmount("");
       setInsuranceWarning("");
+      setIsMultiVehicleMode(false);
+      setMultiVehicles([]);
       setVehicleData({
         model: "",
         vin: "",
@@ -506,6 +597,58 @@ const Contracts = () => {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+              {/* Tryb wielu pojazdów */}
+              <div className="flex items-center space-x-2 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                <Checkbox
+                  id="multi_vehicle_mode"
+                  checked={isMultiVehicleMode}
+                  onCheckedChange={(checked) => {
+                    setIsMultiVehicleMode(checked === true);
+                    if (checked) {
+                      // Initialize with one empty vehicle
+                      setMultiVehicles([{
+                        vehicleId: "",
+                        model: "",
+                        vin: "",
+                        registration_number: "",
+                        next_inspection_date: "",
+                        insurance_policy_number: "",
+                        insurance_valid_until: "",
+                        additional_info: "",
+                        type: "",
+                        cleaning: "",
+                        animals: "",
+                        extra_equipment: "",
+                      }]);
+                      // Reset single vehicle selection
+                      setSelectedVehicleId("");
+                      setGeneratedContractNumber("");
+                      setVehicleData({
+                        model: "",
+                        vin: "",
+                        registration_number: "",
+                        next_inspection_date: "",
+                        insurance_policy_number: "",
+                        insurance_valid_until: "",
+                        additional_info: "",
+                        type: "",
+                        cleaning: "",
+                        animals: "",
+                        extra_equipment: ""
+                      });
+                    } else {
+                      setMultiVehicles([]);
+                    }
+                  }}
+                />
+                <Label htmlFor="multi_vehicle_mode" className="cursor-pointer font-medium">
+                  Umowa na wiele pojazdów
+                </Label>
+                <span className="text-xs text-muted-foreground ml-2">
+                  (dla wynajmu kilku kamperów jednocześnie)
+                </span>
+              </div>
+
               {/* Klient */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-foreground">Klient</h3>
@@ -679,190 +822,201 @@ const Contracts = () => {
 
               {/* Przedmiot najmu */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Przedmiot najmu</h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="wybor_pojazdu">Wybierz pojazd z bazy</Label>
-                    <Popover open={vehicleSearchOpen} onOpenChange={setVehicleSearchOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={vehicleSearchOpen}
-                          className="w-full justify-between"
+                <h3 className="text-lg font-semibold text-foreground">
+                  Przedmiot najmu {isMultiVehicleMode && <span className="text-sm font-normal text-muted-foreground">(tryb wielu pojazdów)</span>}
+                </h3>
+                
+                {isMultiVehicleMode ? (
+                  <MultiVehicleSelector
+                    vehicles={vehicles}
+                    selectedVehicles={multiVehicles}
+                    onVehiclesChange={setMultiVehicles}
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="wybor_pojazdu">Wybierz pojazd z bazy</Label>
+                      <Popover open={vehicleSearchOpen} onOpenChange={setVehicleSearchOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={vehicleSearchOpen}
+                            className="w-full justify-between"
+                          >
+                            {selectedVehicleId
+                              ? (() => {
+                                  const vehicle = vehicles.find((v) => v.id === selectedVehicleId);
+                                  return vehicle ? `${vehicle.model} - ${vehicle.registration_number}` : "Wybierz pojazd";
+                                })()
+                              : "Wybierz pojazd lub wprowadź dane ręcznie"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0 bg-background z-50" align="start">
+                          <Command>
+                            <CommandInput placeholder="Szukaj po modelu, numerze rejestracyjnym lub rodzaju..." />
+                            <CommandList>
+                              <CommandEmpty>Nie znaleziono pojazdu.</CommandEmpty>
+                              <CommandGroup>
+                                {vehicles.map((vehicle) => (
+                                  <CommandItem
+                                    key={vehicle.id}
+                                    value={`${vehicle.model} ${vehicle.registration_number} ${vehicle.type || ''}`}
+                                    onSelect={() => {
+                                      handleVehicleSelect(vehicle.id);
+                                      setVehicleSearchOpen(false);
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedVehicleId === vehicle.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{vehicle.model} - {vehicle.registration_number}</span>
+                                      {vehicle.type && (
+                                        <span className="text-sm opacity-70">
+                                          {vehicle.type}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="przedmiot_model">Model</Label>
+                        <Input 
+                          id="przedmiot_model" 
+                          name="przedmiot_model" 
+                          placeholder="RANDGER R600" 
+                          value={vehicleData.model}
+                          onChange={(e) => setVehicleData({...vehicleData, model: e.target.value})}
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="przedmiot_vin">VIN</Label>
+                        <Input 
+                          id="przedmiot_vin" 
+                          name="przedmiot_vin" 
+                          placeholder="ZFA25000002S85417" 
+                          value={vehicleData.vin}
+                          onChange={(e) => setVehicleData({...vehicleData, vin: e.target.value})}
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="przedmiot_nr_rej">Nr rejestracyjny</Label>
+                        <Input 
+                          id="przedmiot_nr_rej" 
+                          name="przedmiot_nr_rej" 
+                          placeholder="WZ726ES" 
+                          value={vehicleData.registration_number}
+                          onChange={(e) => setVehicleData({...vehicleData, registration_number: e.target.value})}
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="przedmiot_nastepne_badanie">Następne badanie</Label>
+                        <Input 
+                          id="przedmiot_nastepne_badanie" 
+                          name="przedmiot_nastepne_badanie" 
+                          type="date" 
+                          value={vehicleData.next_inspection_date}
+                          onChange={(e) => setVehicleData({...vehicleData, next_inspection_date: e.target.value})}
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="przedmiot_polisa_numer">Numer polisy</Label>
+                        <Input 
+                          id="przedmiot_polisa_numer" 
+                          name="przedmiot_polisa_numer" 
+                          placeholder="1068435310/9933" 
+                          value={vehicleData.insurance_policy_number}
+                          onChange={(e) => setVehicleData({...vehicleData, insurance_policy_number: e.target.value})}
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="przedmiot_polisa_wazna_do">Polisa ważna do</Label>
+                        <Input 
+                          id="przedmiot_polisa_wazna_do" 
+                          name="przedmiot_polisa_wazna_do" 
+                          type="date" 
+                          value={vehicleData.insurance_valid_until}
+                          onChange={(e) => setVehicleData({...vehicleData, insurance_valid_until: e.target.value})}
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="sprzatanie">Sprzątanie dodatkowo</Label>
+                        <Select 
+                          value={vehicleData.cleaning} 
+                          onValueChange={(value: "Tak" | "Nie") => setVehicleData({...vehicleData, cleaning: value})}
                         >
-                          {selectedVehicleId
-                            ? (() => {
-                                const vehicle = vehicles.find((v) => v.id === selectedVehicleId);
-                                return vehicle ? `${vehicle.model} - ${vehicle.registration_number}` : "Wybierz pojazd";
-                              })()
-                            : "Wybierz pojazd lub wprowadź dane ręcznie"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0 bg-background z-50" align="start">
-                        <Command>
-                          <CommandInput placeholder="Szukaj po modelu, numerze rejestracyjnym lub rodzaju..." />
-                          <CommandList>
-                            <CommandEmpty>Nie znaleziono pojazdu.</CommandEmpty>
-                            <CommandGroup>
-                              {vehicles.map((vehicle) => (
-                                <CommandItem
-                                  key={vehicle.id}
-                                  value={`${vehicle.model} ${vehicle.registration_number} ${vehicle.type || ''}`}
-                                  onSelect={() => {
-                                    handleVehicleSelect(vehicle.id);
-                                    setVehicleSearchOpen(false);
-                                  }}
-                                  className="cursor-pointer"
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      selectedVehicleId === vehicle.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">{vehicle.model} - {vehicle.registration_number}</span>
-                                    {vehicle.type && (
-                                      <span className="text-sm opacity-70">
-                                        {vehicle.type}
-                                      </span>
-                                    )}
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="przedmiot_model">Model</Label>
-                      <Input 
-                        id="przedmiot_model" 
-                        name="przedmiot_model" 
-                        placeholder="RANDGER R600" 
-                        value={vehicleData.model}
-                        onChange={(e) => setVehicleData({...vehicleData, model: e.target.value})}
-                        required 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="przedmiot_vin">VIN</Label>
-                      <Input 
-                        id="przedmiot_vin" 
-                        name="przedmiot_vin" 
-                        placeholder="ZFA25000002S85417" 
-                        value={vehicleData.vin}
-                        onChange={(e) => setVehicleData({...vehicleData, vin: e.target.value})}
-                        required 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="przedmiot_nr_rej">Nr rejestracyjny</Label>
-                      <Input 
-                        id="przedmiot_nr_rej" 
-                        name="przedmiot_nr_rej" 
-                        placeholder="WZ726ES" 
-                        value={vehicleData.registration_number}
-                        onChange={(e) => setVehicleData({...vehicleData, registration_number: e.target.value})}
-                        required 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="przedmiot_nastepne_badanie">Następne badanie</Label>
-                      <Input 
-                        id="przedmiot_nastepne_badanie" 
-                        name="przedmiot_nastepne_badanie" 
-                        type="date" 
-                        value={vehicleData.next_inspection_date}
-                        onChange={(e) => setVehicleData({...vehicleData, next_inspection_date: e.target.value})}
-                        required 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="przedmiot_polisa_numer">Numer polisy</Label>
-                      <Input 
-                        id="przedmiot_polisa_numer" 
-                        name="przedmiot_polisa_numer" 
-                        placeholder="1068435310/9933" 
-                        value={vehicleData.insurance_policy_number}
-                        onChange={(e) => setVehicleData({...vehicleData, insurance_policy_number: e.target.value})}
-                        required 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="przedmiot_polisa_wazna_do">Polisa ważna do</Label>
-                      <Input 
-                        id="przedmiot_polisa_wazna_do" 
-                        name="przedmiot_polisa_wazna_do" 
-                        type="date" 
-                        value={vehicleData.insurance_valid_until}
-                        onChange={(e) => setVehicleData({...vehicleData, insurance_valid_until: e.target.value})}
-                        required 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="sprzatanie">Sprzątanie dodatkowo</Label>
-                      <Select 
-                        value={vehicleData.cleaning} 
-                        onValueChange={(value: "Tak" | "Nie") => setVehicleData({...vehicleData, cleaning: value})}
-                      >
-                        <SelectTrigger id="sprzatanie">
-                          <SelectValue placeholder="Wybierz opcję" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="Tak">Tak</SelectItem>
-                          <SelectItem value="Nie">Nie</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="zwierze">Zwierzę</Label>
-                      <Select 
-                        value={vehicleData.animals} 
-                        onValueChange={(value: "Tak" | "Nie") => setVehicleData({...vehicleData, animals: value})}
-                      >
-                        <SelectTrigger id="zwierze">
-                          <SelectValue placeholder="Wybierz opcję" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="Tak">Tak</SelectItem>
-                          <SelectItem value="Nie">Nie</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="wyposazenie">Wyposażenie dodatkowo</Label>
-                      <Select 
-                        value={vehicleData.extra_equipment} 
-                        onValueChange={(value: "Tak" | "Nie") => setVehicleData({...vehicleData, extra_equipment: value})}
-                      >
-                        <SelectTrigger id="wyposazenie">
-                          <SelectValue placeholder="Wybierz opcję" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="Tak">Tak</SelectItem>
-                          <SelectItem value="Nie">Nie</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="przedmiot_dodatkowe_info">Dodatkowe informacje</Label>
-                      <Textarea 
-                        id="przedmiot_dodatkowe_info" 
-                        name="przedmiot_dodatkowe_info" 
-                        placeholder="Inne uwagi dotyczące pojazdu" 
-                        value={vehicleData.additional_info}
-                        onChange={(e) => setVehicleData({...vehicleData, additional_info: e.target.value})}
-                      />
+                          <SelectTrigger id="sprzatanie">
+                            <SelectValue placeholder="Wybierz opcję" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="Tak">Tak</SelectItem>
+                            <SelectItem value="Nie">Nie</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="zwierze">Zwierzę</Label>
+                        <Select 
+                          value={vehicleData.animals} 
+                          onValueChange={(value: "Tak" | "Nie") => setVehicleData({...vehicleData, animals: value})}
+                        >
+                          <SelectTrigger id="zwierze">
+                            <SelectValue placeholder="Wybierz opcję" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="Tak">Tak</SelectItem>
+                            <SelectItem value="Nie">Nie</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="wyposazenie">Wyposażenie dodatkowo</Label>
+                        <Select 
+                          value={vehicleData.extra_equipment} 
+                          onValueChange={(value: "Tak" | "Nie") => setVehicleData({...vehicleData, extra_equipment: value})}
+                        >
+                          <SelectTrigger id="wyposazenie">
+                            <SelectValue placeholder="Wybierz opcję" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="Tak">Tak</SelectItem>
+                            <SelectItem value="Nie">Nie</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="przedmiot_dodatkowe_info">Dodatkowe informacje</Label>
+                        <Textarea 
+                          id="przedmiot_dodatkowe_info" 
+                          name="przedmiot_dodatkowe_info" 
+                          placeholder="Inne uwagi dotyczące pojazdu" 
+                          value={vehicleData.additional_info}
+                          onChange={(e) => setVehicleData({...vehicleData, additional_info: e.target.value})}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Opłaty */}
