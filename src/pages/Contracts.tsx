@@ -310,8 +310,48 @@ const Contracts = () => {
         const validVehicles = multiVehicles.filter(v => v.vehicleId);
         let createdCount = 0;
         
+        // Pre-fetch the highest contract numbers to avoid conflicts
+        const currentYear = new Date().getFullYear();
+        const { data: existingContractsK } = await supabase
+          .from('contracts')
+          .select('contract_number')
+          .or(`contract_number.like.K/%/${currentYear},contract_number.like.%/${currentYear}/K`)
+          .order('created_at', { ascending: false });
+        
+        const { data: existingContractsP } = await supabase
+          .from('contracts')
+          .select('contract_number')
+          .or(`contract_number.like.P/%/${currentYear},contract_number.like.%/${currentYear}/P`)
+          .order('created_at', { ascending: false });
+        
+        const getHighestNumber = (contracts: any[], prefix: string) => {
+          if (!contracts || contracts.length === 0) return 0;
+          const numbers = contracts
+            .map(c => {
+              const parts = c.contract_number.split('/');
+              if (parts.length === 3) {
+                return parseInt(parts[0] === prefix ? parts[1] : parts[0]);
+              }
+              return 0;
+            })
+            .filter(n => !isNaN(n));
+          return numbers.length > 0 ? Math.max(...numbers) : 0;
+        };
+        
+        let nextNumberK = getHighestNumber(existingContractsK, 'K') + 1;
+        let nextNumberP = getHighestNumber(existingContractsP, 'P') + 1;
+        
         for (const vehicleItem of validVehicles) {
-          const contractNumber = await generateContractNumber(vehicleItem.type || "Kamper");
+          const prefix = vehicleItem.type === "Kamper" ? "K" : "P";
+          let contractNumber: string;
+          
+          if (prefix === "K") {
+            contractNumber = `${nextNumberK}/${currentYear}/${prefix}`;
+            nextNumberK++;
+          } else {
+            contractNumber = `${nextNumberP}/${currentYear}/${prefix}`;
+            nextNumberP++;
+          }
           
           // Calculate deposit for this specific vehicle
           const vehicleDepositAmount = customDepositAmount 

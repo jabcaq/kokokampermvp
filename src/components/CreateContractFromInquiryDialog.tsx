@@ -224,9 +224,51 @@ export const CreateContractFromInquiryDialog = ({
         let createdCount = 0;
         let lastContractId = '';
 
+        // Pre-fetch the highest contract numbers to avoid conflicts
+        const year = new Date().getFullYear();
+        const { data: existingContractsK } = await supabase
+          .from('contracts')
+          .select('contract_number')
+          .or(`contract_number.like.K/%/${year},contract_number.like.%/${year}/K`)
+          .order('created_at', { ascending: false });
+        
+        const { data: existingContractsP } = await supabase
+          .from('contracts')
+          .select('contract_number')
+          .or(`contract_number.like.P/%/${year},contract_number.like.%/${year}/P`)
+          .order('created_at', { ascending: false });
+        
+        const getHighestNumber = (contracts: any[], prefix: string) => {
+          if (!contracts || contracts.length === 0) return 0;
+          const numbers = contracts
+            .map(c => {
+              const parts = c.contract_number.split('/');
+              if (parts.length === 3) {
+                return parseInt(parts[0] === prefix ? parts[1] : parts[0]);
+              }
+              return 0;
+            })
+            .filter(n => !isNaN(n));
+          return numbers.length > 0 ? Math.max(...numbers) : 0;
+        };
+        
+        let nextNumberK = getHighestNumber(existingContractsK, 'K') + 1;
+        let nextNumberP = getHighestNumber(existingContractsP, 'P') + 1;
+
         for (const vehicleItem of validVehicles) {
-          const contractNumber = await generateContractNumber(vehicleItem.type || 'Kamper');
-          const finalDepositAmount = getDepositAmount(vehicleItem.type);
+          const vehicleType = vehicleItem.type || 'Kamper';
+          const typePrefix = vehicleType.toLowerCase().includes('przyczepa') || vehicleType.toLowerCase().includes('trailer') ? 'P' : 'K';
+          
+          let contractNumber: string;
+          if (typePrefix === 'K') {
+            contractNumber = `${nextNumberK}/${year}/${typePrefix}`;
+            nextNumberK++;
+          } else {
+            contractNumber = `${nextNumberP}/${year}/${typePrefix}`;
+            nextNumberP++;
+          }
+          
+          const finalDepositAmount = getDepositAmount(vehicleType);
 
           const payments = {
             rezerwacyjna: {
