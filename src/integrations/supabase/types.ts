@@ -221,6 +221,7 @@ export type Database = {
       contracts: {
         Row: {
           additional_drivers: Json | null
+          additional_vehicles: Json | null
           client_id: string
           contract_number: string
           created_at: string | null
@@ -283,6 +284,7 @@ export type Database = {
         }
         Insert: {
           additional_drivers?: Json | null
+          additional_vehicles?: Json | null
           client_id: string
           contract_number: string
           created_at?: string | null
@@ -345,6 +347,7 @@ export type Database = {
         }
         Update: {
           additional_drivers?: Json | null
+          additional_vehicles?: Json | null
           client_id?: string
           contract_number?: string
           created_at?: string | null
