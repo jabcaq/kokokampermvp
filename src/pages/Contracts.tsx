@@ -306,114 +306,111 @@ const Contracts = () => {
     
     try {
       if (isMultiVehicleMode) {
-        // Multi-vehicle mode: create a contract for each vehicle
+        // Multi-vehicle mode: create ONE contract with multiple vehicles
         const validVehicles = multiVehicles.filter(v => v.vehicleId);
-        let createdCount = 0;
         
-        // Pre-fetch the highest contract numbers to avoid conflicts
-        const currentYear = new Date().getFullYear();
-        const { data: existingContractsK } = await supabase
-          .from('contracts')
-          .select('contract_number')
-          .or(`contract_number.like.K/%/${currentYear},contract_number.like.%/${currentYear}/K`)
-          .order('created_at', { ascending: false });
-        
-        const { data: existingContractsP } = await supabase
-          .from('contracts')
-          .select('contract_number')
-          .or(`contract_number.like.P/%/${currentYear},contract_number.like.%/${currentYear}/P`)
-          .order('created_at', { ascending: false });
-        
-        const getHighestNumber = (contracts: any[], prefix: string) => {
-          if (!contracts || contracts.length === 0) return 0;
-          const numbers = contracts
-            .map(c => {
-              const parts = c.contract_number.split('/');
-              if (parts.length === 3) {
-                return parseInt(parts[0] === prefix ? parts[1] : parts[0]);
-              }
-              return 0;
-            })
-            .filter(n => !isNaN(n));
-          return numbers.length > 0 ? Math.max(...numbers) : 0;
-        };
-        
-        let nextNumberK = getHighestNumber(existingContractsK, 'K') + 1;
-        let nextNumberP = getHighestNumber(existingContractsP, 'P') + 1;
-        
-        for (const vehicleItem of validVehicles) {
-          const prefix = vehicleItem.type === "Kamper" ? "K" : "P";
-          let contractNumber: string;
-          
-          if (prefix === "K") {
-            contractNumber = `${nextNumberK}/${currentYear}/${prefix}`;
-            nextNumberK++;
-          } else {
-            contractNumber = `${nextNumberP}/${currentYear}/${prefix}`;
-            nextNumberP++;
-          }
-          
-          // Calculate deposit for this specific vehicle
-          const vehicleDepositAmount = customDepositAmount 
-            ? parseFloat(depositAmount) 
-            : getDefaultDeposit(vehicleItem.type);
-          
-          const vehiclePaymentsData = {
-            ...paymentsData,
-            kaucja: {
-              ...paymentsData.kaucja,
-              wysokosc: vehicleDepositAmount,
-            },
-          };
-          
-          await addContractMutation.mutateAsync({
-            contract_number: contractNumber,
-            umowa_text: formData.get('umowa_text') as string,
-            client_id: selectedClientId,
-            vehicle_model: vehicleItem.model,
-            registration_number: vehicleItem.registration_number,
-            start_date: startDateISO,
-            end_date: endDateISO,
-            status: 'pending',
-            value: total > 0 ? total : null,
-            is_full_payment_as_reservation: isFullPaymentAsReservation,
-            tenant_company_name: formData.get('tenant_company_name') as string || "",
-            lessor_name: "Koko Group Sp. z o.o.",
-            lessor_address: "Złotokłos, 05-504, ul. Stawowa 1",
-            lessor_phone: "+48 660 694 257",
-            lessor_website: "www.kokokamper.pl",
-            lessor_email: "kontakt@kokokamper.pl",
-            tenant_name: selectedClient?.name || "",
-            tenant_email: selectedClient?.email || "",
-            tenant_phone: selectedClient?.phone || "",
-            tenant_address: "",
-            tenant_id_type: "",
-            tenant_id_number: "",
-            tenant_id_issuer: "",
-            tenant_pesel: "",
-            tenant_nip: formData.get('tenant_nip') as string || "",
-            tenant_license_number: "",
-            tenant_license_date: null,
-            vehicle_vin: vehicleItem.vin,
-            vehicle_next_inspection: emptyToNull(vehicleItem.next_inspection_date),
-            vehicle_insurance_number: vehicleItem.insurance_policy_number,
-            vehicle_insurance_valid_until: emptyToNull(vehicleItem.insurance_valid_until),
-            vehicle_cleaning: vehicleItem.cleaning || null,
-            vehicle_animals: vehicleItem.animals || null,
-            vehicle_extra_equipment: vehicleItem.extra_equipment || null,
-            vehicle_additional_info: vehicleItem.additional_info || null,
-            additional_drivers: [],
-            payments: vehiclePaymentsData,
-            notes: formData.get('uwagi') as string,
-            preferred_language: preferredLanguage,
+        if (validVehicles.length === 0) {
+          toast({
+            title: "Błąd",
+            description: "Wybierz co najmniej jeden pojazd.",
+            variant: "destructive",
           });
-          
-          createdCount++;
+          return;
         }
         
+        // First vehicle becomes the main vehicle
+        const mainVehicle = validVehicles[0];
+        // Rest go to additional_vehicles
+        const additionalVehicles = validVehicles.slice(1).map(v => ({
+          model: v.model,
+          vin: v.vin,
+          registration_number: v.registration_number,
+          type: v.type,
+          cleaning: v.cleaning || null,
+          animals: v.animals || null,
+          extra_equipment: v.extra_equipment || null,
+          next_inspection_date: v.next_inspection_date || null,
+          insurance_policy_number: v.insurance_policy_number || null,
+          insurance_valid_until: v.insurance_valid_until || null,
+          additional_info: v.additional_info || null,
+        }));
+        
+        // Generate contract number based on main vehicle type
+        const contractNumber = await generateContractNumber(mainVehicle.type || "Kamper");
+        
+        // Calculate deposit - sum of all vehicles
+        const calculateTotalDeposit = () => {
+          let totalDeposit = 0;
+          for (const v of validVehicles) {
+            if (customDepositAmount) {
+              totalDeposit += parseFloat(depositAmount);
+            } else if (v.type === "Przyczepa") {
+              totalDeposit += 3000;
+            } else if (isPremiumCamper) {
+              totalDeposit += 8000;
+            } else {
+              totalDeposit += 5000;
+            }
+          }
+          return totalDeposit;
+        };
+        
+        const totalDepositAmount = calculateTotalDeposit();
+        
+        const multiVehiclePaymentsData = {
+          ...paymentsData,
+          kaucja: {
+            ...paymentsData.kaucja,
+            wysokosc: totalDepositAmount,
+          },
+        };
+        
+        await addContractMutation.mutateAsync({
+          contract_number: contractNumber,
+          umowa_text: formData.get('umowa_text') as string,
+          client_id: selectedClientId,
+          vehicle_model: mainVehicle.model,
+          registration_number: mainVehicle.registration_number,
+          start_date: startDateISO,
+          end_date: endDateISO,
+          status: 'pending',
+          value: total > 0 ? total : null,
+          is_full_payment_as_reservation: isFullPaymentAsReservation,
+          tenant_company_name: formData.get('tenant_company_name') as string || "",
+          lessor_name: "Koko Group Sp. z o.o.",
+          lessor_address: "Złotokłos, 05-504, ul. Stawowa 1",
+          lessor_phone: "+48 660 694 257",
+          lessor_website: "www.kokokamper.pl",
+          lessor_email: "kontakt@kokokamper.pl",
+          tenant_name: selectedClient?.name || "",
+          tenant_email: selectedClient?.email || "",
+          tenant_phone: selectedClient?.phone || "",
+          tenant_address: "",
+          tenant_id_type: "",
+          tenant_id_number: "",
+          tenant_id_issuer: "",
+          tenant_pesel: "",
+          tenant_nip: formData.get('tenant_nip') as string || "",
+          tenant_license_number: "",
+          tenant_license_date: null,
+          vehicle_vin: mainVehicle.vin,
+          vehicle_next_inspection: emptyToNull(mainVehicle.next_inspection_date),
+          vehicle_insurance_number: mainVehicle.insurance_policy_number,
+          vehicle_insurance_valid_until: emptyToNull(mainVehicle.insurance_valid_until),
+          vehicle_cleaning: mainVehicle.cleaning || null,
+          vehicle_animals: mainVehicle.animals || null,
+          vehicle_extra_equipment: mainVehicle.extra_equipment || null,
+          vehicle_additional_info: mainVehicle.additional_info || null,
+          additional_drivers: [],
+          additional_vehicles: additionalVehicles,
+          payments: multiVehiclePaymentsData,
+          notes: formData.get('uwagi') as string,
+          preferred_language: preferredLanguage,
+        });
+        
         toast({
-          title: "Umowy utworzone",
-          description: `Utworzono ${createdCount} umów dla tego samego klienta.`,
+          title: "Umowa utworzona",
+          description: `Utworzono umowę na ${validVehicles.length} pojazdów.`,
         });
       } else {
         // Single vehicle mode (existing logic)

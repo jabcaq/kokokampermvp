@@ -1,6 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface AdditionalVehicle {
+  model: string;
+  vin: string;
+  registration_number: string;
+  type?: string;
+  cleaning?: string | null;
+  animals?: string | null;
+  extra_equipment?: string | null;
+  next_inspection_date?: string | null;
+  insurance_policy_number?: string | null;
+  insurance_valid_until?: string | null;
+  additional_info?: string | null;
+}
+
 export interface Contract {
   id: string;
   contract_number: string;
@@ -40,6 +54,7 @@ export interface Contract {
   vehicle_extra_equipment?: string;
   number_of_travelers?: number;
   additional_drivers?: any[];
+  additional_vehicles?: any; // JSON array of AdditionalVehicle
   payments?: any;
   notes?: string;
   handover_link?: string;

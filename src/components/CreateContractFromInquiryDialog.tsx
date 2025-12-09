@@ -219,119 +219,104 @@ export const CreateContractFromInquiryDialog = ({
       };
 
       if (isMultiVehicleMode) {
-        // Multi-vehicle mode: create a contract for each vehicle
+        // Multi-vehicle mode: create ONE contract with multiple vehicles
         const validVehicles = multiVehicles.filter(v => v.vehicleId);
-        let createdCount = 0;
-        let lastContractId = '';
-
-        // Pre-fetch the highest contract numbers to avoid conflicts
-        const year = new Date().getFullYear();
-        const { data: existingContractsK } = await supabase
-          .from('contracts')
-          .select('contract_number')
-          .or(`contract_number.like.K/%/${year},contract_number.like.%/${year}/K`)
-          .order('created_at', { ascending: false });
         
-        const { data: existingContractsP } = await supabase
-          .from('contracts')
-          .select('contract_number')
-          .or(`contract_number.like.P/%/${year},contract_number.like.%/${year}/P`)
-          .order('created_at', { ascending: false });
+        if (validVehicles.length === 0) {
+          toast({
+            title: "Błąd",
+            description: "Wybierz co najmniej jeden pojazd.",
+            variant: "destructive",
+          });
+          return;
+        }
         
-        const getHighestNumber = (contracts: any[], prefix: string) => {
-          if (!contracts || contracts.length === 0) return 0;
-          const numbers = contracts
-            .map(c => {
-              const parts = c.contract_number.split('/');
-              if (parts.length === 3) {
-                return parseInt(parts[0] === prefix ? parts[1] : parts[0]);
-              }
-              return 0;
-            })
-            .filter(n => !isNaN(n));
-          return numbers.length > 0 ? Math.max(...numbers) : 0;
+        // First vehicle becomes the main vehicle
+        const mainVehicle = validVehicles[0];
+        // Rest go to additional_vehicles
+        const additionalVehicles = validVehicles.slice(1).map(v => ({
+          model: v.model,
+          vin: v.vin,
+          registration_number: v.registration_number,
+          type: v.type,
+          cleaning: v.cleaning || null,
+          animals: v.animals || null,
+          extra_equipment: v.extra_equipment || null,
+          next_inspection_date: v.next_inspection_date || null,
+          insurance_policy_number: v.insurance_policy_number || null,
+          insurance_valid_until: v.insurance_valid_until || null,
+          additional_info: v.additional_info || null,
+        }));
+        
+        // Generate contract number based on main vehicle type
+        const contractNumber = await generateContractNumber(mainVehicle.type || 'Kamper');
+        
+        // Calculate total deposit for all vehicles
+        const calculateTotalDeposit = () => {
+          let totalDeposit = 0;
+          for (const v of validVehicles) {
+            totalDeposit += getDepositAmount(v.type);
+          }
+          return totalDeposit;
         };
         
-        let nextNumberK = getHighestNumber(existingContractsK, 'K') + 1;
-        let nextNumberP = getHighestNumber(existingContractsP, 'P') + 1;
+        const totalDepositAmount = calculateTotalDeposit();
 
-        for (const vehicleItem of validVehicles) {
-          const vehicleType = vehicleItem.type || 'Kamper';
-          const typePrefix = vehicleType.toLowerCase().includes('przyczepa') || vehicleType.toLowerCase().includes('trailer') ? 'P' : 'K';
-          
-          let contractNumber: string;
-          if (typePrefix === 'K') {
-            contractNumber = `${nextNumberK}/${year}/${typePrefix}`;
-            nextNumberK++;
-          } else {
-            contractNumber = `${nextNumberP}/${year}/${typePrefix}`;
-            nextNumberP++;
-          }
-          
-          const finalDepositAmount = getDepositAmount(vehicleType);
-
-          const payments = {
-            rezerwacyjna: {
-              wysokosc: parseFloat(reservationAmount.toFixed(2)),
-              data: reservationDate.toISOString().split('T')[0],
-              rachunek: "34 1140 2004 0000 3802 8192 4912"
-            },
-            ...(isFullPaymentAsReservation ? {} : {
-              zasadnicza: {
-                wysokosc: parseFloat(mainPaymentAmount.toFixed(2)),
-                data: mainPaymentDate.toISOString().split('T')[0],
-                rachunek: "34 1140 2004 0000 3802 8192 4912"
-              }
-            }),
-            kaucja: {
-              wysokosc: finalDepositAmount,
-              data: startDate.split('T')[0],
+        const payments = {
+          rezerwacyjna: {
+            wysokosc: parseFloat(reservationAmount.toFixed(2)),
+            data: reservationDate.toISOString().split('T')[0],
+            rachunek: "34 1140 2004 0000 3802 8192 4912"
+          },
+          ...(isFullPaymentAsReservation ? {} : {
+            zasadnicza: {
+              wysokosc: parseFloat(mainPaymentAmount.toFixed(2)),
+              data: mainPaymentDate.toISOString().split('T')[0],
               rachunek: "34 1140 2004 0000 3802 8192 4912"
             }
-          };
+          }),
+          kaucja: {
+            wysokosc: totalDepositAmount,
+            data: startDate.split('T')[0],
+            rachunek: "34 1140 2004 0000 3802 8192 4912"
+          }
+        };
 
-          const newContract = await addContract.mutateAsync({
-            contract_number: contractNumber,
-            client_id: clientId,
-            tenant_name: formData.name,
-            tenant_email: formData.email,
-            tenant_phone: formData.phone || null,
-            start_date: startDate,
-            end_date: endDate,
-            status: 'pending',
-            value: total,
-            payments: payments,
-            is_full_payment_as_reservation: isFullPaymentAsReservation,
-            vehicle_model: vehicleItem.model,
-            registration_number: vehicleItem.registration_number,
-            vehicle_vin: vehicleItem.vin,
-            vehicle_next_inspection: vehicleItem.next_inspection_date || null,
-            vehicle_insurance_number: vehicleItem.insurance_policy_number || null,
-            vehicle_insurance_valid_until: vehicleItem.insurance_valid_until || null,
-            vehicle_cleaning: vehicleItem.cleaning || null,
-            vehicle_animals: vehicleItem.animals || null,
-            vehicle_extra_equipment: vehicleItem.extra_equipment || null,
-            inquiry_id: inquiry.id,
-            inquiry_number: inquiry.inquiry_number,
-            preferred_language: preferredLanguage,
-          });
-
-          lastContractId = newContract.id;
-          createdCount++;
-        }
+        const newContract = await addContract.mutateAsync({
+          contract_number: contractNumber,
+          client_id: clientId,
+          tenant_name: formData.name,
+          tenant_email: formData.email,
+          tenant_phone: formData.phone || null,
+          start_date: startDate,
+          end_date: endDate,
+          status: 'pending',
+          value: total,
+          payments: payments,
+          is_full_payment_as_reservation: isFullPaymentAsReservation,
+          vehicle_model: mainVehicle.model,
+          registration_number: mainVehicle.registration_number,
+          vehicle_vin: mainVehicle.vin,
+          vehicle_next_inspection: mainVehicle.next_inspection_date || null,
+          vehicle_insurance_number: mainVehicle.insurance_policy_number || null,
+          vehicle_insurance_valid_until: mainVehicle.insurance_valid_until || null,
+          vehicle_cleaning: mainVehicle.cleaning || null,
+          vehicle_animals: mainVehicle.animals || null,
+          vehicle_extra_equipment: mainVehicle.extra_equipment || null,
+          additional_vehicles: additionalVehicles,
+          inquiry_id: inquiry.id,
+          inquiry_number: inquiry.inquiry_number,
+          preferred_language: preferredLanguage,
+        });
 
         toast({
           title: "Sukces",
-          description: `Utworzono ${createdCount} umów dla tego samego klienta.`,
+          description: `Utworzono umowę na ${validVehicles.length} pojazdów.`,
         });
 
         onOpenChange(false);
         onSuccess?.();
-        
-        // Navigate to the last created contract
-        if (lastContractId) {
-          navigate(`/contracts/${lastContractId}`);
-        }
+        navigate(`/contracts/${newContract.id}`);
       } else {
         // Single vehicle mode
         const selectedVehicle = availableVehicles.find(v => v.id === selectedVehicleId);

@@ -1335,6 +1335,72 @@ const ContractDetails = () => {
         </CardContent>
       </Card>
 
+      {/* Dodatkowe pojazdy (jeśli umowa na wiele pojazdów) */}
+      {displayData?.additional_vehicles && Array.isArray(displayData.additional_vehicles) && displayData.additional_vehicles.length > 0 && (
+        <Card className="shadow-md border-primary/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5" />
+              Dodatkowe pojazdy ({displayData.additional_vehicles.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {displayData.additional_vehicles.map((vehicle: any, index: number) => (
+              <div key={index} className="border border-border rounded-lg p-4 space-y-4 bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-foreground">
+                    Pojazd #{index + 2}: {vehicle.model}
+                  </h4>
+                  <Badge variant="outline">{vehicle.registration_number}</Badge>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">VIN:</span>
+                    <span className="ml-2 font-medium">{vehicle.vin || 'Nie podano'}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Typ:</span>
+                    <span className="ml-2 font-medium">{vehicle.type || 'Nie podano'}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Badanie:</span>
+                    <span className="ml-2 font-medium">{vehicle.next_inspection_date || 'Nie podano'}</span>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Sprzątanie:</span>
+                    <span className="ml-2">
+                      {vehicle.cleaning ? (
+                        <Badge variant={vehicle.cleaning === 'Tak' ? 'default' : 'outline'} className="text-xs">
+                          {vehicle.cleaning}
+                        </Badge>
+                      ) : '-'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Zwierzęta:</span>
+                    <span className="ml-2">
+                      {vehicle.animals ? (
+                        <Badge variant={vehicle.animals === 'Tak' ? 'default' : 'outline'} className="text-xs">
+                          {vehicle.animals}
+                        </Badge>
+                      ) : '-'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Dodatkowy sprzęt:</span>
+                    <span className="ml-2 font-medium">{vehicle.extra_equipment || '-'}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Płatności */}
       <Card className="shadow-md">
         <CardHeader className="pb-3">
