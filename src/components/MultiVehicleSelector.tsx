@@ -196,22 +196,60 @@ export const MultiVehicleSelector = ({
           </div>
 
           {selected.vehicleId && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Model</Label>
-                <Input value={selected.model} readOnly className="bg-muted" />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Model</Label>
+                  <Input value={selected.model} readOnly className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nr rejestracyjny</Label>
+                  <Input value={selected.registration_number} readOnly className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label>VIN</Label>
+                  <Input value={selected.vin} readOnly className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Typ</Label>
+                  <Input value={selected.type} readOnly className="bg-muted" />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Nr rejestracyjny</Label>
-                <Input value={selected.registration_number} readOnly className="bg-muted" />
-              </div>
-              <div className="space-y-2">
-                <Label>VIN</Label>
-                <Input value={selected.vin} readOnly className="bg-muted" />
-              </div>
-              <div className="space-y-2">
-                <Label>Typ</Label>
-                <Input value={selected.type} readOnly className="bg-muted" />
+              
+              {/* Dodatki dla pojazdu */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-border/50">
+                <div className="space-y-2">
+                  <Label>Sprzątanie dodatkowo</Label>
+                  <select
+                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                    value={selected.cleaning}
+                    onChange={(e) => updateVehicleField(index, 'cleaning', e.target.value)}
+                  >
+                    <option value="">Wybierz...</option>
+                    <option value="Tak">Tak</option>
+                    <option value="Nie">Nie</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Zwierzęta</Label>
+                  <select
+                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                    value={selected.animals}
+                    onChange={(e) => updateVehicleField(index, 'animals', e.target.value)}
+                  >
+                    <option value="">Wybierz...</option>
+                    <option value="Tak">Tak</option>
+                    <option value="Nie">Nie</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Dodatkowy sprzęt</Label>
+                  <Input
+                    placeholder="np. krzesła, stół..."
+                    value={selected.extra_equipment}
+                    onChange={(e) => updateVehicleField(index, 'extra_equipment', e.target.value)}
+                  />
+                </div>
               </div>
             </div>
           )}
