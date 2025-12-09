@@ -109,7 +109,18 @@ export const CreateContractFromInquiryDialog = ({
       return;
     }
 
-    if (!selectedVehicleId) {
+    // Validate vehicle selection based on mode
+    if (isMultiVehicleMode) {
+      const validVehicles = multiVehicles.filter(v => v.vehicleId);
+      if (validVehicles.length === 0) {
+        toast({
+          title: "Błąd",
+          description: "Wybierz co najmniej jeden pojazd.",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else if (!selectedVehicleId) {
       toast({
         title: "Błąd",
         description: "Wybierz pojazd dla umowy.",
@@ -134,56 +145,8 @@ export const CreateContractFromInquiryDialog = ({
         clientId = newClient.id;
       }
 
-      // Znajdź wybrany pojazd
-      const selectedVehicle = availableVehicles.find(v => v.id === selectedVehicleId);
-      if (!selectedVehicle) {
-        throw new Error("Nie znaleziono wybranego pojazdu");
-      }
-
-      // Określ skrót typu pojazdu (K dla kamperów, P dla przyczep)
-      const vehicleType = selectedVehicle.type || '';
-      let typePrefix = 'K'; // domyślnie kamper
-      
-      if (vehicleType.toLowerCase().includes('przyczepa') || vehicleType.toLowerCase().includes('trailer')) {
-        typePrefix = 'P';
-      } else if (vehicleType.toLowerCase().includes('kamper') || vehicleType.toLowerCase().includes('van')) {
-        typePrefix = 'K';
-      }
-      
-      const year = new Date().getFullYear();
-      
-      // Pobierz wszystkie umowy dla tego typu w tym roku (nowy i stary format)
-      const { data: existingContracts } = await supabase
-        .from('contracts')
-        .select('contract_number')
-        .or(`contract_number.like.${typePrefix}/%/${year},contract_number.like.%/${year}/${typePrefix}`)
-        .order('created_at', { ascending: false });
-
-      let nextNumber = 1;
-      if (existingContracts && existingContracts.length > 0) {
-        // Parsuj numery z obu formatów i znajdź najwyższy
-        const numbers = existingContracts
-          .map(c => {
-            const parts = c.contract_number.split('/');
-            if (parts.length === 3) {
-              // Stary format: K/14/2025 lub nowy format: 14/2025/K
-              return parseInt(parts[0] === typePrefix ? parts[1] : parts[0]);
-            }
-            return 0;
-          })
-          .filter(n => !isNaN(n));
-        
-        if (numbers.length > 0) {
-          nextNumber = Math.max(...numbers) + 1;
-        }
-      }
-
-      const contractNumber = `${nextNumber}/${year}/${typePrefix}`;
-
       // Konwertuj datetime-local (Warsaw time) do UTC ISO string
       const parseWarsawToUTC = (dateTimeLocal: string) => {
-        // datetime-local format: "2025-02-10T10:00"
-        // Treat this as Warsaw time and convert to UTC
         const warsawDate = new Date(dateTimeLocal);
         return fromZonedTime(warsawDate, WARSAW_TZ).toISOString();
       };
@@ -209,76 +172,192 @@ export const CreateContractFromInquiryDialog = ({
         : todayWarsaw;
       const mainPaymentDate = addDays(startDateObj, -14);
 
-      // Determine deposit amount
-      let finalDepositAmount = 5000;
-      if (customDepositAmount) {
-        finalDepositAmount = parseFloat(depositAmount);
-      } else if (vehicleType.toLowerCase().includes('przyczepa') || vehicleType.toLowerCase().includes('trailer')) {
-        finalDepositAmount = 3000;
-      } else if (isPremiumCamper) {
-        finalDepositAmount = 8000;
-      }
-
-      // Create payments object - all dates in Warsaw timezone
-      const payments = {
-        rezerwacyjna: {
-          wysokosc: parseFloat(reservationAmount.toFixed(2)),
-          data: reservationDate.toISOString().split('T')[0],
-          rachunek: "34 1140 2004 0000 3802 8192 4912"
-        },
-        ...(isFullPaymentAsReservation ? {} : {
-          zasadnicza: {
-            wysokosc: parseFloat(mainPaymentAmount.toFixed(2)),
-            data: mainPaymentDate.toISOString().split('T')[0],
-            rachunek: "34 1140 2004 0000 3802 8192 4912"
-          }
-        }),
-        kaucja: {
-          wysokosc: finalDepositAmount,
-          data: startDate.split('T')[0],
-          rachunek: "34 1140 2004 0000 3802 8192 4912"
+      // Helper function to generate contract number
+      const generateContractNumber = async (vehicleType: string) => {
+        let typePrefix = 'K';
+        if (vehicleType.toLowerCase().includes('przyczepa') || vehicleType.toLowerCase().includes('trailer')) {
+          typePrefix = 'P';
         }
+        
+        const year = new Date().getFullYear();
+        const { data: existingContracts } = await supabase
+          .from('contracts')
+          .select('contract_number')
+          .or(`contract_number.like.${typePrefix}/%/${year},contract_number.like.%/${year}/${typePrefix}`)
+          .order('created_at', { ascending: false });
+
+        let nextNumber = 1;
+        if (existingContracts && existingContracts.length > 0) {
+          const numbers = existingContracts
+            .map(c => {
+              const parts = c.contract_number.split('/');
+              if (parts.length === 3) {
+                return parseInt(parts[0] === typePrefix ? parts[1] : parts[0]);
+              }
+              return 0;
+            })
+            .filter(n => !isNaN(n));
+          
+          if (numbers.length > 0) {
+            nextNumber = Math.max(...numbers) + 1;
+          }
+        }
+
+        return `${nextNumber}/${year}/${typePrefix}`;
       };
 
-      // Utwórz umowę
-      const newContract = await addContract.mutateAsync({
-        contract_number: contractNumber,
-        client_id: clientId,
-        tenant_name: formData.name,
-        tenant_email: formData.email,
-        tenant_phone: formData.phone || null,
-        start_date: startDate,
-        end_date: endDate,
-        status: 'pending',
-        value: total,
-        payments: payments,
-        is_full_payment_as_reservation: isFullPaymentAsReservation,
-        vehicle_model: selectedVehicle.model,
-        registration_number: selectedVehicle.registration_number,
-        vehicle_vin: selectedVehicle.vin,
-        vehicle_next_inspection: selectedVehicle.next_inspection_date,
-        vehicle_insurance_number: selectedVehicle.insurance_policy_number,
-        vehicle_insurance_valid_until: selectedVehicle.insurance_valid_until,
-        vehicle_cleaning: vehicleCleaning || null,
-        vehicle_animals: vehicleAnimals || null,
-        vehicle_extra_equipment: vehicleExtraEquipment || null,
-        inquiry_id: inquiry.id,
-        inquiry_number: inquiry.inquiry_number,
-        preferred_language: preferredLanguage,
-      });
+      // Helper function to determine deposit amount
+      const getDepositAmount = (vehicleType: string) => {
+        if (customDepositAmount) {
+          return parseFloat(depositAmount);
+        } else if (vehicleType.toLowerCase().includes('przyczepa') || vehicleType.toLowerCase().includes('trailer')) {
+          return 3000;
+        } else if (isPremiumCamper) {
+          return 8000;
+        }
+        return 5000;
+      };
 
-      toast({
-        title: "Sukces",
-        description: existingClient 
-          ? "Umowa została utworzona dla istniejącego klienta." 
-          : "Klient i umowa zostały utworzone.",
-      });
+      if (isMultiVehicleMode) {
+        // Multi-vehicle mode: create a contract for each vehicle
+        const validVehicles = multiVehicles.filter(v => v.vehicleId);
+        let createdCount = 0;
+        let lastContractId = '';
 
-      onOpenChange(false);
-      onSuccess?.();
-      
-      // Przekieruj do szczegółów utworzonej umowy
-      navigate(`/contracts/${newContract.id}`);
+        for (const vehicleItem of validVehicles) {
+          const contractNumber = await generateContractNumber(vehicleItem.type || 'Kamper');
+          const finalDepositAmount = getDepositAmount(vehicleItem.type);
+
+          const payments = {
+            rezerwacyjna: {
+              wysokosc: parseFloat(reservationAmount.toFixed(2)),
+              data: reservationDate.toISOString().split('T')[0],
+              rachunek: "34 1140 2004 0000 3802 8192 4912"
+            },
+            ...(isFullPaymentAsReservation ? {} : {
+              zasadnicza: {
+                wysokosc: parseFloat(mainPaymentAmount.toFixed(2)),
+                data: mainPaymentDate.toISOString().split('T')[0],
+                rachunek: "34 1140 2004 0000 3802 8192 4912"
+              }
+            }),
+            kaucja: {
+              wysokosc: finalDepositAmount,
+              data: startDate.split('T')[0],
+              rachunek: "34 1140 2004 0000 3802 8192 4912"
+            }
+          };
+
+          const newContract = await addContract.mutateAsync({
+            contract_number: contractNumber,
+            client_id: clientId,
+            tenant_name: formData.name,
+            tenant_email: formData.email,
+            tenant_phone: formData.phone || null,
+            start_date: startDate,
+            end_date: endDate,
+            status: 'pending',
+            value: total,
+            payments: payments,
+            is_full_payment_as_reservation: isFullPaymentAsReservation,
+            vehicle_model: vehicleItem.model,
+            registration_number: vehicleItem.registration_number,
+            vehicle_vin: vehicleItem.vin,
+            vehicle_next_inspection: vehicleItem.next_inspection_date || null,
+            vehicle_insurance_number: vehicleItem.insurance_policy_number || null,
+            vehicle_insurance_valid_until: vehicleItem.insurance_valid_until || null,
+            vehicle_cleaning: vehicleItem.cleaning || null,
+            vehicle_animals: vehicleItem.animals || null,
+            vehicle_extra_equipment: vehicleItem.extra_equipment || null,
+            inquiry_id: inquiry.id,
+            inquiry_number: inquiry.inquiry_number,
+            preferred_language: preferredLanguage,
+          });
+
+          lastContractId = newContract.id;
+          createdCount++;
+        }
+
+        toast({
+          title: "Sukces",
+          description: `Utworzono ${createdCount} umów dla tego samego klienta.`,
+        });
+
+        onOpenChange(false);
+        onSuccess?.();
+        
+        // Navigate to the last created contract
+        if (lastContractId) {
+          navigate(`/contracts/${lastContractId}`);
+        }
+      } else {
+        // Single vehicle mode
+        const selectedVehicle = availableVehicles.find(v => v.id === selectedVehicleId);
+        if (!selectedVehicle) {
+          throw new Error("Nie znaleziono wybranego pojazdu");
+        }
+
+        const contractNumber = await generateContractNumber(selectedVehicle.type || 'Kamper');
+        const finalDepositAmount = getDepositAmount(selectedVehicle.type || '');
+
+        const payments = {
+          rezerwacyjna: {
+            wysokosc: parseFloat(reservationAmount.toFixed(2)),
+            data: reservationDate.toISOString().split('T')[0],
+            rachunek: "34 1140 2004 0000 3802 8192 4912"
+          },
+          ...(isFullPaymentAsReservation ? {} : {
+            zasadnicza: {
+              wysokosc: parseFloat(mainPaymentAmount.toFixed(2)),
+              data: mainPaymentDate.toISOString().split('T')[0],
+              rachunek: "34 1140 2004 0000 3802 8192 4912"
+            }
+          }),
+          kaucja: {
+            wysokosc: finalDepositAmount,
+            data: startDate.split('T')[0],
+            rachunek: "34 1140 2004 0000 3802 8192 4912"
+          }
+        };
+
+        const newContract = await addContract.mutateAsync({
+          contract_number: contractNumber,
+          client_id: clientId,
+          tenant_name: formData.name,
+          tenant_email: formData.email,
+          tenant_phone: formData.phone || null,
+          start_date: startDate,
+          end_date: endDate,
+          status: 'pending',
+          value: total,
+          payments: payments,
+          is_full_payment_as_reservation: isFullPaymentAsReservation,
+          vehicle_model: selectedVehicle.model,
+          registration_number: selectedVehicle.registration_number,
+          vehicle_vin: selectedVehicle.vin,
+          vehicle_next_inspection: selectedVehicle.next_inspection_date,
+          vehicle_insurance_number: selectedVehicle.insurance_policy_number,
+          vehicle_insurance_valid_until: selectedVehicle.insurance_valid_until,
+          vehicle_cleaning: vehicleCleaning || null,
+          vehicle_animals: vehicleAnimals || null,
+          vehicle_extra_equipment: vehicleExtraEquipment || null,
+          inquiry_id: inquiry.id,
+          inquiry_number: inquiry.inquiry_number,
+          preferred_language: preferredLanguage,
+        });
+
+        toast({
+          title: "Sukces",
+          description: existingClient 
+            ? "Umowa została utworzona dla istniejącego klienta." 
+            : "Klient i umowa zostały utworzone.",
+        });
+
+        onOpenChange(false);
+        onSuccess?.();
+        
+        navigate(`/contracts/${newContract.id}`);
+      }
     } catch (error) {
       console.error('Error creating client and contract:', error);
       toast({
@@ -605,6 +684,7 @@ export const CreateContractFromInquiryDialog = ({
               </Select>
             </div>
           </div>
+          )}
 
           <div className="space-y-4 pt-4 border-t">
             <h4 className="text-sm font-semibold text-foreground">Preferowany język</h4>
