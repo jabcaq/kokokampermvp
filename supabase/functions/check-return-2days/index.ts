@@ -17,13 +17,16 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get date 2 days from now (for returns)
+    // Get today's date and target date (2 days from now for returns)
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + 2);
     const targetDateStr = targetDate.toISOString().split('T')[0];
     console.log('Checking for returns in 2 days (date only):', targetDateStr);
 
     // Fetch all contracts ending in 2 days using DATE comparison
+    // Note: For return notifications, we check future end_date, so no need to filter by past end_date
     const { data: contracts, error: contractsError } = await supabase
       .from('contracts')
       .select('*')
@@ -84,8 +87,8 @@ Deno.serve(async (req) => {
     // Create notification log
     await supabase.from('notification_logs').insert({
       notification_type: 'return_2days_prior',
-      notification_title: 'Powiadomienia o zwrotach za 3 dni',
-      action_description: `Wysłano powiadomienie dla ${contracts.length} umów kończących się za 3 dni`,
+      notification_title: 'Powiadomienia o zwrotach za 2 dni',
+      action_description: `Wysłano powiadomienie dla ${contracts.length} umów kończących się za 2 dni`,
       metadata: { date: targetDateStr, count: contracts.length },
     });
 
