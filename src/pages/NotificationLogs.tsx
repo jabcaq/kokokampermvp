@@ -9,9 +9,21 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Bell, Search, Filter, User, Calendar, Info } from "lucide-react";
+import { FileText, Bell, Search, Filter, User, Calendar, Info, RotateCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+// Typy powiadomień które można ponownie wysłać na webhook
+const resendableTypes = [
+  'deposit_received',
+  'deposit_notification', 
+  'contract_active',
+  'payment_reminder',
+  'payment_overdue',
+  'final_invoice_due',
+];
 
 const notificationTypeLabels: Record<string, string> = {
   status_auto_change: "Zmiana statusu",
@@ -67,6 +79,8 @@ export default function NotificationLogs() {
   const [contractFilter, setContractFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [userFilter, setUserFilter] = useState("");
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const { data: logs, isLoading } = useQuery({
     queryKey: ["notification_logs"],
@@ -81,6 +95,40 @@ export default function NotificationLogs() {
       return data;
     },
   });
+
+  const handleResend = async (log: any) => {
+    setResendingId(log.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('resend-notification', {
+        body: {
+          notification_type: log.notification_type,
+          notification_title: log.notification_title,
+          action_description: log.action_description,
+          contract_id: log.contract_id,
+          contract_number: log.contract_number,
+          inquiry_id: log.inquiry_id,
+          inquiry_number: log.inquiry_number,
+          metadata: log.metadata,
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Wysłano ponownie",
+        description: "Powiadomienie zostało wysłane na webhook",
+      });
+    } catch (error: any) {
+      console.error('Error resending notification:', error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się wysłać powiadomienia",
+        variant: "destructive",
+      });
+    } finally {
+      setResendingId(null);
+    }
+  };
 
   // Get unique notification types for filter
   const uniqueTypes = logs 
@@ -198,6 +246,7 @@ export default function NotificationLogs() {
                     <TableHead>Tytuł</TableHead>
                     <TableHead>Opis</TableHead>
                     <TableHead className="w-[180px]">Użytkownik</TableHead>
+                    <TableHead className="w-[60px]">Akcje</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -242,6 +291,30 @@ export default function NotificationLogs() {
                           <span className="text-sm">{log.user_email}</span>
                         ) : (
                           <span className="text-muted-foreground text-sm">System</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {resendableTypes.includes(log.notification_type) && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleResend(log)}
+                                  disabled={resendingId === log.id}
+                                >
+                                  <RotateCw 
+                                    className={`h-4 w-4 ${resendingId === log.id ? 'animate-spin' : ''}`} 
+                                  />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Wyślij ponownie na webhook</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                       </TableCell>
                     </TableRow>
