@@ -9,10 +9,17 @@ const corsHeaders = {
 const webhookMapping: Record<string, string> = {
   deposit_received: 'https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp',
   deposit_notification: 'https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp',
+  deposit_paid_rental_day: 'https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp',
   contract_active: 'https://hook.eu2.make.com/h6d7ee9fb114su7n7hz3x8w5h4mfjr3b',
   payment_reminder: 'https://hook.eu2.make.com/y6p65n7fg253wq5j1y0ryqxra1hsibxo',
   payment_overdue: 'https://hook.eu2.make.com/qnvmpalrn8bhuz7qjon7cknhzw7yz4mq',
   final_invoice_due: 'https://hook.eu2.make.com/g4hbumjfkgenjrv9x4431oslrcyciy72',
+  // Generyczne powiadomienia - używają tego samego webhooka co deposit
+  driver_submission_webhook: 'https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp',
+  handover_day: 'https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp',
+  return_day: 'https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp',
+  return_2days_prior: 'https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp',
+  upcoming_rental_3days: 'https://hook.eu2.make.com/hg6o7ehx1b6nar2xsshlpmqkkkf11fkp',
 };
 
 interface ResendRequest {

@@ -18,11 +18,17 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 // Typy powiadomień które można ponownie wysłać na webhook
 const resendableTypes = [
   'deposit_received',
-  'deposit_notification', 
+  'deposit_notification',
+  'deposit_paid_rental_day',
   'contract_active',
   'payment_reminder',
   'payment_overdue',
   'final_invoice_due',
+  'driver_submission_webhook',
+  'handover_day',
+  'return_day',
+  'return_2days_prior',
+  'upcoming_rental_3days',
 ];
 
 const notificationTypeLabels: Record<string, string> = {
