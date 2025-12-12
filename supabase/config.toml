@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.export-data]
 verify_jwt = false
+
+[functions.resend-notification]
+verify_jwt = false
