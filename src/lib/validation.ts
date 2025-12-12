@@ -125,10 +125,7 @@ export const contractSchema = z.object({
 export const clientSchema = z.object({
   name: z.string().min(1, "Nazwa jest wymagana").max(200),
   email: z.string().regex(emailRegex, "Nieprawidłowy format adresu email").max(255),
-  phone: z.string()
-    .regex(phoneRegex, "Nieprawidłowy format numeru telefonu")
-    .optional()
-    .or(z.literal("")),
+  phone: z.string().max(50).optional().or(z.literal("")).nullable(),
 });
 
 export const inquirySchema = z.object({
