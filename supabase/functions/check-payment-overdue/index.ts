@@ -12,6 +12,7 @@ interface Contract {
   tenant_name: string;
   tenant_email: string;
   start_date: string;
+  end_date: string;
   payments: any;
 }
 
@@ -29,12 +30,14 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Checking for overdue payments as of:', today);
 
-    // Fetch all active contracts
+    // Fetch all active contracts where end_date has not passed
+    // IMPORTANT: Exclude contracts that have already ended
     const { data: contracts, error } = await supabase
       .from('contracts')
-      .select('id, contract_number, tenant_name, tenant_email, start_date, payments')
+      .select('id, contract_number, tenant_name, tenant_email, start_date, end_date, payments')
       .eq('is_archived', false)
-      .in('status', ['pending', 'active']);
+      .in('status', ['pending', 'active'])
+      .gte('end_date', `${today}T00:00:00`); // Exclude contracts that have already ended
 
     if (error) {
       console.error('Error fetching contracts:', error);

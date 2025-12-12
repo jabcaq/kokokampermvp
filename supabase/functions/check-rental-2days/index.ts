@@ -23,6 +23,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Calculate target date (2 days from now)
     const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
     const targetDate = new Date(now);
     targetDate.setDate(targetDate.getDate() + 2);
     
@@ -32,11 +33,13 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Checking for rentals starting in 2 days (date only):', targetDateStr);
 
     // Fetch contracts starting in 2 days using DATE comparison
+    // IMPORTANT: Also check that end_date has not passed (contract is still valid)
     const { data: contracts, error: contractsError } = await supabase
       .from('contracts')
       .select('*')
       .eq('is_archived', false)
       .in('status', ['pending', 'active'])
+      .gte('end_date', `${todayStr}T00:00:00`) // Exclude contracts that have already ended
       .filter('start_date', 'gte', `${targetDateStr}T00:00:00`)
       .filter('start_date', 'lt', `${targetDateStr}T23:59:59`);
 

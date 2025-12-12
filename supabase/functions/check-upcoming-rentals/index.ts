@@ -21,6 +21,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Calculate target date (3 days from now)
     const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
     const threeDaysFromNow = new Date(now);
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
     
@@ -30,11 +31,13 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Checking for contracts starting in 3 days (date only):', targetDateStr);
 
     // Find contracts starting in 3 days using DATE comparison
+    // IMPORTANT: Also check that end_date has not passed (contract is still valid)
     const { data: contracts, error } = await supabase
       .from('contracts')
       .select('*')
       .eq('is_archived', false)
       .in('status', ['pending', 'active'])
+      .gte('end_date', `${todayStr}T00:00:00`) // Exclude contracts that have already ended
       .filter('start_date', 'gte', `${targetDateStr}T00:00:00`)
       .filter('start_date', 'lt', `${targetDateStr}T23:59:59`);
 

@@ -26,6 +26,8 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Calculate target date (5 days from now)
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + 5);
     const targetDateStr = targetDate.toISOString().split('T')[0];
@@ -33,12 +35,14 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Checking contracts starting in 5 days (date only):', targetDateStr);
 
     // Fetch contracts starting in 5 days where deposit is not received
+    // IMPORTANT: Also check that end_date has not passed (contract is still valid)
     const { data: contracts, error } = await supabase
       .from('contracts')
       .select('id, contract_number, tenant_name, start_date, deposit_received, payments')
       .eq('deposit_received', false)
       .eq('is_archived', false)
       .in('status', ['pending', 'active'])
+      .gte('end_date', `${todayStr}T00:00:00`) // Exclude contracts that have already ended
       .filter('start_date', 'gte', `${targetDateStr}T00:00:00`)
       .filter('start_date', 'lt', `${targetDateStr}T23:59:59`);
 

@@ -24,11 +24,13 @@ Deno.serve(async (req) => {
     console.log('Checking for handovers on:', todayStr);
 
     // Fetch all contracts starting today
+    // IMPORTANT: Also check that end_date has not passed (contract is still valid)
     const { data: contracts, error: contractsError } = await supabase
       .from('contracts')
       .select('*')
       .gte('start_date', `${todayStr}T00:00:00`)
       .lt('start_date', `${todayStr}T23:59:59`)
+      .gte('end_date', `${todayStr}T00:00:00`) // Exclude contracts that have already ended
       .not('is_archived', 'eq', true)
       .in('status', ['pending', 'active']);
 

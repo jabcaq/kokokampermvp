@@ -12,6 +12,7 @@ interface Contract {
   tenant_name: string;
   tenant_email: string;
   start_date: string;
+  end_date: string;
   payments: any;
   is_full_payment_as_reservation: boolean;
 }
@@ -29,7 +30,9 @@ const handler = async (req: Request): Promise<Response> => {
     // Check if this is a test request with a specific contract
     const { testContractId } = await req.json().catch(() => ({}));
 
-    // Calculate target date (7 days from now)
+    // Calculate target date (7 days from now) and today's date
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + 7);
     const targetDateStr = targetDate.toISOString().split('T')[0];
@@ -39,7 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Fetch contracts (either specific test contract or all active contracts)
     let query = supabase
       .from('contracts')
-      .select('id, contract_number, tenant_name, tenant_email, start_date, payments, is_full_payment_as_reservation')
+      .select('id, contract_number, tenant_name, tenant_email, start_date, end_date, payments, is_full_payment_as_reservation')
       .eq('is_archived', false);
 
     if (testContractId) {
@@ -47,8 +50,10 @@ const handler = async (req: Request): Promise<Response> => {
       console.log('Test mode: checking contract', testContractId);
       query = query.eq('id', testContractId);
     } else {
-      // Production mode: check active/pending contracts
-      query = query.in('status', ['pending', 'active']);
+      // Production mode: check active/pending contracts where end_date has not passed
+      query = query
+        .in('status', ['pending', 'active'])
+        .gte('end_date', `${todayStr}T00:00:00`); // Exclude contracts that have already ended
     }
 
     const { data: contracts, error } = await query;

@@ -49,11 +49,13 @@ serve(async (req) => {
     // 2. Have deposit received
     // 3. Are not archived
     // 4. Are pending or active
+    // 5. End date has not passed (contract is still valid)
     const { data: contracts, error } = await supabase
       .from('contracts')
       .select('id, contract_number, tenant_name, tenant_email, tenant_phone, start_date, end_date, deposit_received, deposit_received_at, payments')
       .gte('start_date', todayStart.toISOString())
       .lte('start_date', todayEnd.toISOString())
+      .gte('end_date', todayStart.toISOString()) // Exclude contracts that have already ended
       .eq('deposit_received', true)
       .eq('is_archived', false)
       .in('status', ['pending', 'active']);
