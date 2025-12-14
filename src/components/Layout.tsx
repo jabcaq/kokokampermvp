@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { NotificationBell } from "@/components/NotificationBell";
+import { EnvironmentBadge } from "@/components/EnvironmentBadge";
 import { useCheckExpiringDocuments } from "@/hooks/useNotifications";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -139,7 +140,9 @@ export const Layout = () => {
   );
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <>
+      <EnvironmentBadge />
+      <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-white border-r border-sidebar-border shadow-sm overflow-y-auto">
         <NavContent />
@@ -175,5 +178,6 @@ export const Layout = () => {
         </div>
       </main>
     </div>
+    </>
   );
 };
