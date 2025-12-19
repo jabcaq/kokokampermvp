@@ -63,8 +63,8 @@ const Protocols = () => {
             
             const isHandover = protocol.type === 'handover';
             const formUrl = isHandover 
-              ? `/vehicle-handover?contractId=${protocol.contract_id}&contractNumber=${encodeURIComponent(protocol.contract_number)}&tenantName=${encodeURIComponent(protocol.tenant_name)}&startDate=${protocol.start_date}&endDate=${protocol.end_date}`
-              : `/vehicle-return?contractId=${protocol.contract_id}&contractNumber=${encodeURIComponent(protocol.contract_number)}&tenantName=${encodeURIComponent(protocol.tenant_name)}&startDate=${protocol.start_date}&endDate=${protocol.end_date}`;
+              ? `/vehicle-handover?contractId=${protocol.contract_id}&contractNumber=${encodeURIComponent(protocol.contract_number)}&tenantName=${encodeURIComponent(protocol.tenant_name)}&startDate=${protocol.start_date}&endDate=${protocol.end_date}&from=protocols`
+              : `/vehicle-return?contractId=${protocol.contract_id}&contractNumber=${encodeURIComponent(protocol.contract_number)}&tenantName=${encodeURIComponent(protocol.tenant_name)}&startDate=${protocol.start_date}&endDate=${protocol.end_date}&from=protocols`;
 
             return (
               <Card
