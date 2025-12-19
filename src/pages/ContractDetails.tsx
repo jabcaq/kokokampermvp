@@ -55,7 +55,7 @@ const ContractDetails = () => {
   const { data: contract, isLoading } = useContract(id);
   const { data: vehicles } = useVehicles();
   const { data: handovers } = useVehicleHandovers(id);
-  const { data: returns } = useVehicleReturns(id);
+  const { data: returns } = useVehicleReturns(id, true); // Include incomplete returns for contract details
   
   // Check if user has accounting role
   const { data: userRoles } = useQuery({

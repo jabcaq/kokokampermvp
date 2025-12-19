@@ -42,7 +42,8 @@ const VehicleReturn = () => {
   const endDate = searchParams.get('endDate') || contractMeta?.end_date || undefined;
   const vehicleModel = searchParams.get('vehicleModel') || contractMeta?.vehicle_model || undefined;
 
-  const { data: existingReturns } = useVehicleReturns(contractId || undefined);
+  // Include incomplete returns when loading for editing
+  const { data: existingReturns } = useVehicleReturns(contractId || undefined, true);
   const existingReturn = existingReturns?.[0];
 
   const [isEditMode, setIsEditMode] = useState(false);

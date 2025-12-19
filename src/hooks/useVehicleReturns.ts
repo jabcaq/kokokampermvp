@@ -26,18 +26,26 @@ export interface VehicleReturn {
   updated_at: string;
 }
 
-export const useVehicleReturns = (contractId?: string) => {
+export const useVehicleReturns = (contractId?: string, includeIncomplete = false) => {
   return useQuery({
-    queryKey: ["vehicle_returns", contractId],
+    queryKey: ["vehicle_returns", contractId, includeIncomplete],
     queryFn: async () => {
       let query = supabase
         .from("vehicle_returns")
-        .select("*")
-        .eq("return_completed", true); // Only show completed returns (actual protocols, not bookings)
+        .select("*");
+      
+      // When fetching for a specific contract (e.g., for editing), include all returns
+      // When fetching general list, only show completed ones
+      if (!includeIncomplete && !contractId) {
+        query = query.eq("return_completed", true);
+      }
       
       if (contractId) {
         query = query.eq("contract_id", contractId);
       }
+      
+      // Filter to only returns with actual data (mileage > 0) to distinguish from booking-only records
+      query = query.gt("mileage", 0);
       
       const { data, error } = await query;
       
