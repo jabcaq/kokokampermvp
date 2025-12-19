@@ -193,6 +193,8 @@ const VehicleReturn = () => {
           title: 'Nowy formularz zwrotu pojazdu',
           message: `Wypełniono formularz zwrotu dla umowy ${contractNumber} (${vehicleModel})`,
           link: `/contracts/${contractId}`,
+          contract_id: contractId || undefined,
+          contract_number: contractNumber || undefined,
         });
         
         // Create notification for deposit refund to account
@@ -202,6 +204,8 @@ const VehicleReturn = () => {
             title: 'Zwrot kaucji na konto',
             message: `Kaucja dla umowy ${contractNumber} (${tenantName}) może zostać zwrócona na konto`,
             link: `/contracts/${contractId}`,
+            contract_id: contractId || undefined,
+            contract_number: contractNumber || undefined,
           });
         }
       }
