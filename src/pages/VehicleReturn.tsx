@@ -372,7 +372,7 @@ const VehicleReturn = () => {
                 <p><span className="font-medium">Numer umowy:</span> {contractNumber}</p>
                 <p><span className="font-medium">Najemca:</span> {tenantName}</p>
                 <p><span className="font-medium">Pojazd:</span> {vehicleModel}</p>
-                <p><span className="font-medium">Okres najmu:</span> {startDate && format(new Date(startDate), 'dd.MM.yyyy')} - {endDate && format(new Date(endDate), 'dd.MM.yyyy')}</p>
+                <p><span className="font-medium">Okres najmu:</span> {startDate && !isNaN(new Date(startDate).getTime()) ? format(new Date(startDate), 'dd.MM.yyyy') : startDate?.split('T')[0] || '-'} - {endDate && !isNaN(new Date(endDate).getTime()) ? format(new Date(endDate), 'dd.MM.yyyy') : endDate?.split('T')[0] || '-'}</p>
               </div>
             </div>
 
