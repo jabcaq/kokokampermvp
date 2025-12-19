@@ -69,9 +69,9 @@ export default function BookingsCalendar() {
     );
   }
 
-  // Filtruj tylko aktywne i oczekujące rezerwacje (bez anulowanych i zakończonych)
+  // Filtruj rezerwacje - ukryj tylko anulowane
   const filteredContracts = contracts?.filter(
-    (c) => c.status === "active" || c.status === "pending"
+    (c) => c.status !== "cancelled"
   ) || [];
 
   const events: BookingEvent[] = filteredContracts.map((contract, index) => ({
