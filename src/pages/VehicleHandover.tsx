@@ -170,6 +170,8 @@ const VehicleHandover = () => {
           title: 'Nowy formularz wydania pojazdu',
           message: `Wypełniono formularz wydania dla umowy ${contractNumber || contractMeta?.contract_number || '—'} (${vehicleModel || contractMeta?.vehicle_model || '—'})`,
           link: `/contracts/${contractId}`,
+          contract_id: contractId || undefined,
+          contract_number: contractNumber || contractMeta?.contract_number || undefined,
         });
       }
 

@@ -123,20 +123,31 @@ export const useCreateNotification = () => {
   const createLog = useCreateNotificationLog();
   
   return useMutation({
-    mutationFn: async (notification: Omit<Notification, 'id' | 'created_at' | 'updated_at' | 'read'>) => {
+    mutationFn: async (notification: Omit<Notification, 'id' | 'created_at' | 'updated_at' | 'read'> & {
+      contract_id?: string;
+      contract_number?: string;
+      inquiry_id?: string;
+      inquiry_number?: string;
+    }) => {
+      const { contract_id, contract_number, inquiry_id, inquiry_number, ...notificationData } = notification;
+      
       const { data, error } = await supabase
         .from('notifications')
-        .insert([notification])
+        .insert([notificationData])
         .select()
         .single();
       
       if (error) throw error;
       
-      // Log the notification creation
+      // Log the notification creation with contract/inquiry info
       await createLog.mutateAsync({
         notification_type: notification.type,
         notification_title: notification.title,
         action_description: notification.message,
+        contract_id,
+        contract_number,
+        inquiry_id,
+        inquiry_number,
         metadata: { link: notification.link, automatic: true }
       });
       
