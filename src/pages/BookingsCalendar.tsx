@@ -69,20 +69,24 @@ export default function BookingsCalendar() {
     );
   }
 
-  const events: BookingEvent[] =
-    contracts?.map((contract, index) => ({
-      id: contract.id,
-      title: `${contract.vehicle_model} - ${contract.contract_number}`,
-      start: new Date(contract.start_date),
-      end: new Date(contract.end_date),
-      contractNumber: contract.contract_number,
-      vehicleModel: contract.vehicle_model,
-      registrationNumber: contract.registration_number,
-      clientName: contract.client?.name || "Brak danych",
-      status: contract.status,
-      value: contract.value || 0,
-      color: generateColor(index),
-    })) || [];
+  // Filtruj tylko aktywne i oczekujące rezerwacje (bez anulowanych i zakończonych)
+  const filteredContracts = contracts?.filter(
+    (c) => c.status === "active" || c.status === "pending"
+  ) || [];
+
+  const events: BookingEvent[] = filteredContracts.map((contract, index) => ({
+    id: contract.id,
+    title: `${contract.vehicle_model} - ${contract.contract_number}`,
+    start: new Date(contract.start_date),
+    end: new Date(contract.end_date),
+    contractNumber: contract.contract_number,
+    vehicleModel: contract.vehicle_model,
+    registrationNumber: contract.registration_number,
+    clientName: contract.client?.name || "Brak danych",
+    status: contract.status,
+    value: contract.value || 0,
+    color: generateColor(index),
+  }));
 
   const eventStyleGetter = (event: BookingEvent) => {
     return {
